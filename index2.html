@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#8a9a91">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>TaskTracker Pro</title>
+  <link rel="manifest" href="./manifest.json">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      --bg: #f6f5f2;
+      --surface: #ffffff;
+      --card-border: #e6e3da;
+      --accent: #6b8299;
+      --accent-soft: #eaeff3;
+      --accent-hover: #5a6f83;
+      --text: #33332f;
+      --text-muted: #82807a;
+      --danger: #b5695a;
+      --danger-soft: #faf1ee;
+      --success: #7a9b7e;
+      --success-soft: #eef4ef;
+      --radius: 12px;
+      --nav-height: 64px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); display: flex; flex-direction: column; }
+
+    /* Header */
+    header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 90; padding: 14px 20px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+    .brand-title { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+
+    .sync-badge { font-size: 0.75rem; background: var(--bg); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
+    .dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
+    /* Layout */
+    main { padding: 16px; max-width: 768px; margin: 0 auto; width: 100%; flex: 1; }
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Cards & Inputs */
+    .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--card-border); padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .card-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+
+    label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-top: 14px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); background: #fff; }
+    .field-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; }
+
+    .btn { width: 100%; background: var(--accent); color: #ffffff; font-weight: 600; border: none; padding: 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s; margin-top: 14px; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { opacity: 0.55; cursor: default; }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--card-border); }
+    .btn-secondary:hover { background: #efece4; }
+    .btn-danger { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(181, 105, 90, 0.2); }
+    .btn-success { background: var(--success); }
+    .btn-success:hover { background: #698e6e; }
+
+    /* Table Styling */
+    .table-container { width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th { background: #f1f0eb; padding: 12px 14px; font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--card-border); }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--card-border); color: var(--text); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #faf9f6; }
+
+    .badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; display: inline-block; text-transform: uppercase; }
+    .badge-task { background: var(--accent-soft); color: var(--accent-hover); }
+    .badge-achievement { background: var(--success-soft); color: #4f7256; }
+
+    .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; transition: color 0.15s; }
+    .action-icon-btn:hover { color: var(--text); background: #eceae3; }
+    .action-icon-btn.delete:hover { color: var(--danger); background: var(--danger-soft); }
+
+    /* Searchable History Dropdown Component */
+    .searchable-select { position: relative; }
+    .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: none; }
+    .history-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid var(--card-border); }
+    .history-item:last-child { border-bottom: none; }
+    .history-item:hover { background: var(--accent-soft); color: var(--accent-hover); }
+    .history-item .h-month { color: var(--text-muted); font-size: 0.72rem; margin-right: 6px; }
+
+    /* Bottom Navigation */
+    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; font-size: 0.7rem; font-weight: 600; gap: 4px; background: none; border: none; padding: 0; margin: 0; cursor: pointer; width: 33.3%; height: 100%; }
+    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
+    .nav-item.active { color: var(--accent); }
+
+    /* Report Card Preview */
+    .report-card { background: var(--surface); border: 1px solid var(--card-border); border-left: 4px solid var(--accent); padding: 14px; border-radius: 8px; margin-bottom: 12px; }
+    .report-card.achievement { border-left-color: var(--success); }
+
+    .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Authentication Overlay -->
+  <div id="authScreen" class="auth-overlay">
+    <div style="text-align: center; max-width: 320px;">
+      <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">TaskTracker Pro</h2>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">Secure task management synchronized directly to your private Google Drive storage.</p>
+      <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #33332f; border: 1px solid var(--card-border); font-weight: 600;">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        Sign in with Google
+      </button>
+      <p style="color: var(--text-muted); font-size: 0.72rem; margin-top: 16px; line-height: 1.5;">Also used to send your monthly report as a formatted email from your own Gmail account.</p>
+    </div>
+  </div>
+
+  <!-- App Header -->
+  <header>
+    <span class="brand-title">TaskTracker</span>
+    <div class="sync-badge" id="syncTrigger">
+      <span id="syncDot" class="dot"></span>
+      <span id="syncText">Offline Mode</span>
+    </div>
+  </header>
+
+  <main id="appContent" class="hidden">
+
+    <!-- VIEW 1: Current Month Records Table (DEFAULT) -->
+    <section id="viewRecords" class="view active">
+      <div class="card" style="padding: 14px 18px; margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size:0.85rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Month View</span>
+          <input type="month" id="monthPicker" style="width: auto; margin: 0; padding: 6px 10px; font-size: 0.85rem;">
+        </div>
+      </div>
+
+      <!-- Main Records Table -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Title</th>
+              <th>Details</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Add New Task Trigger below table -->
+      <button id="addTaskTableBtn" class="btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add New Entry
+      </button>
+    </section>
+
+    <!-- VIEW 2: Entry Form (Add/Edit) -->
+    <section id="viewEntry" class="view">
+      <div class="card">
+        <div class="card-title">
+          <span id="formHeaderTitle">New Entry</span>
+          <button id="cancelEditBtn" class="btn btn-secondary hidden" style="width:auto; padding:4px 10px; font-size:0.75rem; margin:0;">Cancel</button>
+        </div>
+
+        <!-- Searchable Clone Dropdown -->
+        <label>Search & Clone Previous Task</label>
+        <div class="searchable-select">
+          <input type="text" id="historySearchInput" placeholder="Type to filter past tasks..." autocomplete="off">
+          <div id="historyResults" class="history-results"></div>
+        </div>
+
+        <label>Type</label>
+        <select id="taskType">
+          <option value="Task">Task</option>
+          <option value="Achievement">Achievement</option>
+        </select>
+
+        <label>Title</label>
+        <input type="text" id="taskTitle" placeholder="e.g. Database Index Optimization">
+
+        <label>Details & Outcomes</label>
+        <textarea id="taskDesc" rows="4" placeholder="Log execution metrics, scope, or achievements..."></textarea>
+
+        <button id="saveTaskBtn" class="btn">Save Entry</button>
+      </div>
+    </section>
+
+    <!-- VIEW 3: Reports & Export -->
+    <section id="viewReports" class="view">
+      <div class="card">
+        <div class="card-title">Monthly Executive Summary</div>
+
+        <label>Select Month</label>
+        <input type="month" id="reportMonthPicker" style="margin-bottom: 16px;">
+
+        <div id="reportPreviewContainer" style="margin-bottom: 8px;"></div>
+
+        <label>Send report to</label>
+        <input type="email" id="reportRecipient" placeholder="you@example.com">
+        <p class="field-hint">Sent as a formatted HTML email directly from your signed-in Gmail account.</p>
+
+        <button id="exportReportBtn" class="btn btn-success">
+          ✉️ Send Formatted Gmail Report
+        </button>
+        <button id="mailtoFallbackBtn" class="btn btn-secondary">
+          Open Plain-Text Version in Mail App
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-target="viewRecords">
+      <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+      Records
+    </button>
+    <button class="nav-item" data-target="viewEntry">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Add Task
+    </button>
+    <button class="nav-item" data-target="viewReports">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
+      Reports
+    </button>
+  </nav>
+
+  <script>
+    // --- CONFIG & DB ENGINE ---
+    const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
+    // Drive scope keeps your data synced; gmail.send lets the app email the report as real HTML from your account.
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/gmail.send';
+    const DRIVE_FILE_NAME = 'tasktracker_db.json';
+    const STORAGE_KEY_SESSION = 'tasktracker_google_session';
+    const DB_NAME = 'TaskTrackerDB';
+    let db = null;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains('entries')) {
+            database.createObjectStore('entries', { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = (e) => { db = e.target.result; resolve(); };
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    const dbOps = {
+      async save(entry) {
+        const tx = db.transaction('entries', 'readwrite');
+        tx.objectStore('entries').put(entry);
+        await tx.complete;
+        syncToDrive();
+      },
+      async getAll() {
+        return new Promise((resolve) => {
+          const tx = db.transaction('entries', 'readonly');
+          const request = tx.objectStore('entries').getAll();
+          request.onsuccess = () => resolve(request.result);
+        });
+      },
+      async bulkReplace(entries) {
+        const tx = db.transaction('entries', 'readwrite');
+        const store = tx.objectStore('entries');
+        store.clear();
+        entries.forEach(item => store.put(item));
+        return tx.complete;
+      },
+      async delete(id) {
+        const tx = db.transaction('entries', 'readwrite');
+        tx.objectStore('entries').delete(id);
+        await tx.complete;
+        syncToDrive();
+      }
+    };
+
+    // --- DRIVE SYNC ENGINE ---
+    let accessToken = null;
+    let tokenClient = null;
+
+    function initGoogleAuth() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: async (response) => {
+          if (response.error) return alert("Login Failed: " + response.error);
+          accessToken = response.access_token;
+          localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ access_token: accessToken, expiry: Date.now() + ((response.expires_in || 3600) * 1000) }));
+          await applyAuthState();
+        },
+      });
+      restoreSession();
+    }
+
+    function restoreSession() {
+      const raw = localStorage.getItem(STORAGE_KEY_SESSION);
+      if (!raw) return;
+      try {
+        const session = JSON.parse(raw);
+        if (session.access_token && Date.now() < (session.expiry - 300000)) accessToken = session.access_token;
+      } catch (err) { localStorage.removeItem(STORAGE_KEY_SESSION); }
+    }
+
+    async function applyAuthState() {
+      if (accessToken) {
+        el('authScreen').classList.add('hidden');
+        el('appContent').classList.remove('hidden');
+        updateSyncStatus('online', 'Connected');
+        await pullFromDrive();
+      } else {
+        el('authScreen').classList.remove('hidden');
+        el('appContent').classList.add('hidden');
+      }
+    }
+
+    function updateSyncStatus(state, text) {
+      el('syncDot').className = 'dot ' + state;
+      el('syncText').innerText = text;
+    }
+
+    async function findDriveFileId() {
+      const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder', { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (res.status === 401) { accessToken = null; applyAuthState(); throw new Error("Unauthorized"); }
+      const data = await res.json();
+      return data.files?.find(f => f.name === DRIVE_FILE_NAME)?.id || null;
+    }
+
+    async function pullFromDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Syncing...');
+      try {
+        const fileId = await findDriveFileId();
+        if (fileId) {
+          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+          const remoteEntries = await res.json();
+          if (Array.isArray(remoteEntries)) { await dbOps.bulkReplace(remoteEntries); render(); }
+        }
+        updateSyncStatus('online', 'Synced');
+      } catch (err) { updateSyncStatus('', 'Offline Mode'); }
+    }
+
+    async function syncToDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Saving...');
+      try {
+        const localEntries = await dbOps.getAll();
+        const fileId = await findDriveFileId();
+        const blob = new Blob([JSON.stringify(localEntries, null, 2)], { type: 'application/json' });
+
+        if (fileId) {
+          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+            method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: blob
+          });
+        } else {
+          const metadata = { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          form.append('file', blob);
+          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form });
+        }
+        updateSyncStatus('online', 'Saved');
+      } catch (err) { updateSyncStatus('', 'Save Failed'); }
+    }
+
+    // --- CONTROLLERS ---
+    const now = new Date();
+    let currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let editingId = null;
+
+    const el = id => document.getElementById(id);
+
+    function monthLabel(key) {
+      const [y, m] = key.split('-').map(Number);
+      return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    }
+
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
+    });
+
+    function switchView(viewId) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+      const activeNav = document.querySelector(`.nav-item[data-target="${viewId}"]`);
+      if (activeNav) activeNav.classList.add('active');
+      el(viewId).classList.add('active');
+
+      if (viewId === 'viewReports') renderReportPreview();
+    }
+
+    async function render() {
+      const allEntries = await dbOps.getAll();
+      const monthEntries = allEntries
+        .filter(e => e.month === currentSelectedMonth)
+        .sort((a, b) => b.timestamp - a.timestamp);
+
+      const tbody = el('tableBody');
+      tbody.innerHTML = '';
+
+      if (monthEntries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">No entries recorded for this month.</td></tr>`;
+      } else {
+        monthEntries.forEach(item => {
+          const tr = document.createElement('tr');
+          const badgeClass = item.type === 'Achievement' ? 'badge-achievement' : 'badge-task';
+          tr.innerHTML = `
+            <td><span class="badge ${badgeClass}">${item.type}</span></td>
+            <td style="font-weight: 600;">${escapeHTML(item.title)}</td>
+            <td style="color: var(--text-muted); font-size: 0.82rem;">${escapeHTML(item.desc || '-')}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button onclick="editEntry('${item.id}')" class="action-icon-btn" title="Edit">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    // Searchable Clone Dropdown Handler — debounced + capped for large histories
+    let historyDebounceTimer;
+    el('historySearchInput').addEventListener('input', (e) => {
+      clearTimeout(historyDebounceTimer);
+      const value = e.target.value;
+      historyDebounceTimer = setTimeout(() => runHistorySearch(value), 150);
+    });
+
+    document.addEventListener('click', (e) => {
+      const wrap = document.querySelector('.searchable-select');
+      if (wrap && !wrap.contains(e.target)) el('historyResults').style.display = 'none';
+    });
+
+    async function runHistorySearch(rawQuery) {
+      const query = rawQuery.toLowerCase().trim();
+      const resultsContainer = el('historyResults');
+      if (!query) { resultsContainer.style.display = 'none'; resultsContainer.innerHTML = ''; return; }
+
+      const all = await dbOps.getAll();
+      const matches = all
+        .filter(item => item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query))
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 25);
+
+      resultsContainer.innerHTML = '';
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="history-item" style="color:var(--text-muted); cursor:default;">No matches</div>`;
+        resultsContainer.style.display = 'block';
+        return;
+      }
+
+      matches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `<span class="h-month">${item.month}</span>${escapeHTML(item.title)}`;
+        div.onclick = () => {
+          el('taskTitle').value = item.title;
+          el('taskType').value = item.type;
+          el('taskDesc').value = item.desc || '';
+          el('historySearchInput').value = item.title;
+          resultsContainer.style.display = 'none';
+        };
+        resultsContainer.appendChild(div);
+      });
+      resultsContainer.style.display = 'block';
+    }
+
+    // Form Save Controller
+    async function handleSave() {
+      const title = el('taskTitle').value.trim();
+      const type = el('taskType').value;
+      const desc = el('taskDesc').value.trim();
+
+      if (!title) return alert('Title is required');
+
+      const record = {
+        id: editingId || 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        month: currentSelectedMonth,
+        title,
+        type,
+        desc,
+        timestamp: Date.now()
+      };
+
+      await dbOps.save(record);
+      resetForm();
+      await render();
+      switchView('viewRecords');
+    }
+
+    function resetForm() {
+      editingId = null;
+      el('taskTitle').value = '';
+      el('taskDesc').value = '';
+      el('historySearchInput').value = '';
+      el('formHeaderTitle').innerText = 'New Entry';
+      el('saveTaskBtn').innerText = 'Save Entry';
+      el('cancelEditBtn').classList.add('hidden');
+    }
+
+    window.editEntry = async (id) => {
+      const all = await dbOps.getAll();
+      const target = all.find(e => e.id === id);
+      if (!target) return;
+
+      editingId = target.id;
+      el('taskTitle').value = target.title;
+      el('taskType').value = target.type;
+      el('taskDesc').value = target.desc;
+      el('formHeaderTitle').innerText = 'Edit Entry';
+      el('saveTaskBtn').innerText = 'Update Entry';
+      el('cancelEditBtn').classList.remove('hidden');
+      switchView('viewEntry');
+    };
+
+    window.deleteEntry = async (id) => {
+      if (confirm('Delete this record?')) {
+        await dbOps.delete(id);
+        render();
+      }
+    };
+
+    // Report Builder (Sorted Chronologically & Numbered)
+    async function getReportEntries(targetMonth) {
+      const all = await dbOps.getAll();
+      return all
+        .filter(e => e.month === targetMonth)
+        .sort((a, b) => a.timestamp - b.timestamp); // Chronological ascending order
+    }
+
+    async function renderReportPreview() {
+      const targetMonth = el('reportMonthPicker').value;
+      const monthEntries = await getReportEntries(targetMonth);
+
+      const container = el('reportPreviewContainer');
+      container.innerHTML = '';
+
+      if (monthEntries.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">No tasks logged for ${targetMonth}.</p>`;
+        return;
+      }
+
+      monthEntries.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = `report-card ${item.type.toLowerCase()}`;
+        card.innerHTML = `
+          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:4px;">
+            ${idx + 1}. [${item.type.toUpperCase()}] - ${new Date(item.timestamp).toLocaleDateString()}
+          </div>
+          <div style="font-weight:700; color:var(--text); font-size:0.95rem;">${escapeHTML(item.title)}</div>
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">${escapeHTML(item.desc || '')}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Builds an email-safe HTML version of the report cards (inline styles, since most
+    // mail clients strip <style> blocks out of incoming HTML).
+    function buildReportHTML(month, entries) {
+      const rows = entries.map((item, idx) => {
+        const isAch = item.type === 'Achievement';
+        const borderColor = isAch ? '#7a9b7e' : '#6b8299';
+        const badgeBg = isAch ? '#eef4ef' : '#eaeff3';
+        const badgeColor = isAch ? '#4f7256' : '#4a5f73';
+        const details = escapeHTML(item.desc || '').replace(/\n/g, '<br>');
+        return `
+          <tr><td style="padding:0 0 12px 0;">
+            <div style="background:#ffffff;border:1px solid #e6e3da;border-left:4px solid ${borderColor};border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:700;color:#82807a;letter-spacing:0.3px;margin-bottom:6px;">
+                ${idx + 1}.
+                <span style="background:${badgeBg};color:${badgeColor};padding:2px 8px;border-radius:10px;text-transform:uppercase;">${item.type}</span>
+                &nbsp;·&nbsp;${new Date(item.timestamp).toLocaleDateString()}
+              </div>
+              <div style="font-size:15px;font-weight:700;color:#33332f;margin-bottom:4px;">${escapeHTML(item.title)}</div>
+              <div style="font-size:13px;color:#82807a;line-height:1.5;">${details}</div>
+            </div>
+          </td></tr>`;
+      }).join('');
+
+      return `<div style="max-width:560px;margin:0 auto;font-family:-apple-system,Segoe UI,Roboto,sans-serif;">
+        <h2 style="font-size:18px;color:#33332f;margin-bottom:4px;">Monthly Performance Report</h2>
+        <p style="font-size:13px;color:#82807a;margin-top:0;margin-bottom:18px;">${monthLabel(month)} · ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+      </div>`;
+    }
+
+    // Base64url-encodes a minimal RFC 2822 MIME message with an HTML body for the Gmail API.
+    function buildMimeMessage(to, subject, html) {
+      const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
+      const message =
+        `To: ${to}\r\n` +
+        `Subject: ${subjectEncoded}\r\n` +
+        `MIME-Version: 1.0\r\n` +
+        `Content-Type: text/html; charset="UTF-8"\r\n\r\n` +
+        html;
+      return btoa(unescape(encodeURIComponent(message)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    async function sendGmailReport() {
+      const targetMonth = el('reportMonthPicker').value;
+      const monthEntries = await getReportEntries(targetMonth);
+      if (monthEntries.length === 0) return alert('No data to export.');
+
+      const recipient = el('reportRecipient').value.trim();
+      if (!recipient) return alert('Enter a recipient email first.');
+
+      if (!accessToken) {
+        alert('Sign in with Google first — the report is sent from your own Gmail account.');
+        return;
+      }
+
+      const subject = `Monthly Performance Report - ${targetMonth}`;
+      const html = buildReportHTML(targetMonth, monthEntries);
+      const btn = el('exportReportBtn');
+      btn.disabled = true;
+      updateSyncStatus('syncing', 'Sending...');
+
+      try {
+        const raw = buildMimeMessage(recipient, subject, html);
+        const res = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages/send', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ raw })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          if (res.status === 401 || res.status === 403) {
+            // Existing session likely predates the gmail.send scope — ask for consent again.
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+            throw new Error('Needs one-time Gmail permission — please try Send again after approving.');
+          }
+          throw new Error(errData.error?.message || 'Send failed');
+        }
+
+        updateSyncStatus('online', 'Report sent');
+        alert('Report emailed to ' + recipient);
+      } catch (err) {
+        updateSyncStatus('', 'Send failed');
+        alert(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function openMailtoFallback() {
+      const targetMonth = el('reportMonthPicker').value;
+      const monthEntries = await getReportEntries(targetMonth);
+      if (monthEntries.length === 0) return alert('No data to export.');
+
+      let body = `Performance Summary Report - ${targetMonth}\n\n`;
+      monthEntries.forEach((a, i) => {
+        body += `${i + 1}. [${a.type}] ${a.title}\nDate Added: ${new Date(a.timestamp).toLocaleDateString()}\nDetails: ${a.desc || 'N/A'}\n-------------------------------------------\n\n`;
+      });
+
+      const recipient = el('reportRecipient').value.trim();
+      window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent('Monthly Performance Report - ' + targetMonth)}&body=${encodeURIComponent(body)}`;
+    }
+
+    el('exportReportBtn').addEventListener('click', sendGmailReport);
+    el('mailtoFallbackBtn').addEventListener('click', openMailtoFallback);
+
+    // Event Bindings
+    el('addTaskTableBtn').addEventListener('click', () => { resetForm(); switchView('viewEntry'); });
+    el('cancelEditBtn').addEventListener('click', resetForm);
+    el('syncTrigger').addEventListener('click', pullFromDrive);
+    el('googleSignInBtn').addEventListener('click', () => tokenClient && tokenClient.requestAccessToken({ prompt: '' }));
+    el('saveTaskBtn').addEventListener('click', handleSave);
+
+    el('monthPicker').value = currentSelectedMonth;
+    el('reportMonthPicker').value = currentSelectedMonth;
+
+    el('monthPicker').addEventListener('change', (e) => { currentSelectedMonth = e.target.value; render(); });
+    el('reportMonthPicker').addEventListener('change', renderReportPreview);
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await initDB();
+      render();
+      if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); }
+      else window.addEventListener('load', async () => { if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); } });
+    });
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+  </script>
+</body>
+</html>
