@@ -11,113 +11,191 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
-      --bg: #0f172a;
+      --bg: #0b1120;
       --card-bg: #1e293b;
+      --card-border: #334155;
       --accent: #38bdf8;
+      --accent-hover: #0284c7;
       --text: #f8fafc;
       --text-muted: #94a3b8;
-      --border: #334155;
-      --danger: #ef4444;
-      --success: #22c55e;
-      --radius: 12px;
+      --danger: #f43f5e;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --radius: 14px;
+      --nav-height: 65px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; padding-bottom: 20px; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); display: flex; flex-direction: column; }
+
+    /* Sticky App Header */
+    header { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 90; padding: 14px 20px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-title { font-size: 1.1rem; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
     
-    header { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-    h1 { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
-    
-    main { padding: 16px; max-width: 600px; margin: 0 auto; width: 100%; flex: 1; }
-    .card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 16px; }
-    .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    
-    input, select, textarea, button { width: 100%; background: #0f172a; border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 8px; font-size: 0.95rem; margin-top: 6px; margin-bottom: 12px; outline: none; }
-    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-    button { background: var(--accent); color: #000; font-weight: 600; border: none; cursor: pointer; transition: opacity 0.2s; margin-bottom: 0; }
-    button:active { opacity: 0.8; }
-    button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    button.danger { background: var(--danger); color: #fff; }
-    
-    .sync-status { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); display: inline-block; }
-    .dot.online { background: var(--success); }
+    .sync-badge { font-size: 0.75rem; background: rgba(51, 65, 85, 0.5); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
+    .dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
     .dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
-    
     @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
+    /* Main Container & Views */
+    main { padding: 16px; max-width: 600px; margin: 0 auto; width: 100%; flex: 1; }
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* UI Cards & Inputs */
+    .card { background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--card-border); padding: 18px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .card-title { font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+
+    label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-top: 12px; margin-bottom: 6px; text-transform: uppercase; }
+    input, select, textarea { width: 100%; background: #0f172a; border: 1px solid var(--card-border); color: var(--text); padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     
-    .task-item { background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
-    .task-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); }
-    .task-title { font-size: 1rem; font-weight: 600; }
-    .task-actions { display: flex; gap: 8px; margin-top: 8px; }
-    .task-actions button { padding: 6px 10px; font-size: 0.8rem; }
-    
+    .btn { width: 100%; background: var(--accent); color: #0f172a; font-weight: 700; border: none; padding: 14px; border-radius: 10px; font-size: 0.95rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s; margin-top: 14px; }
+    .btn:active { opacity: 0.85; }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--card-border); }
+    .btn-danger { background: rgba(244, 63, 94, 0.15); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.3); }
+
+    /* Filter Chips */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; }
+    .chip { background: #0f172a; border: 1px solid var(--card-border); color: var(--text-muted); font-size: 0.8rem; font-weight: 600; padding: 6px 14px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
+    .chip.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    /* Task Item Styling */
+    .task-item { background: #0f172a; border-radius: 10px; padding: 14px; margin-bottom: 10px; border: 1px solid var(--card-border); position: relative; }
+    .task-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
+    .type-badge { font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; }
+    .type-badge.achievement { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .type-badge.task { background: rgba(56, 189, 248, 0.2); color: var(--accent); }
+    .task-title { font-size: 1rem; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .task-desc { font-size: 0.85rem; color: var(--text-muted); white-space: pre-wrap; line-height: 1.4; }
+    .task-actions { display: flex; gap: 8px; margin-top: 10px; justify-content: flex-end; }
+    .task-actions button { width: auto; padding: 6px 12px; font-size: 0.75rem; margin: 0; }
+
+    /* Bottom Navigation Bar */
+    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height); background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; font-size: 0.7rem; font-weight: 600; gap: 4px; background: none; border: none; padding: 0; margin: 0; cursor: pointer; }
+    .nav-item svg { width: 22px; height: 22px; fill: currentColor; }
+    .nav-item.active { color: var(--accent); }
+
+    /* Auth Overlay */
+    .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .hidden { display: none !important; }
-    .row { display: flex; gap: 8px; }
-    .badge { background: #0284c7; color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <!-- Auth Screen -->
+  <!-- Authentication Overlay -->
   <div id="authScreen" class="auth-overlay">
-    <h2 style="margin-bottom: 8px;">TaskTracker Pro</h2>
-    <p style="color: var(--text-muted); margin-bottom: 24px; text-align: center;">Sign in with Google to sync your tasks via Google Drive.</p>
-    <button id="googleSignInBtn" style="max-width: 280px; background: #fff; color: #000; display: flex; align-items: center; justify-content: center; gap: 10px;">
-      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-      Sign in with Google
-    </button>
+    <div style="text-align: center; max-width: 320px;">
+      <h2 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 8px;">TaskTracker Pro</h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 28px;">Secure task management synchronized directly to your private Google Drive storage.</p>
+      <button id="googleSignInBtn" class="btn" style="background: #fff; color: #000; font-weight: 600;">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        Sign in with Google
+      </button>
+    </div>
   </div>
 
-  <!-- App Header -->
+  <!-- Header -->
   <header>
-    <div>
-      <h1>TaskTracker</h1>
-      <div class="sync-status">
-        <span id="syncDot" class="dot"></span>
-        <span id="syncText">Offline Mode</span>
-      </div>
+    <div class="brand">
+      <span class="brand-title">TaskTracker</span>
     </div>
-    <span id="currentMonthBadge" class="badge"></span>
+    <div class="sync-badge" id="syncTrigger" style="cursor: pointer;">
+      <span id="syncDot" class="dot"></span>
+      <span id="syncText">Offline Mode</span>
+    </div>
   </header>
 
+  <!-- Main View Router -->
   <main id="appContent" class="hidden">
-    <div class="card">
-      <label>Workspace Month</label>
-      <input type="month" id="monthPicker">
-      <div class="row" style="margin-top: 8px;">
-        <button id="exportReportBtn">📧 Gmail Report</button>
-        <button id="syncNowBtn" class="secondary">🔄 Sync Drive</button>
+
+    <!-- VIEW 1: Entry Form (Add/Edit) -->
+    <section id="viewEntry" class="view active">
+      <div class="card">
+        <div class="card-title">
+          <span id="formHeaderTitle">New Entry</span>
+          <button id="cancelEditBtn" class="btn btn-secondary hidden" style="width:auto; padding:4px 10px; font-size:0.75rem; margin:0;">Cancel</button>
+        </div>
+
+        <label>Clone Previous Record</label>
+        <select id="historyDropdown">
+          <option value="">-- Choose template from history --</option>
+        </select>
+
+        <label>Entry Type</label>
+        <select id="taskType">
+          <option value="Task">Task</option>
+          <option value="Achievement">Achievement</option>
+        </select>
+
+        <label>Title</label>
+        <input type="text" id="taskTitle" placeholder="e.g. Infrastructure Modernization">
+
+        <label>Details & Metrics</label>
+        <textarea id="taskDesc" rows="4" placeholder="Log details, outcome metrics, or execution links..."></textarea>
+
+        <button id="saveTaskBtn" class="btn">Save Entry</button>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h3 style="margin-bottom: 12px;">New Entry</h3>
-      
-      <label>Copy from History</label>
-      <select id="historyDropdown">
-        <option value="">-- Pick previous entry to clone --</option>
-      </select>
+    <!-- VIEW 2: Records Dashboard -->
+    <section id="viewRecords" class="view">
+      <div class="card" style="padding: 12px 18px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size:0.85rem; font-weight:600; color:var(--text-muted);">WORKSPACE</span>
+          <input type="month" id="monthPicker" style="width: auto; margin: 0; padding: 6px 10px; font-size: 0.85rem;">
+        </div>
+      </div>
 
-      <label>Title / Task Name</label>
-      <input type="text" id="taskTitle" placeholder="e.g., Q3 Infrastructure Migration">
+      <!-- Category Filter Chips -->
+      <div class="filter-bar">
+        <button class="chip active" data-filter="ALL">All Records</button>
+        <button class="chip" data-filter="Task">Tasks Only</button>
+        <button class="chip" data-filter="Achievement">Achievements</button>
+      </div>
 
-      <label>Type</label>
-      <select id="taskType">
-        <option value="Achievement">Achievement</option>
-        <option value="Task">Task</option>
-      </select>
-
-      <label>Details / Metrics</label>
-      <textarea id="taskDesc" rows="3" placeholder="Key outcomes, links, or metrics..."></textarea>
-
-      <button id="saveTaskBtn">Save Record</button>
-    </div>
-
-    <div class="card">
-      <h3 style="margin-bottom: 12px;">Month Records</h3>
+      <!-- Dynamic Task List -->
       <div id="taskList"></div>
-    </div>
+    </section>
+
+    <!-- VIEW 3: Reports & Export -->
+    <section id="viewReports" class="view">
+      <div class="card">
+        <div class="card-title">Gmail Summary Report</div>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px; line-height: 1.4;">
+          Compile and format performance metrics for your selected month into an executive summary ready for distribution.
+        </p>
+
+        <label>Target Workspace Month</label>
+        <input type="month" id="reportMonthPicker">
+
+        <button id="exportReportBtn" class="btn" style="background: var(--success); color: #000;">
+          ✉️ Generate Gmail Report
+        </button>
+      </div>
+    </section>
+
   </main>
+
+  <!-- Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-target="viewEntry">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Add Entry
+    </button>
+    <button class="nav-item" data-target="viewRecords">
+      <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+      Records
+    </button>
+    <button class="nav-item" data-target="viewReports">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
+      Reports
+    </button>
+  </nav>
 
   <script>
     // --- CONFIGURATION ---
@@ -181,40 +259,28 @@
         client_id: GOOGLE_CLIENT_ID,
         scope: 'https://www.googleapis.com/auth/drive.appdata',
         callback: async (response) => {
-          if (response.error) {
-            alert("Google Login Failed: " + response.error);
-            return;
-          }
+          if (response.error) return alert("Google Login Failed: " + response.error);
           saveSession(response);
           await applyAuthState();
         },
       });
-
       restoreSession();
     }
 
     function saveSession(response) {
       accessToken = response.access_token;
-      // expires_in is given in seconds (typically 3600s = 1 hour)
       const expiryTimestamp = Date.now() + ((response.expires_in || 3600) * 1000);
-      const sessionData = {
-        access_token: accessToken,
-        expiry: expiryTimestamp
-      };
-      localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(sessionData));
+      localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ access_token: accessToken, expiry: expiryTimestamp }));
     }
 
     function restoreSession() {
       const raw = localStorage.getItem(STORAGE_KEY_SESSION);
       if (!raw) return;
-
       try {
         const session = JSON.parse(raw);
-        // Ensure token has at least 5 minutes (300,000 ms) of validity left
         if (session.access_token && Date.now() < (session.expiry - 300000)) {
           accessToken = session.access_token;
         } else {
-          // Token expired or close to expiring
           localStorage.removeItem(STORAGE_KEY_SESSION);
           accessToken = null;
         }
@@ -228,7 +294,7 @@
       if (accessToken) {
         el('authScreen').classList.add('hidden');
         el('appContent').classList.remove('hidden');
-        updateSyncStatus('online', 'Google Drive Connected');
+        updateSyncStatus('online', 'Connected');
         await pullFromDrive();
       } else {
         el('authScreen').classList.remove('hidden');
@@ -247,15 +313,12 @@
       const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder', {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
-      
       if (res.status === 401) {
-        // Token revoked or invalidated remotely
         localStorage.removeItem(STORAGE_KEY_SESSION);
         accessToken = null;
         applyAuthState();
-        throw new Error("Unauthorized token");
+        throw new Error("Unauthorized");
       }
-
       const data = await res.json();
       const file = data.files?.find(f => f.name === DRIVE_FILE_NAME);
       return file ? file.id : null;
@@ -263,7 +326,7 @@
 
     async function pullFromDrive() {
       if (!accessToken) return;
-      updateSyncStatus('syncing', 'Syncing from Drive...');
+      updateSyncStatus('syncing', 'Syncing...');
       try {
         const fileId = await findDriveFileId();
         if (fileId) {
@@ -276,16 +339,15 @@
             render();
           }
         }
-        updateSyncStatus('online', 'Synced with Drive');
+        updateSyncStatus('online', 'Synced');
       } catch (err) {
-        console.error(err);
         if (accessToken) updateSyncStatus('', 'Sync Error');
       }
     }
 
     async function syncToDrive() {
       if (!accessToken) return;
-      updateSyncStatus('syncing', 'Saving to Drive...');
+      updateSyncStatus('syncing', 'Saving...');
       try {
         const localEntries = await dbOps.getAll();
         const fileId = await findDriveFileId();
@@ -309,26 +371,55 @@
             body: form
           });
         }
-        updateSyncStatus('online', 'Saved to Drive');
+        updateSyncStatus('online', 'Saved');
       } catch (err) {
-        console.error(err);
         if (accessToken) updateSyncStatus('', 'Save Failed');
       }
     }
 
-    // --- APP UI CONTROLLERS ---
+    // --- APP CONTROLLERS & NAVIGATION ---
     const now = new Date();
     let currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     let editingId = null;
+    let activeFilter = 'ALL';
 
     const el = id => document.getElementById(id);
 
+    // Tab Navigation Logic
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetView = e.currentTarget.getAttribute('data-target');
+        switchView(targetView);
+      });
+    });
+
+    function switchView(viewId) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      
+      const activeNav = document.querySelector(`.nav-item[data-target="${viewId}"]`);
+      if (activeNav) activeNav.classList.add('active');
+      
+      const targetEl = el(viewId);
+      if (targetEl) targetEl.classList.add('active');
+    }
+
+    // Filter Chips Controller
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        e.target.classList.add('active');
+        activeFilter = e.target.getAttribute('data-filter');
+        render();
+      });
+    });
+
     async function render() {
-      el('currentMonthBadge').innerText = currentSelectedMonth;
       const allEntries = await dbOps.getAll();
       
+      // Update history clone dropdown
       const historySelect = el('historyDropdown');
-      historySelect.innerHTML = '<option value="">-- Pick previous entry to clone --</option>';
+      historySelect.innerHTML = '<option value="">-- Choose template from history --</option>';
       allEntries.forEach(item => {
         const opt = document.createElement('option');
         opt.value = item.id;
@@ -336,28 +427,35 @@
         historySelect.appendChild(opt);
       });
 
-      const monthEntries = allEntries.filter(e => e.month === currentSelectedMonth);
+      // Filter entries by Month & Type
+      let monthEntries = allEntries.filter(e => e.month === currentSelectedMonth);
+      if (activeFilter !== 'ALL') {
+        monthEntries = monthEntries.filter(e => e.type === activeFilter);
+      }
+
       const listContainer = el('taskList');
       listContainer.innerHTML = '';
 
       if (monthEntries.length === 0) {
-        listContainer.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 12px;">No tasks logged for ${currentSelectedMonth}.</p>`;
+        listContainer.innerHTML = `<p style="color:var(--text-muted); text-align:center; padding: 24px 0; font-size:0.9rem;">No records found for this view.</p>`;
         return;
       }
 
       monthEntries.forEach(item => {
         const itemEl = document.createElement('div');
         itemEl.className = 'task-item';
+        const typeClass = item.type === 'Achievement' ? 'achievement' : 'task';
+        
         itemEl.innerHTML = `
           <div class="task-header">
-            <span>${item.type}</span>
+            <span class="type-badge ${typeClass}">${item.type}</span>
             <span>${new Date(item.timestamp).toLocaleDateString()}</span>
           </div>
           <div class="task-title">${escapeHTML(item.title)}</div>
-          <div style="font-size: 0.85rem; color: var(--text-muted); white-space: pre-wrap;">${escapeHTML(item.desc)}</div>
+          <div class="task-desc">${escapeHTML(item.desc)}</div>
           <div class="task-actions">
-            <button onclick="editEntry('${item.id}')" class="secondary">Edit</button>
-            <button onclick="deleteEntry('${item.id}')" class="danger">Delete</button>
+            <button onclick="editEntry('${item.id}')" class="btn btn-secondary">Edit</button>
+            <button onclick="deleteEntry('${item.id}')" class="btn btn-danger">Delete</button>
           </div>
         `;
         listContainer.appendChild(itemEl);
@@ -381,11 +479,18 @@
       };
 
       await dbOps.save(record);
+      resetForm();
+      render();
+      switchView('viewRecords');
+    }
+
+    function resetForm() {
       editingId = null;
       el('taskTitle').value = '';
       el('taskDesc').value = '';
-      el('saveTaskBtn').innerText = 'Save Record';
-      render();
+      el('formHeaderTitle').innerText = 'New Entry';
+      el('saveTaskBtn').innerText = 'Save Entry';
+      el('cancelEditBtn').classList.add('hidden');
     }
 
     window.editEntry = async (id) => {
@@ -397,8 +502,11 @@
       el('taskTitle').value = target.title;
       el('taskType').value = target.type;
       el('taskDesc').value = target.desc;
-      el('saveTaskBtn').innerText = 'Update Record';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      el('formHeaderTitle').innerText = 'Edit Entry';
+      el('saveTaskBtn').innerText = 'Update Entry';
+      el('cancelEditBtn').classList.remove('hidden');
+      
+      switchView('viewEntry');
     };
 
     window.deleteEntry = async (id) => {
@@ -407,6 +515,8 @@
         render();
       }
     };
+
+    el('cancelEditBtn').addEventListener('click', resetForm);
 
     el('historyDropdown').addEventListener('change', async (e) => {
       const selectedId = e.target.value;
@@ -418,32 +528,35 @@
         el('taskType').value = match.type;
         el('taskDesc').value = match.desc;
         editingId = null;
-        el('saveTaskBtn').innerText = 'Save Record (Cloning)';
+        el('formHeaderTitle').innerText = 'Clone Entry';
+        el('saveTaskBtn').innerText = 'Save Cloned Record';
       }
     });
 
     el('exportReportBtn').addEventListener('click', async () => {
+      const targetMonth = el('reportMonthPicker').value;
       const all = await dbOps.getAll();
-      const monthEntries = all.filter(e => e.month === currentSelectedMonth);
-      if (monthEntries.length === 0) return alert('No data for selected month.');
+      const monthEntries = all.filter(e => e.month === targetMonth);
+      if (monthEntries.length === 0) return alert('No data logged for the selected month.');
 
-      let body = `Monthly Performance & Task Report - ${currentSelectedMonth}\n===========================================\n\n`;
+      let body = `Monthly Performance Report - ${targetMonth}\n===========================================\n\n`;
       monthEntries.forEach((a, i) => {
-        body += `${i + 1}. [${a.type}] ${a.title}\n   Notes: ${a.desc}\n\n`;
+        body += `${i + 1}. [${a.type.toUpperCase()}] ${a.title}\n   ${a.desc}\n\n`;
       });
 
-      window.location.href = `mailto:?subject=${encodeURIComponent('Monthly Report: ' + currentSelectedMonth)}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:?subject=${encodeURIComponent('Performance Summary: ' + targetMonth)}&body=${encodeURIComponent(body)}`;
     });
 
-    el('syncNowBtn').addEventListener('click', pullFromDrive);
+    el('syncTrigger').addEventListener('click', pullFromDrive);
     el('googleSignInBtn').addEventListener('click', () => {
-      if (tokenClient) {
-        tokenClient.requestAccessToken({ prompt: '' });
-      }
+      if (tokenClient) tokenClient.requestAccessToken({ prompt: '' });
     });
     el('saveTaskBtn').addEventListener('click', handleSave);
     
+    // Synchronize month pickers
     el('monthPicker').value = currentSelectedMonth;
+    el('reportMonthPicker').value = currentSelectedMonth;
+    
     el('monthPicker').addEventListener('change', (e) => {
       currentSelectedMonth = e.target.value;
       render();
@@ -453,7 +566,6 @@
       await initDB();
       render();
       
-      // Wait for Google Identity Services script to initialize
       if (window.google && google.accounts && google.accounts.oauth2) {
         initGoogleAuth();
         await applyAuthState();
