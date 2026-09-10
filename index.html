@@ -186,7 +186,21 @@
 
     /* CARD GRID VIEW FOR RECORDS */
     .records-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
-    .record-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: var(--shadow); }
+    .record-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
+    
+    /* Highlighted Pushed Tasks Styling */
+    .record-card.pushed-task-highlight {
+      border: 2px solid var(--warning) !important;
+      background: var(--warning-soft) !important;
+      box-shadow: 0 0 12px rgba(217, 119, 6, 0.35) !important;
+      animation: pulsePushedTask 2.5s infinite ease-in-out;
+    }
+    @keyframes pulsePushedTask {
+      0% { border-color: var(--warning); box-shadow: 0 0 4px rgba(217, 119, 6, 0.2); }
+      50% { border-color: var(--danger); box-shadow: 0 0 14px rgba(217, 119, 6, 0.5); }
+      100% { border-color: var(--warning); box-shadow: 0 0 4px rgba(217, 119, 6, 0.2); }
+    }
+
     .record-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
     .record-card-title { font-weight: 700; font-size: 0.95rem; color: var(--text); line-height: 1.3; }
     .record-card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
@@ -284,7 +298,7 @@
         </button>
         <button class="nav-item admin-only hidden" data-target="viewAssign">
           <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-          <span class="nav-text">Assign Tasks</span>
+          <span class="nav-text">Push / Assign Tasks</span>
         </button>
         <button class="nav-item" data-target="viewReports">
           <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
@@ -323,11 +337,11 @@
             </div>
           </div>
 
-          <!-- Assigned To Me Section -->
+          <!-- Assigned / Pushed To Me Section -->
           <div id="assignedSectionContainer" class="hidden" style="margin-bottom: 24px;">
-            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--purple); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--warning); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-              Assigned To Me (Pending)
+              Pushed Tasks Assigned To Me (Action Required)
             </h3>
             <div id="assignedCardsGrid" class="records-grid"></div>
           </div>
@@ -375,10 +389,10 @@
           </div>
         </section>
 
-        <!-- VIEW 3: Admin Task Assignment (Admin Only) -->
+        <!-- VIEW 3: Admin Push Task Assignment (Admin Only) -->
         <section id="viewAssign" class="view">
           <div class="card">
-            <div class="card-title">Assign Task to Team Member</div>
+            <div class="card-title">Push Task to Team Member</div>
 
             <label>Task Title</label>
             <input type="text" id="assignTitle" placeholder="e.g. Prepare Quarter Audit Summary">
@@ -386,21 +400,33 @@
             <label>Assignee (Team Member)</label>
             <select id="assignUserSelect"></select>
 
-            <label>Priority</label>
+            <label>Importance / Priority Level</label>
             <select id="assignPriority">
-              <option value="Medium">Medium</option>
-              <option value="Urgent">Urgent</option>
-              <option value="High">High</option>
-              <option value="Low">Low</option>
+              <option value="Urgent">🔥 Urgent (Immediate Action)</option>
+              <option value="High">⚡ High Priority</option>
+              <option value="Medium">Medium Priority</option>
+              <option value="Low">Low Priority</option>
             </select>
 
-            <label>Target Deadline & Timeframe</label>
-            <input type="datetime-local" id="assignDatetime">
+            <label>Time Frame & Target Deadline</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <select id="assignTimeframe">
+                  <option value="24 Hours">24 Hours (Immediate)</option>
+                  <option value="3 Days">3 Days (Short-term)</option>
+                  <option value="1 Week">1 Week (Medium-term)</option>
+                  <option value="Custom">Custom Schedule</option>
+                </select>
+              </div>
+              <div>
+                <input type="datetime-local" id="assignDatetime">
+              </div>
+            </div>
 
-            <label>Description & Scope</label>
-            <textarea id="assignDesc" rows="3" placeholder="Specify instructions or expectations..."></textarea>
+            <label>Description & Instructions</label>
+            <textarea id="assignDesc" rows="3" placeholder="Specify instructions, deliverables or expectations..."></textarea>
 
-            <button id="dispatchAssignBtn" class="btn btn-warning">Dispatch Assigned Task</button>
+            <button id="dispatchAssignBtn" class="btn btn-warning">🚀 Dispatch Pushed Task</button>
           </div>
         </section>
 
@@ -462,7 +488,7 @@
 
           <!-- Assigned Tasks Report Section -->
           <div class="card">
-            <div class="card-title">Admin Assigned Tasks Log</div>
+            <div class="card-title">Admin Pushed Tasks Log</div>
             <div class="table-container">
               <table>
                 <thead>
@@ -470,8 +496,9 @@
                     <th>Assignee</th>
                     <th>Title</th>
                     <th>Priority</th>
+                    <th>Time Frame</th>
                     <th>Status</th>
-                    <th>Date / Target</th>
+                    <th>Deadline</th>
                   </tr>
                 </thead>
                 <tbody id="assignedTableBody"></tbody>
@@ -509,7 +536,7 @@
           <div class="card" style="border-left: 4px solid var(--warning);">
             <div class="card-title">Admin Rights & Controls</div>
             <div id="adminLoginBox">
-              <p class="field-hint" style="margin-bottom: 10px;">Login as Admin to manage assigned tasks, view team performance, and compare reward metrics.</p>
+              <p class="field-hint" style="margin-bottom: 10px;">Login as Admin to push tasks, view team performance, and compare reward metrics.</p>
               <label>Admin Password</label>
               <input type="password" id="adminPassInput" placeholder="Enter admin password">
               <button id="adminLoginBtn" class="btn btn-secondary" style="margin-top: 10px;">Login as Admin</button>
@@ -571,6 +598,11 @@
             </div>
 
             <button id="saveSettingsBtn" class="btn" disabled>Save Preferences</button>
+          </div>
+
+          <!-- Task tracker Pro Version Banner -->
+          <div style="text-align: center; margin-top: 24px; padding: 14px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); border-top: 1px solid var(--card-border);">
+            Task tracker Pro (Beta 0.8)
           </div>
         </section>
 
@@ -661,7 +693,6 @@
       if (day === 5 || day === 6) {
         return 'Holiday';
       }
-      // Official hours: 08:30 (510 min) to 16:00 (960 min)
       if (totalMinutes >= 510 && totalMinutes <= 960) {
         return 'Regular';
       }
@@ -807,7 +838,7 @@
       const allEntries = await dbOps.getAll();
       const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => !e.userId || e.userId === currentUser.id);
 
-      // Pending Assigned Tasks for User
+      // Pending Assigned / Pushed Tasks for User
       const assignedPending = visibleEntries.filter(e => e.isAssigned && e.status === 'Pending' && (e.userId === currentUser.id || isAdmin));
       const assignedContainer = el('assignedSectionContainer');
       const assignedGrid = el('assignedCardsGrid');
@@ -837,7 +868,10 @@
 
     function createTaskCard(item, isAssignedPending) {
       const card = document.createElement('div');
-      card.className = 'record-card';
+      const isPushed = item.isAssigned || item.isPushed;
+
+      // Apply distinct highlight style for pending pushed tasks
+      card.className = 'record-card' + (isPushed && item.status === 'Pending' ? ' pushed-task-highlight' : '');
 
       const workType = item.workType || calculateWorkType(item.datetime);
       const isOwnTask = !item.userId || item.userId === currentUser.id;
@@ -849,13 +883,13 @@
 
       let typeBadgeClass = 'badge-task';
       if (item.type === 'Achievement') typeBadgeClass = 'badge-achievement';
-      if (item.type === 'Assigned Task') typeBadgeClass = 'badge-assigned';
+      if (item.type === 'Assigned Task' || item.type === 'Pushed Task') typeBadgeClass = 'badge-assigned';
 
       const formattedDt = item.datetime ? new Date(item.datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : new Date(item.timestamp).toLocaleDateString();
 
       let actionsHtml = '';
       if (isAssignedPending && (item.userId === currentUser.id || isAdmin)) {
-        actionsHtml = `<button onclick="markAssignedComplete('${item.id}')" class="btn btn-success btn-inline">✓ Complete</button>`;
+        actionsHtml = `<button onclick="markAssignedComplete('${item.id}')" class="btn btn-success btn-inline">✓ Complete Task</button>`;
       } else if (isOwnTask) {
         actionsHtml = `
           <div class="record-actions">
@@ -873,14 +907,16 @@
             <span class="badge ${typeBadgeClass}">${item.type}</span>
           </div>
           <div class="record-card-meta">
+            ${isPushed && item.status === 'Pending' ? `<span class="badge badge-urgent">📌 Pushed Task</span>` : ''}
             <span class="badge ${workBadgeClass}">${workType}</span>
-            ${item.priority ? `<span class="badge badge-urgent">${item.priority}</span>` : ''}
+            ${item.priority ? `<span class="badge badge-urgent">Priority: ${escapeHTML(item.priority)}</span>` : ''}
+            ${item.timeframe ? `<span class="badge badge-assigned">Timeframe: ${escapeHTML(item.timeframe)}</span>` : ''}
             ${isAdmin ? `<span class="badge badge-admin">${escapeHTML(displayName)}</span>` : ''}
           </div>
           <div class="record-card-body">${escapeHTML(item.desc || 'No additional details logged.')}</div>
         </div>
         <div class="record-card-footer">
-          <span>🕒 ${formattedDt}</span>
+          <span>🕒 Target: ${formattedDt}</span>
           ${actionsHtml}
         </div>
       `;
@@ -986,17 +1022,21 @@
       }
     };
 
-    /* Admin Task Assignment */
+    /* Admin Task Assignment & Pushing */
     async function populateAssigneeDropdown() {
       const all = await dbOps.getAll();
       const select = el('assignUserSelect');
       select.innerHTML = '';
 
       const usersMap = new Map();
-      usersMap.set(currentUser.id, savedSettings.username || currentUser.email || 'Current User');
+      const currentDisplayName = savedSettings.username || currentUser.email || 'Current User';
+      usersMap.set(currentUser.id, currentDisplayName);
 
+      // Distinct users from recorded tasks
       all.forEach(e => {
-        if (e.userId) usersMap.set(e.userId, e.username || e.userName || e.userId);
+        const name = e.username || e.userName || e.userId;
+        const uid = e.userId || name;
+        if (name) usersMap.set(uid, name);
       });
 
       usersMap.forEach((name, uid) => {
@@ -1011,6 +1051,7 @@
       const title = el('assignTitle').value.trim();
       const targetUserId = el('assignUserSelect').value;
       const priority = el('assignPriority').value;
+      const timeframe = el('assignTimeframe').value;
       const datetime = el('assignDatetime').value;
       const desc = el('assignDesc').value.trim();
 
@@ -1019,25 +1060,27 @@
       const targetOptionText = el('assignUserSelect').options[el('assignUserSelect').selectedIndex].text;
 
       const assignedRecord = {
-        id: 'assigned_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7),
+        id: 'pushed_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7),
         userId: targetUserId,
         userName: targetOptionText,
         username: targetOptionText,
         assignedBy: savedSettings.username || currentUser.email || 'Admin',
         month: datetime.substring(0, 7),
         title,
-        type: 'Assigned Task',
+        type: 'Pushed Task',
         desc,
         datetime: datetime,
         priority: priority,
+        timeframe: timeframe,
         isAssigned: true,
+        isPushed: true,
         status: 'Pending',
         workType: calculateWorkType(datetime),
         timestamp: new Date(datetime).getTime()
       };
 
       await dbOps.save(assignedRecord);
-      alert('Task successfully assigned to ' + targetOptionText);
+      alert('Task successfully pushed to ' + targetOptionText);
       el('assignTitle').value = '';
       el('assignDesc').value = '';
       render();
@@ -1067,7 +1110,7 @@
       let filtered = isAdmin ? all : all.filter(e => !e.userId || e.userId === currentUser.id);
 
       if (isAdmin && selectedUser !== 'ALL') {
-        filtered = filtered.filter(e => e.userId === selectedUser);
+        filtered = filtered.filter(e => e.userId === selectedUser || e.username === selectedUser || e.userName === selectedUser);
       }
 
       if (timeframeMode === 'month') {
@@ -1084,7 +1127,39 @@
       return filtered;
     }
 
+    /* Dynamically lookup distinct usernames from database task records */
+    async function populateAdminUsersFilter() {
+      const all = await dbOps.getAll();
+      const select = el('reportUserSelect');
+      const currentValue = select.value;
+      select.innerHTML = '<option value="ALL">All Users</option>';
+      
+      const distinctUsers = new Map();
+
+      all.forEach(e => {
+        const uName = e.username || e.userName;
+        const uId = e.userId || uName;
+        if (uName) {
+          distinctUsers.set(uId, uName);
+        }
+      });
+
+      distinctUsers.forEach((name, uid) => {
+        const opt = document.createElement('option');
+        opt.value = uid;
+        opt.textContent = name;
+        select.appendChild(opt);
+      });
+
+      if (Array.from(select.options).some(o => o.value === currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
     async function renderReportsView() {
+      if (isAdmin) {
+        await populateAdminUsersFilter();
+      }
       const filtered = await getFilteredReportData();
       renderSummaryTable(filtered);
       renderAssignedTable(filtered);
@@ -1131,7 +1206,7 @@
       const assigned = entries.filter(e => e.isAssigned);
 
       if (assigned.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No assigned tasks logged.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No pushed/assigned tasks logged.</td></tr>`;
         return;
       }
 
@@ -1142,6 +1217,7 @@
           <td>${escapeHTML(item.username || item.userName || 'User')}</td>
           <td style="font-weight:600;">${escapeHTML(item.title)}</td>
           <td><span class="badge badge-urgent">${item.priority || 'Normal'}</span></td>
+          <td><span class="badge badge-assigned">${item.timeframe || 'Scheduled'}</span></td>
           <td><span class="badge ${isDone ? 'badge-achievement' : 'badge-task'}">${item.status}</span></td>
           <td style="font-size:0.8rem; color:var(--text-muted);">${item.datetime ? new Date(item.datetime).toLocaleString() : '-'}</td>
         `;
@@ -1162,7 +1238,7 @@
         const m = new Date(baseDt.getFullYear(), baseDt.getMonth() - i, 1);
         const mStr = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`;
         monthsLabels.push(m.toLocaleString('default', { month: 'short', year: '2-digit' }));
-        monthCounts[3 - i] = allEntries.filter(e => e.month === mStr && (!isAdmin || el('reportUserSelect').value === 'ALL' || e.userId === el('reportUserSelect').value)).length;
+        monthCounts[3 - i] = allEntries.filter(e => e.month === mStr && (!isAdmin || el('reportUserSelect').value === 'ALL' || e.userId === el('reportUserSelect').value || e.username === el('reportUserSelect').value)).length;
       }
 
       if (chartMonthlyInstance) chartMonthlyInstance.destroy();
@@ -1264,7 +1340,7 @@
       const filtered = await getFilteredReportData();
       if (filtered.length === 0) return alert('No data available to export.');
 
-      let csv = 'ID,User,Type,Title,Status,Priority,Work Type,Date Time,Details\n';
+      let csv = 'ID,User,Type,Title,Status,Priority,Timeframe,Work Type,Date Time,Details\n';
       filtered.forEach(e => {
         const row = [
           `"${e.id}"`,
@@ -1273,6 +1349,7 @@
           `"${(e.title || '').replace(/"/g, '""')}"`,
           `"${e.status || 'Completed'}"`,
           `"${e.priority || 'Normal'}"`,
+          `"${e.timeframe || 'Standard'}"`,
           `"${e.workType || 'Regular'}"`,
           `"${e.datetime || new Date(e.timestamp).toISOString()}"`,
           `"${(e.desc || '').replace(/"/g, '""')}"`
@@ -1281,7 +1358,6 @@
       });
 
       const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.revokeObjectURL(blob);
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = `TaskTracker_Report_${currentSelectedMonth}.csv`;
@@ -1414,27 +1490,11 @@
       if (isAdmin) {
         scopeBadge.innerText = 'Full System Report (All Users)';
         scopeBadge.className = 'badge badge-admin';
-        populateAdminUsersFilter();
+        await populateAdminUsersFilter();
       } else {
         scopeBadge.innerText = 'Personal Report';
         scopeBadge.className = 'badge badge-task';
       }
-    }
-
-    async function populateAdminUsersFilter() {
-      const all = await dbOps.getAll();
-      const select = el('reportUserSelect');
-      select.innerHTML = '<option value="ALL">All Users</option>';
-      const usersMap = new Map();
-      all.forEach(e => {
-        if (e.userId) usersMap.set(e.userId, e.username || e.userName || e.userId);
-      });
-      usersMap.forEach((name, uid) => {
-        const opt = document.createElement('option');
-        opt.value = uid;
-        opt.textContent = name;
-        select.appendChild(opt);
-      });
     }
 
     /* Global Navigation & Event Wiring */
