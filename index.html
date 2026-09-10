@@ -653,7 +653,7 @@
 
           <!-- Task tracker Pro Version Banner -->
           <div style="text-align: center; margin-top: 24px; padding: 14px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); border-top: 1px solid var(--card-border);">
-            Task tracker Pro (Beta 0.90.9)
+            Task tracker Pro (Beta 0.9.09)
           </div>
         </section>
 
@@ -664,10 +664,8 @@
   <script>
     const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
     const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive';
-    // One shared database file. Create/share it once, then optionally paste its ID below.
-    // Leave empty to auto-find the shared file by name among files accessible to the signed-in user.
-    const SHARED_DRIVE_FILE_ID = '';
     const DRIVE_FILE_NAME = 'tasktracker_shared_db.json';
+    const SHARED_DRIVE_FILE_ID = ''; // Optional: paste the ID of the shared Drive file here. Leave blank to find it by name.
     const STORAGE_KEY_SESSION = 'tasktracker_google_session';
     const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
     const STORAGE_KEY_ADMIN_PASS = 'tasktracker_admin_pass';
@@ -866,85 +864,79 @@
       el('syncText').innerText = text;
     }
 
+    /* Shared Google Drive database
+       IMPORTANT: this uses normal Google Drive, not appDataFolder.
+       Create/share tasktracker_shared_db.json once from the owner account and share it with every user.
+       Optionally put that file ID in SHARED_DRIVE_FILE_ID above for deterministic access. */
     async function findDriveFileId() {
-      if (SHARED_DRIVE_FILE_ID && SHARED_DRIVE_FILE_ID.trim()) {
-        return SHARED_DRIVE_FILE_ID.trim();
-      }
+      if (!accessToken) return null;
+      if (SHARED_DRIVE_FILE_ID) return SHARED_DRIVE_FILE_ID;
 
-      const q = encodeURIComponent(`name = '${DRIVE_FILE_NAME}' and trashed = false`);
-      const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime,owners)&orderBy=modifiedTime desc`;
+      const q = encodeURIComponent(`name = '${DRIVE_FILE_NAME.replace(/'/g, "\\'")}' and trashed = false`);
+      const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime,owners)&orderBy=modifiedTime%20desc&pageSize=100`;
       const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
       if (res.status === 401) {
         accessToken = null;
-        applyAuthState();
+        await applyAuthState();
         throw new Error('Unauthorized');
       }
-      if (!res.ok) throw new Error('Unable to locate shared database');
+      if (!res.ok) throw new Error('Unable to search shared Drive database');
       const data = await res.json();
       return data.files?.[0]?.id || null;
     }
 
-    function mergeEntries(localEntries, remoteEntries) {
-      const map = new Map();
-      [...(remoteEntries || []), ...(localEntries || [])].forEach(item => {
-        if (!item || !item.id) return;
-        const existing = map.get(item.id);
-        if (!existing) {
-          map.set(item.id, item);
-          return;
-        }
-        const existingTime = new Date(existing.updatedAt || existing.datetime || existing.timestamp || 0).getTime() || 0;
-        const itemTime = new Date(item.updatedAt || item.datetime || item.timestamp || 0).getTime() || 0;
-        map.set(item.id, itemTime >= existingTime ? item : existing);
-      });
-      return Array.from(map.values());
+    function getUserSettingsKey() {
+      return currentUser.id || currentUser.email || 'default';
     }
 
-    function sameEntryIds(a, b) {
-      if (a.length !== b.length) return false;
-      const aIds = new Set(a.map(x => x.id));
-      return b.every(x => aIds.has(x.id));
+    function buildSharedPayload(entries) {
+      return {
+        version: 2,
+        userSettings: {
+          [getUserSettingsKey()]: savedSettings
+        },
+        entries: entries || []
+      };
     }
 
     async function pullFromDrive() {
       if (!accessToken) return;
       updateSyncStatus('syncing', 'Syncing...');
       try {
-        const localEntries = await dbOps.getAll();
         const fileId = await findDriveFileId();
-
         if (!fileId) {
-          // First user creates the shared database from their current local data.
-          // Other existing users can merge their local tasks after the file is shared with them.
-          await syncToDrive();
-          updateSyncStatus('online', 'Shared database created');
-          await render();
+          updateSyncStatus('online', 'No shared database yet');
           return;
         }
 
-        const res = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
         if (!res.ok) throw new Error('Unable to read shared database');
 
         const payload = await res.json();
-        const remoteEntries = Array.isArray(payload)
-          ? payload
-          : (Array.isArray(payload.entries) ? payload.entries : []);
+        if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+          // New shared format: settings are kept separately for each Google user.
+          const mySettings = payload.userSettings?.[getUserSettingsKey()];
+          if (mySettings) {
+            savedSettings = { ...savedSettings, ...mySettings };
+            activeSettings = { ...savedSettings };
+            localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+            applyLiveUI(activeSettings);
+            syncSettingsFormValues();
+            checkSettingsDirty();
+          }
 
-        // Do not overwrite a user's local preferences with another user's preferences.
-        // Only task data is shared globally.
-        const mergedEntries = mergeEntries(localEntries, remoteEntries);
-        await dbOps.bulkReplace(mergedEntries);
-
-        // Migration support: if this user still has tasks not yet present in the shared file,
-        // immediately write the merged collection back so existing data from every account survives.
-        if (!sameEntryIds(mergedEntries, remoteEntries)) {
-          await syncToDrive();
+          if (Array.isArray(payload.entries)) await dbOps.bulkReplace(payload.entries);
+        } else if (Array.isArray(payload)) {
+          await dbOps.bulkReplace(payload);
         }
 
         await render();
+        if (isAdmin) {
+          await populateAdminReportFilters();
+          await populateAssigneeDropdown();
+        }
         updateSyncStatus('online', 'Synced');
       } catch (err) {
         console.error(err);
@@ -957,37 +949,46 @@
       updateSyncStatus('syncing', 'Saving...');
       try {
         const localEntries = await dbOps.getAll();
-        const fullPayload = {
-          version: 2,
-          updatedAt: new Date().toISOString(),
-          entries: localEntries
-        };
         const fileId = await findDriveFileId();
+
+        // Preserve settings belonging to other users when updating the shared file.
+        let existingPayload = {};
+        if (fileId) {
+          try {
+            const currentRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            if (currentRes.ok) existingPayload = await currentRes.json();
+          } catch (_) {}
+        }
+
+        const userSettings = { ...(existingPayload?.userSettings || {}) };
+        userSettings[getUserSettingsKey()] = savedSettings;
+        const fullPayload = { version: 2, userSettings, entries: localEntries };
         const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
 
         if (fileId) {
-          const res = await fetch(
-            `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
-            {
-              method: 'PATCH',
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: blob
-            }
-          );
-          if (!res.ok) throw new Error('Unable to save shared database');
+          const updateRes = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: blob
+          });
+          if (!updateRes.ok) throw new Error('Unable to save shared database');
         } else {
+          // First user creates the shared database in normal Drive. The owner must share
+          // this file with the other users once, or set SHARED_DRIVE_FILE_ID above.
           const metadata = { name: DRIVE_FILE_NAME, mimeType: 'application/json' };
           const form = new FormData();
           form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
           form.append('file', blob);
-          const res = await fetch(
-            'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-            { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form }
-          );
-          if (!res.ok) throw new Error('Unable to create shared database');
+          const createRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${accessToken}` },
+            body: form
+          });
+          if (!createRes.ok) throw new Error('Unable to create shared database');
+          const created = await createRes.json();
+          console.info('Shared TaskTracker database created:', created.id);
         }
         updateSyncStatus('online', 'Saved');
       } catch (err) {
@@ -1164,8 +1165,7 @@
         desc,
         workType: detectedWorkType,
         status: 'Completed',
-        timestamp: new Date(datetime).getTime() || Date.now(),
-        updatedAt: new Date().toISOString()
+        timestamp: new Date(datetime).getTime() || Date.now()
       };
 
       await dbOps.save(record);
@@ -1275,8 +1275,7 @@
         status: 'Pending',
         userResponse: '',
         workType: calculateWorkType(datetime),
-        timestamp: new Date(datetime).getTime(),
-        updatedAt: new Date().toISOString()
+        timestamp: new Date(datetime).getTime()
       };
 
       await dbOps.save(assignedRecord);
@@ -1704,9 +1703,9 @@
         isAdmin = true;
         el('adminPassInput').value = '';
         updateAdminUIState();
+        render();
         populateAssigneeDropdown();
         populateAdminReportFilters();
-        render();
       } else { alert('Incorrect Admin Password'); }
     }
 
