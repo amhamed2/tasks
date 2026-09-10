@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#6b8299">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>TaskTracker Pro</title>
+  <link rel="manifest" href="./manifest.json">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      /* structural tokens — overridden per data-design preset */
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.04);
+      --card-pad: 20px;
+      --border-w: 1px;
+      --badge-radius: 12px;
+      --nav-height: 64px;
+
+      /* light-mode neutrals — overridden by [data-mode="dark"] */
+      --bg: #f6f5f2;
+      --surface: #ffffff;
+      --card-border: #e6e3da;
+      --text: #33332f;
+      --text-muted: #82807a;
+
+      /* accent — overridden per data-color scheme */
+      --accent: #6b8299;
+
+      /* semantic colors */
+      --success: #7a9b7e;
+      --danger: #b5695a;
+
+      /* derived tones — auto-adapt to light/dark since they reference var(--surface) */
+      --accent-soft: color-mix(in srgb, var(--accent) 16%, var(--surface));
+      --accent-hover: color-mix(in srgb, var(--accent) 78%, black);
+      --success-soft: color-mix(in srgb, var(--success) 16%, var(--surface));
+      --danger-soft: color-mix(in srgb, var(--danger) 14%, var(--surface));
+      --table-head: color-mix(in srgb, var(--text) 6%, var(--surface));
+      --row-hover: color-mix(in srgb, var(--text) 3%, var(--surface));
+      --icon-hover: color-mix(in srgb, var(--text) 8%, var(--surface));
+      --header-bg: color-mix(in srgb, var(--surface) 85%, transparent);
+      --nav-bg: color-mix(in srgb, var(--surface) 95%, transparent);
+    }
+
+    /* ---------- Color schemes ---------- */
+    html[data-color="sage"]   { --accent: #6b8299; }
+    html[data-color="ocean"]  { --accent: #4f7d94; }
+    html[data-color="plum"]   { --accent: #8574a1; }
+    html[data-color="amber"]  { --accent: #b08a4e; }
+    html[data-color="rose"]   { --accent: #b17a83; }
+    html[data-color="forest"] { --accent: #5e8f6f; }
+
+    /* ---------- Dark mode ---------- */
+    html[data-mode="dark"] {
+      --bg: #1c1c1a;
+      --surface: #262622;
+      --card-border: #3a392f;
+      --text: #eceae4;
+      --text-muted: #9c9a90;
+      --accent-hover: color-mix(in srgb, var(--accent) 75%, white);
+    }
+
+    /* ---------- Layout / design presets ---------- */
+    html[data-design="1"] { --radius: 12px; --radius-sm: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.04); --card-pad: 20px; --border-w: 1px; --badge-radius: 12px; }
+    html[data-design="2"] { --radius: 6px;  --radius-sm: 4px; --shadow: none;                        --card-pad: 18px; --border-w: 1px; --badge-radius: 4px; }
+    html[data-design="3"] { --radius: 20px; --radius-sm: 12px; --shadow: 0 4px 14px rgba(0,0,0,0.07); --card-pad: 24px; --border-w: 1px; --badge-radius: 999px; }
+    html[data-design="4"] { --radius: 8px;  --radius-sm: 6px; --shadow: 0 1px 2px rgba(0,0,0,0.04);  --card-pad: 14px; --border-w: 1px; --badge-radius: 8px; }
+    html[data-design="5"] { --radius: 10px; --radius-sm: 6px; --shadow: none; --card-pad: 20px; --border-w: 2px; --badge-radius: 6px;
+      --card-border: color-mix(in srgb, var(--accent) 32%, var(--card-border)); }
+    html[data-design="6"] { --radius: 16px; --radius-sm: 10px; --shadow: 0 10px 26px rgba(0,0,0,0.10); --card-pad: 22px; --border-w: 0px; --badge-radius: 14px; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); display: flex; flex-direction: column; transition: background 0.15s, color 0.15s; }
+
+    /* Header */
+    header { background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 90; padding: 14px 20px; border-bottom: var(--border-w) solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+    .brand-title { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+
+    .sync-badge { font-size: 0.75rem; background: var(--bg); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
+    .dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
+    /* Layout */
+    main { padding: 16px; max-width: 768px; margin: 0 auto; width: 100%; flex: 1; }
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Cards & Inputs */
+    .card { background: var(--surface); border-radius: var(--radius); border: var(--border-w) solid var(--card-border); padding: var(--card-pad); margin-bottom: 16px; box-shadow: var(--shadow); }
+    .card-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+
+    label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-top: 14px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 12px; border-radius: var(--radius-sm); font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); background: var(--surface); }
+    .field-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; }
+
+    .btn { width: 100%; background: var(--accent); color: #ffffff; font-weight: 600; border: none; padding: 12px; border-radius: var(--radius-sm); font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s; margin-top: 14px; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { opacity: 0.55; cursor: default; }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--card-border); }
+    .btn-secondary:hover { background: var(--row-hover); }
+    .btn-danger { background: var(--danger-soft); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent); }
+
+    /* Table Styling */
+    .table-container { width: 100%; overflow-x: auto; background: var(--surface); border: var(--border-w) solid var(--card-border); border-radius: var(--radius); margin-bottom: 14px; box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th { background: var(--table-head); padding: 12px 14px; font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--card-border); }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--card-border); color: var(--text); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--row-hover); }
+
+    .badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: var(--badge-radius); display: inline-block; text-transform: uppercase; }
+    .badge-task { background: var(--accent-soft); color: var(--accent-hover); }
+    .badge-achievement { background: var(--success-soft); color: color-mix(in srgb, var(--success) 70%, black); }
+
+    .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; transition: color 0.15s; }
+    .action-icon-btn:hover { color: var(--text); background: var(--icon-hover); }
+    .action-icon-btn.delete:hover { color: var(--danger); background: var(--danger-soft); }
+
+    /* Searchable History Dropdown Component */
+    .searchable-select { position: relative; }
+    .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius-sm); max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: none; }
+    .history-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid var(--card-border); }
+    .history-item:last-child { border-bottom: none; }
+    .history-item:hover { background: var(--accent-soft); color: var(--accent-hover); }
+    .history-item .h-month { color: var(--text-muted); font-size: 0.72rem; margin-right: 6px; }
+
+    /* Bottom Navigation */
+    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height); background: var(--nav-bg); backdrop-filter: blur(16px); border-top: var(--border-w) solid var(--card-border); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; font-size: 0.68rem; font-weight: 600; gap: 4px; background: none; border: none; padding: 0; margin: 0; cursor: pointer; flex: 1; height: 100%; }
+    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
+    .nav-item.active { color: var(--accent); }
+
+    /* Report Card Preview */
+    .report-card { background: var(--surface); border: 1px solid var(--card-border); border-left: 4px solid var(--accent); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 12px; }
+    .report-card.achievement { border-left-color: var(--success); }
+
+    .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .hidden { display: none !important; }
+
+    /* Settings */
+    .swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; }
+    .swatch.selected { border-color: var(--text); }
+    .design-option { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); cursor: pointer; background: var(--bg); }
+    .design-option.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .design-preview { width: 34px; height: 34px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--card-border); }
+    .design-option-label { font-size: 0.85rem; font-weight: 600; }
+    .mode-toggle { display: flex; gap: 8px; }
+    .mode-toggle button { flex: 1; }
+    .recipient-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--card-border); font-size: 0.85rem; }
+    .recipient-row:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Authentication Overlay -->
+  <div id="authScreen" class="auth-overlay">
+    <div style="text-align: center; max-width: 320px;">
+      <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">TaskTracker Pro</h2>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">Secure task management synchronized directly to your private Google Drive storage.</p>
+      <button id="googleSignInBtn" class="btn" style="background: var(--surface); color: var(--text); border: 1px solid var(--card-border); font-weight: 600;">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        Sign in with Google
+      </button>
+    </div>
+  </div>
+
+  <!-- App Header -->
+  <header>
+    <span class="brand-title">TaskTracker</span>
+    <div class="sync-badge" id="syncTrigger">
+      <span id="syncDot" class="dot"></span>
+      <span id="syncText">Offline Mode</span>
+    </div>
+  </header>
+
+  <main id="appContent" class="hidden">
+
+    <!-- VIEW 1: Current Month Records Table (DEFAULT) -->
+    <section id="viewRecords" class="view active">
+      <div class="card" style="padding: 14px 18px; margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size:0.85rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Month View</span>
+          <input type="month" id="monthPicker" style="width: auto; margin: 0; padding: 6px 10px; font-size: 0.85rem;">
+        </div>
+      </div>
+
+      <!-- Main Records Table -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Title</th>
+              <th>Details</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Add New Task Trigger below table -->
+      <button id="addTaskTableBtn" class="btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add New Entry
+      </button>
+    </section>
+
+    <!-- VIEW 2: Entry Form (Add/Edit) -->
+    <section id="viewEntry" class="view">
+      <div class="card">
+        <div class="card-title">
+          <span id="formHeaderTitle">New Entry</span>
+          <button id="cancelEditBtn" class="btn btn-secondary hidden" style="width:auto; padding:4px 10px; font-size:0.75rem; margin:0;">Cancel</button>
+        </div>
+
+        <!-- Searchable Clone Dropdown -->
+        <label>Search & Clone Previous Task</label>
+        <div class="searchable-select">
+          <input type="text" id="historySearchInput" placeholder="Type to filter past tasks..." autocomplete="off">
+          <div id="historyResults" class="history-results"></div>
+        </div>
+
+        <label>Type</label>
+        <select id="taskType">
+          <option value="Task">Task</option>
+          <option value="Achievement">Achievement</option>
+        </select>
+
+        <label>Title</label>
+        <input type="text" id="taskTitle" placeholder="e.g. Database Index Optimization">
+
+        <label>Details & Outcomes</label>
+        <textarea id="taskDesc" rows="4" placeholder="Log execution metrics, scope, or achievements..."></textarea>
+
+        <button id="saveTaskBtn" class="btn">Save Entry</button>
+      </div>
+    </section>
+
+    <!-- VIEW 3: Reports & Export -->
+    <section id="viewReports" class="view">
+      <div class="card">
+        <div class="card-title">Monthly Executive Summary</div>
+
+        <label>Select Month</label>
+        <input type="month" id="reportMonthPicker" style="margin-bottom: 16px;">
+
+        <div id="reportPreviewContainer" style="margin-bottom: 8px;"></div>
+
+        <button id="sendReportBtn" class="btn">
+          ✉️ Send Report via Mail App
+        </button>
+        <button id="copyReportBtn" class="btn btn-secondary">
+          Copy Report Text
+        </button>
+        <p class="field-hint" id="reportRecipientsHint"></p>
+      </div>
+    </section>
+
+    <!-- VIEW 4: Settings -->
+    <section id="viewSettings" class="view">
+      <div class="card">
+        <div class="card-title">Default Recipients</div>
+        <div id="recipientList"></div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <input type="email" id="newRecipientInput" placeholder="name@company.com" style="margin:0;">
+          <button id="addRecipientBtn" class="btn" style="width:auto; margin:0; padding:10px 16px;">Add</button>
+        </div>
+        <p class="field-hint">Pre-fills the "To" field when you send a report — you can still change it in your mail app.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Color Theme</div>
+        <div id="colorSwatches" style="display:flex; gap:12px; flex-wrap:wrap;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Appearance</div>
+        <div class="mode-toggle">
+          <button class="btn btn-secondary" data-mode-btn="light">☀️ Light</button>
+          <button class="btn btn-secondary" data-mode-btn="dark">🌙 Dark</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Layout Style</div>
+        <div id="designOptions" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-target="viewRecords">
+      <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+      Records
+    </button>
+    <button class="nav-item" data-target="viewEntry">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Add Task
+    </button>
+    <button class="nav-item" data-target="viewReports">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
+      Reports
+    </button>
+    <button class="nav-item" data-target="viewSettings">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      Settings
+    </button>
+  </nav>
+
+  <script>
+    /* ============ Apply saved appearance before first paint ============ */
+    (function () {
+      try {
+        const s = JSON.parse(localStorage.getItem('tasktracker_settings')) || {};
+        document.documentElement.setAttribute('data-color', s.color || 'sage');
+        document.documentElement.setAttribute('data-mode', s.mode || 'light');
+        document.documentElement.setAttribute('data-design', s.design || '1');
+      } catch (e) {
+        document.documentElement.setAttribute('data-color', 'sage');
+        document.documentElement.setAttribute('data-mode', 'light');
+        document.documentElement.setAttribute('data-design', '1');
+      }
+    })();
+  </script>
+
+  <script>
+    // --- CONFIG & DB ENGINE ---
+    const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+    const DRIVE_FILE_NAME = 'tasktracker_db.json';
+    const STORAGE_KEY_SESSION = 'tasktracker_google_session';
+    const SETTINGS_KEY = 'tasktracker_settings';
+    const DB_NAME = 'TaskTrackerDB';
+    let db = null;
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains('entries')) {
+            database.createObjectStore('entries', { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = (e) => { db = e.target.result; resolve(); };
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    const dbOps = {
+      async save(entry) {
+        const tx = db.transaction('entries', 'readwrite');
+        tx.objectStore('entries').put(entry);
+        await tx.complete;
+        syncToDrive();
+      },
+      async getAll() {
+        return new Promise((resolve) => {
+          const tx = db.transaction('entries', 'readonly');
+          const request = tx.objectStore('entries').getAll();
+          request.onsuccess = () => resolve(request.result);
+        });
+      },
+      async bulkReplace(entries) {
+        const tx = db.transaction('entries', 'readwrite');
+        const store = tx.objectStore('entries');
+        store.clear();
+        entries.forEach(item => store.put(item));
+        return tx.complete;
+      },
+      async delete(id) {
+        const tx = db.transaction('entries', 'readwrite');
+        tx.objectStore('entries').delete(id);
+        await tx.complete;
+        syncToDrive();
+      }
+    };
+
+    // --- DRIVE SYNC ENGINE ---
+    let accessToken = null;
+    let tokenClient = null;
+
+    function initGoogleAuth() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: async (response) => {
+          if (response.error) return alert("Login Failed: " + response.error);
+          accessToken = response.access_token;
+          localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ access_token: accessToken, expiry: Date.now() + ((response.expires_in || 3600) * 1000) }));
+          await applyAuthState();
+        },
+      });
+      restoreSession();
+    }
+
+    function restoreSession() {
+      const raw = localStorage.getItem(STORAGE_KEY_SESSION);
+      if (!raw) return;
+      try {
+        const session = JSON.parse(raw);
+        if (session.access_token && Date.now() < (session.expiry - 300000)) accessToken = session.access_token;
+      } catch (err) { localStorage.removeItem(STORAGE_KEY_SESSION); }
+    }
+
+    async function applyAuthState() {
+      if (accessToken) {
+        el('authScreen').classList.add('hidden');
+        el('appContent').classList.remove('hidden');
+        updateSyncStatus('online', 'Connected');
+        await pullFromDrive();
+      } else {
+        el('authScreen').classList.remove('hidden');
+        el('appContent').classList.add('hidden');
+      }
+    }
+
+    function updateSyncStatus(state, text) {
+      el('syncDot').className = 'dot ' + state;
+      el('syncText').innerText = text;
+    }
+
+    async function findDriveFileId() {
+      const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder', { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (res.status === 401) { accessToken = null; applyAuthState(); throw new Error("Unauthorized"); }
+      const data = await res.json();
+      return data.files?.find(f => f.name === DRIVE_FILE_NAME)?.id || null;
+    }
+
+    async function pullFromDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Syncing...');
+      try {
+        const fileId = await findDriveFileId();
+        if (fileId) {
+          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+          const remoteEntries = await res.json();
+          if (Array.isArray(remoteEntries)) { await dbOps.bulkReplace(remoteEntries); render(); }
+        }
+        updateSyncStatus('online', 'Synced');
+      } catch (err) { updateSyncStatus('', 'Offline Mode'); }
+    }
+
+    async function syncToDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Saving...');
+      try {
+        const localEntries = await dbOps.getAll();
+        const fileId = await findDriveFileId();
+        const blob = new Blob([JSON.stringify(localEntries, null, 2)], { type: 'application/json' });
+
+        if (fileId) {
+          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+            method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: blob
+          });
+        } else {
+          const metadata = { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          form.append('file', blob);
+          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form });
+        }
+        updateSyncStatus('online', 'Saved');
+      } catch (err) { updateSyncStatus('', 'Save Failed'); }
+    }
+
+    // --- SETTINGS (theme, mode, layout, default recipients) ---
+    const COLOR_SCHEMES = [
+      { id: 'sage', label: 'Sage' },
+      { id: 'ocean', label: 'Ocean' },
+      { id: 'plum', label: 'Plum' },
+      { id: 'amber', label: 'Amber' },
+      { id: 'rose', label: 'Rose' },
+      { id: 'forest', label: 'Forest' }
+    ];
+    const COLOR_HEX = { sage: '#6b8299', ocean: '#4f7d94', plum: '#8574a1', amber: '#b08a4e', rose: '#b17a83', forest: '#5e8f6f' };
+    const DESIGN_PRESETS = [
+      { id: '1', label: 'Classic Cards', desc: 'Rounded cards, soft shadow' },
+      { id: '2', label: 'Minimal Flat', desc: 'Flat, thin borders, no shadow' },
+      { id: '3', label: 'Soft Rounded', desc: 'Extra-round corners, airy spacing' },
+      { id: '4', label: 'Compact Dense', desc: 'Tighter padding, more on screen' },
+      { id: '5', label: 'Bold Border', desc: 'Thicker accent-tinted borders' },
+      { id: '6', label: 'Elevated', desc: 'Borderless cards, floating shadow' }
+    ];
+
+    function defaultSettings() { return { color: 'sage', mode: 'light', design: '1', recipients: [] }; }
+    function getSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+        return { ...defaultSettings(), ...(saved || {}) };
+      } catch { return defaultSettings(); }
+    }
+    function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+    function applySettings(s) {
+      document.documentElement.setAttribute('data-color', s.color);
+      document.documentElement.setAttribute('data-mode', s.mode);
+      document.documentElement.setAttribute('data-design', s.design);
+    }
+
+    function renderSettingsView() {
+      const s = getSettings();
+
+      // Default recipients
+      const list = el('recipientList');
+      list.innerHTML = s.recipients.length
+        ? s.recipients.map((r, i) => `
+            <div class="recipient-row">
+              <span>${escapeHTML(r)}</span>
+              <button class="action-icon-btn delete" data-remove-recipient="${i}" title="Remove">✕</button>
+            </div>`).join('')
+        : `<p style="font-size:0.82rem; color:var(--text-muted);">No default recipients yet.</p>`;
+      list.querySelectorAll('[data-remove-recipient]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cur = getSettings();
+          cur.recipients.splice(Number(btn.dataset.removeRecipient), 1);
+          saveSettings(cur);
+          renderSettingsView();
+          updateReportRecipientsHint();
+        });
+      });
+
+      // Color swatches
+      const colorWrap = el('colorSwatches');
+      colorWrap.innerHTML = COLOR_SCHEMES.map(c => `
+        <button class="swatch ${s.color === c.id ? 'selected' : ''}" data-color-choice="${c.id}" title="${c.label}" style="background:${COLOR_HEX[c.id]};"></button>
+      `).join('');
+      colorWrap.querySelectorAll('[data-color-choice]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cur = getSettings();
+          cur.color = btn.dataset.colorChoice;
+          saveSettings(cur); applySettings(cur); renderSettingsView();
+        });
+      });
+
+      // Mode toggle
+      document.querySelectorAll('[data-mode-btn]').forEach(btn => {
+        const active = btn.dataset.modeBtn === s.mode;
+        btn.style.background = active ? 'var(--accent)' : '';
+        btn.style.color = active ? '#fff' : '';
+        btn.style.borderColor = active ? 'var(--accent)' : '';
+      });
+
+      // Layout / design presets
+      const designWrap = el('designOptions');
+      designWrap.innerHTML = DESIGN_PRESETS.map(d => `
+        <div class="design-option ${s.design === d.id ? 'selected' : ''}" data-design-choice="${d.id}">
+          <div class="design-preview" style="border-radius:${{1:'10px',2:'4px',3:'16px',4:'6px',5:'8px',6:'14px'}[d.id]}; box-shadow:${d.id === '6' ? '0 4px 10px rgba(0,0,0,0.15)' : 'none'}; border-width:${d.id === '5' ? '2px' : '1px'};"></div>
+          <div>
+            <div class="design-option-label">${d.label}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${d.desc}</div>
+          </div>
+        </div>
+      `).join('');
+      designWrap.querySelectorAll('[data-design-choice]').forEach(opt => {
+        opt.addEventListener('click', () => {
+          const cur = getSettings();
+          cur.design = opt.dataset.designChoice;
+          saveSettings(cur); applySettings(cur); renderSettingsView();
+        });
+      });
+    }
+
+    // --- CONTROLLERS ---
+    const now = new Date();
+    let currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let editingId = null;
+
+    const el = id => document.getElementById(id);
+
+    function monthLabel(key) {
+      const [y, m] = key.split('-').map(Number);
+      return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    }
+
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
+    });
+
+    function switchView(viewId) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+      const activeNav = document.querySelector(`.nav-item[data-target="${viewId}"]`);
+      if (activeNav) activeNav.classList.add('active');
+      el(viewId).classList.add('active');
+
+      if (viewId === 'viewReports') { renderReportPreview(); updateReportRecipientsHint(); }
+      if (viewId === 'viewSettings') renderSettingsView();
+    }
+
+    async function render() {
+      const allEntries = await dbOps.getAll();
+      const monthEntries = allEntries
+        .filter(e => e.month === currentSelectedMonth)
+        .sort((a, b) => b.timestamp - a.timestamp);
+
+      const tbody = el('tableBody');
+      tbody.innerHTML = '';
+
+      if (monthEntries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">No entries recorded for this month.</td></tr>`;
+      } else {
+        monthEntries.forEach(item => {
+          const tr = document.createElement('tr');
+          const badgeClass = item.type === 'Achievement' ? 'badge-achievement' : 'badge-task';
+          tr.innerHTML = `
+            <td><span class="badge ${badgeClass}">${item.type}</span></td>
+            <td style="font-weight: 600;">${escapeHTML(item.title)}</td>
+            <td style="color: var(--text-muted); font-size: 0.82rem;">${escapeHTML(item.desc || '-')}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button onclick="editEntry('${item.id}')" class="action-icon-btn" title="Edit">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    // Searchable Clone Dropdown Handler — debounced + capped for large histories
+    let historyDebounceTimer;
+    el('historySearchInput').addEventListener('input', (e) => {
+      clearTimeout(historyDebounceTimer);
+      const value = e.target.value;
+      historyDebounceTimer = setTimeout(() => runHistorySearch(value), 150);
+    });
+
+    document.addEventListener('click', (e) => {
+      const wrap = document.querySelector('.searchable-select');
+      if (wrap && !wrap.contains(e.target)) el('historyResults').style.display = 'none';
+    });
+
+    async function runHistorySearch(rawQuery) {
+      const query = rawQuery.toLowerCase().trim();
+      const resultsContainer = el('historyResults');
+      if (!query) { resultsContainer.style.display = 'none'; resultsContainer.innerHTML = ''; return; }
+
+      const all = await dbOps.getAll();
+      const matches = all
+        .filter(item => item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query))
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 25);
+
+      resultsContainer.innerHTML = '';
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="history-item" style="color:var(--text-muted); cursor:default;">No matches</div>`;
+        resultsContainer.style.display = 'block';
+        return;
+      }
+
+      matches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `<span class="h-month">${item.month}</span>${escapeHTML(item.title)}`;
+        div.onclick = () => {
+          el('taskTitle').value = item.title;
+          el('taskType').value = item.type;
+          el('taskDesc').value = item.desc || '';
+          el('historySearchInput').value = item.title;
+          resultsContainer.style.display = 'none';
+        };
+        resultsContainer.appendChild(div);
+      });
+      resultsContainer.style.display = 'block';
+    }
+
+    // Form Save Controller
+    async function handleSave() {
+      const title = el('taskTitle').value.trim();
+      const type = el('taskType').value;
+      const desc = el('taskDesc').value.trim();
+
+      if (!title) return alert('Title is required');
+
+      const record = {
+        id: editingId || 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        month: currentSelectedMonth,
+        title,
+        type,
+        desc,
+        timestamp: Date.now()
+      };
+
+      await dbOps.save(record);
+      resetForm();
+      await render();
+      switchView('viewRecords');
+    }
+
+    function resetForm() {
+      editingId = null;
+      el('taskTitle').value = '';
+      el('taskDesc').value = '';
+      el('historySearchInput').value = '';
+      el('formHeaderTitle').innerText = 'New Entry';
+      el('saveTaskBtn').innerText = 'Save Entry';
+      el('cancelEditBtn').classList.add('hidden');
+    }
+
+    window.editEntry = async (id) => {
+      const all = await dbOps.getAll();
+      const target = all.find(e => e.id === id);
+      if (!target) return;
+
+      editingId = target.id;
+      el('taskTitle').value = target.title;
+      el('taskType').value = target.type;
+      el('taskDesc').value = target.desc;
+      el('formHeaderTitle').innerText = 'Edit Entry';
+      el('saveTaskBtn').innerText = 'Update Entry';
+      el('cancelEditBtn').classList.remove('hidden');
+      switchView('viewEntry');
+    };
+
+    window.deleteEntry = async (id) => {
+      if (confirm('Delete this record?')) {
+        await dbOps.delete(id);
+        render();
+      }
+    };
+
+    // --- Report Builder (Sorted Chronologically & Numbered) ---
+    async function getReportEntries(targetMonth) {
+      const all = await dbOps.getAll();
+      return all
+        .filter(e => e.month === targetMonth)
+        .sort((a, b) => a.timestamp - b.timestamp); // Chronological ascending order
+    }
+
+    async function renderReportPreview() {
+      const targetMonth = el('reportMonthPicker').value;
+      const monthEntries = await getReportEntries(targetMonth);
+
+      const container = el('reportPreviewContainer');
+      container.innerHTML = '';
+
+      if (monthEntries.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">No tasks logged for ${targetMonth}.</p>`;
+        return;
+      }
+
+      monthEntries.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = `report-card ${item.type.toLowerCase()}`;
+        card.innerHTML = `
+          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:4px;">
+            ${idx + 1}. [${item.type.toUpperCase()}] - ${new Date(item.timestamp).toLocaleDateString()}
+          </div>
+          <div style="font-weight:700; color:var(--text); font-size:0.95rem;">${escapeHTML(item.title)}</div>
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">${escapeHTML(item.desc || '')}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Plain-text version for the mail body / clipboard — numbered, sorted, same order as the preview.
+    function buildReportText(targetMonth, entries) {
+      let text = `Monthly Performance Report — ${monthLabel(targetMonth)}\n`;
+      text += '='.repeat(40) + '\n\n';
+      entries.forEach((item, i) => {
+        text += `${i + 1}. [${item.type.toUpperCase()}] ${item.title}\n`;
+        text += `   Date: ${new Date(item.timestamp).toLocaleDateString()}\n`;
+        if (item.desc) text += `   ${item.desc.replace(/\n/g, '\n   ')}\n`;
+        text += '\n';
+      });
+      text += `Total items: ${entries.length}`;
+      return text;
+    }
+
+    function updateReportRecipientsHint() {
+      const s = getSettings();
+      el('reportRecipientsHint').textContent = s.recipients.length
+        ? `Opens your mail app addressed to: ${s.recipients.join(', ')}`
+        : `Opens your mail app with the report in the body — no default recipients set (add some in Settings).`;
+    }
+
+    async function sendReport() {
+      const targetMonth = el('reportMonthPicker').value;
+      const monthEntries = await getReportEntries(targetMonth);
+      if (monthEntries.length === 0) return alert('No data to export.');
+
+      const s = getSettings();
+      const to = s.recipients.join(',');
+      const subject = encodeURIComponent(`Monthly Performance Report - ${monthLabel(targetMonth)}`);
+      const body = encodeURIComponent(buildReportText(targetMonth, monthEntries));
+
+      // mailto opens the user's own default mail app / Gmail app, with recipient left
+      // editable there — this app never sends email itself.
+      window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+    }
+
+    async function copyReportText() {
+      const targetMonth = el('reportMonthPicker').value;
+      const monthEntries = await getReportEntries(targetMonth);
+      if (monthEntries.length === 0) return alert('No data to export.');
+      const text = buildReportText(targetMonth, monthEntries);
+      try {
+        await navigator.clipboard.writeText(text);
+        const btn = el('copyReportBtn');
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = original; }, 1400);
+      } catch {
+        alert('Could not copy automatically — select and copy the report text manually.');
+      }
+    }
+
+    el('sendReportBtn').addEventListener('click', sendReport);
+    el('copyReportBtn').addEventListener('click', copyReportText);
+
+    // Settings event bindings
+    el('addRecipientBtn').addEventListener('click', () => {
+      const input = el('newRecipientInput');
+      const val = input.value.trim();
+      if (!val) return;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { alert('Enter a valid email address'); return; }
+      const s = getSettings();
+      if (!s.recipients.includes(val)) s.recipients.push(val);
+      saveSettings(s);
+      input.value = '';
+      renderSettingsView();
+      updateReportRecipientsHint();
+    });
+    el('newRecipientInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') el('addRecipientBtn').click(); });
+
+    document.querySelectorAll('[data-mode-btn]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const s = getSettings();
+        s.mode = btn.dataset.modeBtn;
+        saveSettings(s); applySettings(s); renderSettingsView();
+      });
+    });
+
+    // Event Bindings
+    el('addTaskTableBtn').addEventListener('click', () => { resetForm(); switchView('viewEntry'); });
+    el('cancelEditBtn').addEventListener('click', resetForm);
+    el('syncTrigger').addEventListener('click', pullFromDrive);
+    el('googleSignInBtn').addEventListener('click', () => tokenClient && tokenClient.requestAccessToken({ prompt: '' }));
+    el('saveTaskBtn').addEventListener('click', handleSave);
+
+    el('monthPicker').value = currentSelectedMonth;
+    el('reportMonthPicker').value = currentSelectedMonth;
+
+    el('monthPicker').addEventListener('change', (e) => { currentSelectedMonth = e.target.value; render(); });
+    el('reportMonthPicker').addEventListener('change', renderReportPreview);
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await initDB();
+      render();
+      if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); }
+      else window.addEventListener('load', async () => { if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); } });
+    });
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+  </script>
+</body>
+</html>
