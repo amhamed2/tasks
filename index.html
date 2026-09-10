@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light" data-ui-style="default" data-color-palette="sage">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -10,93 +10,146 @@
   <link rel="manifest" href="./manifest.json">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
+    /* ==========================================================================
+       THEME & COLOR PALETTE ENGINE
+       ========================================================================== */
     :root {
+      /* Base Defaults (Sage Palette) */
+      --primary: #6b8299;
+      --primary-hover: #5a6f83;
+      --primary-soft: #eaeff3;
+      --accent: #6b8299;
+      --success: #7a9b7e;
+      --success-soft: #eef4ef;
+      --danger: #b5695a;
+      --danger-soft: #faf1ee;
+
+      /* Light Theme Variables */
       --bg: #f6f5f2;
       --surface: #ffffff;
       --card-border: #e6e3da;
-      --accent: #6b8299;
-      --accent-soft: #eaeff3;
-      --accent-hover: #5a6f83;
       --text: #33332f;
       --text-muted: #82807a;
-      --danger: #b5695a;
-      --danger-soft: #faf1ee;
-      --success: #7a9b7e;
-      --success-soft: #eef4ef;
+      --nav-bg: rgba(255, 255, 255, 0.95);
+      --header-bg: rgba(255, 255, 255, 0.85);
       --radius: 12px;
       --nav-height: 64px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); display: flex; flex-direction: column; }
+    /* Color Palettes */
+    [data-color-palette="sage"] { --primary: #6b8299; --primary-hover: #5a6f83; --primary-soft: #eaeff3; }
+    [data-color-palette="ocean"] { --primary: #2563eb; --primary-hover: #1d4ed8; --primary-soft: #dbeafe; }
+    [data-color-palette="slate"] { --primary: #475569; --primary-hover: #334155; --primary-soft: #f1f5f9; }
+    [data-color-palette="sunset"] { --primary: #ea580c; --primary-hover: #c2410c; --primary-soft: #ffedd5; }
+    [data-color-palette="emerald"] { --primary: #059669; --primary-hover: #047857; --primary-soft: #d1fae5; }
+    [data-color-palette="berry"] { --primary: #9333ea; --primary-hover: #7e22ce; --primary-soft: #f3e8ff; }
 
-    /* Header */
-    header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 90; padding: 14px 20px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+    /* Dark Mode Overrides */
+    [data-theme="dark"] {
+      --bg: #121214;
+      --surface: #1e1e22;
+      --card-border: #2e2e34;
+      --text: #e4e4e7;
+      --text-muted: #a1a1aa;
+      --nav-bg: rgba(30, 30, 34, 0.95);
+      --header-bg: rgba(30, 30, 34, 0.85);
+      --primary-soft: #2d3748;
+      --success-soft: #1c3323;
+      --danger-soft: #3c1e1e;
+      --shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    /* UI Design Presets */
+    /* 1. Default Cards */
+    [data-ui-style="default"] { --radius: 12px; }
+    
+    /* 2. Compact Minimalist */
+    [data-ui-style="compact"] { --radius: 4px; --shadow: none; }
+    [data-ui-style="compact"] .card { padding: 12px; margin-bottom: 8px; }
+
+    /* 3. Neumorphic Soft */
+    [data-ui-style="neumorphic"] { --radius: 16px; --bg: #e0e5ec; --surface: #e0e5ec; --card-border: transparent; --shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff; }
+    [data-theme="dark"][data-ui-style="neumorphic"] { --bg: #1a1b1e; --surface: #1a1b1e; --shadow: 5px 5px 10px #121315, -5px -5px 10px #222327; }
+
+    /* 4. Glassmorphism */
+    [data-ui-style="glass"] { --radius: 20px; --surface: rgba(255, 255, 255, 0.45); --card-border: rgba(255, 255, 255, 0.3); }
+    [data-theme="dark"][data-ui-style="glass"] { --surface: rgba(30, 30, 34, 0.45); --card-border: rgba(255, 255, 255, 0.08); }
+    [data-ui-style="glass"] .card { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+    /* 5. Terminal / High-Contrast */
+    [data-ui-style="terminal"] { --radius: 0px; --card-border: var(--primary); --shadow: none; }
+    [data-ui-style="terminal"] .card { border-width: 2px; }
+
+    /* 6. Clean Bordered */
+    [data-ui-style="bordered"] { --radius: 8px; --shadow: none; --card-border: #d1d5db; }
+    [data-theme="dark"][data-ui-style="bordered"] { --card-border: #4b5563; }
+
+    /* ==========================================================================
+       BASE CSS & LAYOUT
+       ========================================================================== */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); display: flex; flex-direction: column; transition: background 0.2s, color 0.2s; }
+
+    header { background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 90; padding: 14px 20px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
     .brand-title { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
 
     .sync-badge { font-size: 0.75rem; background: var(--bg); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
     .dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
-    .dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+    .dot.syncing { background: var(--primary); animation: pulse 1s infinite; }
     @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
-    /* Layout */
     main { padding: 16px; max-width: 768px; margin: 0 auto; width: 100%; flex: 1; }
     .view { display: none; }
     .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Cards & Inputs */
-    .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--card-border); padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+    .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--card-border); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); transition: all 0.2s; }
     .card-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
 
     label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-top: 14px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
     input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
-    input:focus, select:focus, textarea:focus { border-color: var(--accent); background: #fff; }
-    .field-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    .field-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; line-height: 1.3; }
 
-    .btn { width: 100%; background: var(--accent); color: #ffffff; font-weight: 600; border: none; padding: 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s; margin-top: 14px; }
-    .btn:hover { background: var(--accent-hover); }
-    .btn:disabled { opacity: 0.55; cursor: default; }
+    .btn { width: 100%; background: var(--primary); color: #ffffff; font-weight: 600; border: none; padding: 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: opacity 0.2s, background 0.2s; margin-top: 14px; }
+    .btn:hover { opacity: 0.9; }
     .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--card-border); }
-    .btn-secondary:hover { background: #efece4; }
-    .btn-danger { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(181, 105, 90, 0.2); }
-    .btn-success { background: var(--success); }
-    .btn-success:hover { background: #698e6e; }
+    .btn-success { background: var(--success); color: #fff; }
 
-    /* Table Styling */
-    .table-container { width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    /* Tables */
+    .table-container { width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 14px; box-shadow: var(--shadow); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
-    th { background: #f1f0eb; padding: 12px 14px; font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--card-border); }
+    th { background: var(--bg); padding: 12px 14px; font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--card-border); }
     td { padding: 12px 14px; border-bottom: 1px solid var(--card-border); color: var(--text); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #faf9f6; }
 
     .badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; display: inline-block; text-transform: uppercase; }
-    .badge-task { background: var(--accent-soft); color: var(--accent-hover); }
-    .badge-achievement { background: var(--success-soft); color: #4f7256; }
+    .badge-task { background: var(--primary-soft); color: var(--primary); }
+    .badge-achievement { background: var(--success-soft); color: var(--success); }
 
-    .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; transition: color 0.15s; }
-    .action-icon-btn:hover { color: var(--text); background: #eceae3; }
-    .action-icon-btn.delete:hover { color: var(--danger); background: var(--danger-soft); }
+    .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; }
+    .action-icon-btn.delete:hover { color: var(--danger); }
 
-    /* Searchable History Dropdown Component */
+    /* Dropdown Search */
     .searchable-select { position: relative; }
-    .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: none; }
+    .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; }
     .history-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid var(--card-border); }
-    .history-item:last-child { border-bottom: none; }
-    .history-item:hover { background: var(--accent-soft); color: var(--accent-hover); }
-    .history-item .h-month { color: var(--text-muted); font-size: 0.72rem; margin-right: 6px; }
+    .history-item:hover { background: var(--primary-soft); color: var(--primary); }
 
-    /* Bottom Navigation */
-    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; font-size: 0.7rem; font-weight: 600; gap: 4px; background: none; border: none; padding: 0; margin: 0; cursor: pointer; width: 33.3%; height: 100%; }
+    /* Bottom Nav */
+    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height); background: var(--nav-bg); backdrop-filter: blur(16px); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; font-size: 0.7rem; font-weight: 600; gap: 4px; background: none; border: none; cursor: pointer; width: 25%; height: 100%; }
     .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
-    .nav-item.active { color: var(--accent); }
+    .nav-item.active { color: var(--primary); }
 
-    /* Report Card Preview */
-    .report-card { background: var(--surface); border: 1px solid var(--card-border); border-left: 4px solid var(--accent); padding: 14px; border-radius: 8px; margin-bottom: 12px; }
+    .report-card { background: var(--surface); border: 1px solid var(--card-border); border-left: 4px solid var(--primary); padding: 14px; border-radius: 8px; margin-bottom: 12px; }
     .report-card.achievement { border-left-color: var(--success); }
+
+    .grid-swatch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+    .swatch-btn { padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg); cursor: pointer; font-size: 0.8rem; font-weight: 600; text-align: center; color: var(--text); }
+    .swatch-btn.active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
 
     .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .hidden { display: none !important; }
@@ -104,20 +157,18 @@
 </head>
 <body>
 
-  <!-- Authentication Overlay -->
+  <!-- Auth Screen -->
   <div id="authScreen" class="auth-overlay">
     <div style="text-align: center; max-width: 320px;">
       <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">TaskTracker Pro</h2>
       <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">Secure task management synchronized directly to your private Google Drive storage.</p>
-      <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #33332f; border: 1px solid var(--card-border); font-weight: 600;">
+      <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #333; border: 1px solid var(--card-border); font-weight: 600;">
         <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
         Sign in with Google
       </button>
-      <p style="color: var(--text-muted); font-size: 0.72rem; margin-top: 16px; line-height: 1.5;">Also used to send your monthly report as a formatted email from your own Gmail account.</p>
     </div>
   </div>
 
-  <!-- App Header -->
   <header>
     <span class="brand-title">TaskTracker</span>
     <div class="sync-badge" id="syncTrigger">
@@ -128,7 +179,7 @@
 
   <main id="appContent" class="hidden">
 
-    <!-- VIEW 1: Current Month Records Table (DEFAULT) -->
+    <!-- VIEW 1: Records Table -->
     <section id="viewRecords" class="view active">
       <div class="card" style="padding: 14px 18px; margin-bottom: 14px;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -137,7 +188,6 @@
         </div>
       </div>
 
-      <!-- Main Records Table -->
       <div class="table-container">
         <table>
           <thead>
@@ -152,14 +202,13 @@
         </table>
       </div>
 
-      <!-- Add New Task Trigger below table -->
       <button id="addTaskTableBtn" class="btn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         Add New Entry
       </button>
     </section>
 
-    <!-- VIEW 2: Entry Form (Add/Edit) -->
+    <!-- VIEW 2: Entry Form -->
     <section id="viewEntry" class="view">
       <div class="card">
         <div class="card-title">
@@ -167,7 +216,6 @@
           <button id="cancelEditBtn" class="btn btn-secondary hidden" style="width:auto; padding:4px 10px; font-size:0.75rem; margin:0;">Cancel</button>
         </div>
 
-        <!-- Searchable Clone Dropdown -->
         <label>Search & Clone Previous Task</label>
         <div class="searchable-select">
           <input type="text" id="historySearchInput" placeholder="Type to filter past tasks..." autocomplete="off">
@@ -190,7 +238,7 @@
       </div>
     </section>
 
-    <!-- VIEW 3: Reports & Export -->
+    <!-- VIEW 3: Reports -->
     <section id="viewReports" class="view">
       <div class="card">
         <div class="card-title">Monthly Executive Summary</div>
@@ -200,22 +248,56 @@
 
         <div id="reportPreviewContainer" style="margin-bottom: 8px;"></div>
 
-        <label>Send report to</label>
-        <input type="email" id="reportRecipient" placeholder="you@example.com">
-        <p class="field-hint">Sent as a formatted HTML email directly from your signed-in Gmail account.</p>
+        <p class="field-hint" style="margin-bottom: 12px;">Exports tasks as formatted plain text to your clipboard and opens your default mail client.</p>
 
         <button id="exportReportBtn" class="btn btn-success">
-          ✉️ Send Formatted Gmail Report
+          ✉️ Export & Open in Email App
         </button>
-        <button id="mailtoFallbackBtn" class="btn btn-secondary">
-          Open Plain-Text Version in Mail App
-        </button>
+      </div>
+    </section>
+
+    <!-- VIEW 4: Settings -->
+    <section id="viewSettings" class="view">
+      <div class="card">
+        <div class="card-title">App Preferences</div>
+
+        <label>Default Email Recipients</label>
+        <input type="text" id="defaultRecipientsInput" placeholder="boss@company.com, team@company.com">
+        <p class="field-hint">Comma-separated email addresses pre-filled when triggering reports.</p>
+
+        <label>Color Palette</label>
+        <div class="grid-swatch" id="palettePicker">
+          <button class="swatch-btn" data-palette="sage">Sage</button>
+          <button class="swatch-btn" data-palette="ocean">Ocean</button>
+          <button class="swatch-btn" data-palette="slate">Slate</button>
+          <button class="swatch-btn" data-palette="sunset">Sunset</button>
+          <button class="swatch-btn" data-palette="emerald">Emerald</button>
+          <button class="swatch-btn" data-palette="berry">Berry</button>
+        </div>
+
+        <label>Theme Mode</label>
+        <select id="themeModeSelect">
+          <option value="light">☀️ Light Mode</option>
+          <option value="dark">🌙 Dark Mode</option>
+        </select>
+
+        <label>UI Design Preset</label>
+        <select id="uiPresetSelect">
+          <option value="default">Default Cards</option>
+          <option value="compact">Compact Minimalist</option>
+          <option value="neumorphic">Neumorphic Soft</option>
+          <option value="glass">Rounded Glass</option>
+          <option value="terminal">High-Contrast Terminal</option>
+          <option value="bordered">Clean Bordered</option>
+        </select>
+
+        <button id="saveSettingsBtn" class="btn">Save Preferences</button>
       </div>
     </section>
 
   </main>
 
-  <!-- Bottom Nav -->
+  <!-- Navigation -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-target="viewRecords">
       <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
@@ -229,18 +311,62 @@
       <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
       Reports
     </button>
+    <button class="nav-item" data-target="viewSettings">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      Settings
+    </button>
   </nav>
 
   <script>
-    // --- CONFIG & DB ENGINE ---
     const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
-    // Drive scope keeps your data synced; gmail.send lets the app email the report as real HTML from your account.
-    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/gmail.send';
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
     const DRIVE_FILE_NAME = 'tasktracker_db.json';
     const STORAGE_KEY_SESSION = 'tasktracker_google_session';
+    const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
     const DB_NAME = 'TaskTrackerDB';
     let db = null;
 
+    /* Preferences */
+    let settings = {
+      recipients: '',
+      palette: 'sage',
+      theme: 'light',
+      uiStyle: 'default'
+    };
+
+    function loadSettings() {
+      const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+      if (raw) {
+        try { settings = { ...settings, ...JSON.parse(raw) }; } catch(e){}
+      }
+      applySettingsUI();
+    }
+
+    function applySettingsUI() {
+      document.documentElement.setAttribute('data-theme', settings.theme);
+      document.documentElement.setAttribute('data-color-palette', settings.palette);
+      document.documentElement.setAttribute('data-ui-style', settings.uiStyle);
+
+      el('defaultRecipientsInput').value = settings.recipients;
+      el('themeModeSelect').value = settings.theme;
+      el('uiPresetSelect').value = settings.uiStyle;
+
+      document.querySelectorAll('.swatch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-palette') === settings.palette);
+      });
+    }
+
+    function saveSettings() {
+      settings.recipients = el('defaultRecipientsInput').value.trim();
+      settings.theme = el('themeModeSelect').value;
+      settings.uiStyle = el('uiPresetSelect').value;
+      
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+      applySettingsUI();
+      alert('Preferences saved.');
+    }
+
+    /* Database Setup */
     function initDB() {
       return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, 1);
@@ -284,7 +410,7 @@
       }
     };
 
-    // --- DRIVE SYNC ENGINE ---
+    /* Google Drive Sync */
     let accessToken = null;
     let tokenClient = null;
 
@@ -372,17 +498,12 @@
       } catch (err) { updateSyncStatus('', 'Save Failed'); }
     }
 
-    // --- CONTROLLERS ---
+    /* Core State & Navigation */
     const now = new Date();
     let currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     let editingId = null;
 
     const el = id => document.getElementById(id);
-
-    function monthLabel(key) {
-      const [y, m] = key.split('-').map(Number);
-      return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-    }
 
     document.querySelectorAll('.nav-item').forEach(btn => {
       btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
@@ -432,7 +553,7 @@
       }
     }
 
-    // Searchable Clone Dropdown Handler — debounced + capped for large histories
+    /* History Clone Logic */
     let historyDebounceTimer;
     el('historySearchInput').addEventListener('input', (e) => {
       clearTimeout(historyDebounceTimer);
@@ -466,7 +587,7 @@
       matches.forEach(item => {
         const div = document.createElement('div');
         div.className = 'history-item';
-        div.innerHTML = `<span class="h-month">${item.month}</span>${escapeHTML(item.title)}`;
+        div.innerHTML = `<span style="color:var(--text-muted); font-size:0.75rem; margin-right:6px;">${item.month}</span>${escapeHTML(item.title)}`;
         div.onclick = () => {
           el('taskTitle').value = item.title;
           el('taskType').value = item.type;
@@ -479,7 +600,6 @@
       resultsContainer.style.display = 'block';
     }
 
-    // Form Save Controller
     async function handleSave() {
       const title = el('taskTitle').value.trim();
       const type = el('taskType').value;
@@ -534,18 +654,17 @@
       }
     };
 
-    // Report Builder (Sorted Chronologically & Numbered)
+    /* Reports & Mail Integration */
     async function getReportEntries(targetMonth) {
       const all = await dbOps.getAll();
       return all
         .filter(e => e.month === targetMonth)
-        .sort((a, b) => a.timestamp - b.timestamp); // Chronological ascending order
+        .sort((a, b) => a.timestamp - b.timestamp);
     }
 
     async function renderReportPreview() {
       const targetMonth = el('reportMonthPicker').value;
       const monthEntries = await getReportEntries(targetMonth);
-
       const container = el('reportPreviewContainer');
       container.innerHTML = '';
 
@@ -568,114 +687,45 @@
       });
     }
 
-    // Builds an email-safe HTML version of the report cards (inline styles, since most
-    // mail clients strip <style> blocks out of incoming HTML).
-    function buildReportHTML(month, entries) {
-      const rows = entries.map((item, idx) => {
-        const isAch = item.type === 'Achievement';
-        const borderColor = isAch ? '#7a9b7e' : '#6b8299';
-        const badgeBg = isAch ? '#eef4ef' : '#eaeff3';
-        const badgeColor = isAch ? '#4f7256' : '#4a5f73';
-        const details = escapeHTML(item.desc || '').replace(/\n/g, '<br>');
-        return `
-          <tr><td style="padding:0 0 12px 0;">
-            <div style="background:#ffffff;border:1px solid #e6e3da;border-left:4px solid ${borderColor};border-radius:8px;padding:14px 16px;">
-              <div style="font-size:11px;font-weight:700;color:#82807a;letter-spacing:0.3px;margin-bottom:6px;">
-                ${idx + 1}.
-                <span style="background:${badgeBg};color:${badgeColor};padding:2px 8px;border-radius:10px;text-transform:uppercase;">${item.type}</span>
-                &nbsp;·&nbsp;${new Date(item.timestamp).toLocaleDateString()}
-              </div>
-              <div style="font-size:15px;font-weight:700;color:#33332f;margin-bottom:4px;">${escapeHTML(item.title)}</div>
-              <div style="font-size:13px;color:#82807a;line-height:1.5;">${details}</div>
-            </div>
-          </td></tr>`;
-      }).join('');
-
-      return `<div style="max-width:560px;margin:0 auto;font-family:-apple-system,Segoe UI,Roboto,sans-serif;">
-        <h2 style="font-size:18px;color:#33332f;margin-bottom:4px;">Monthly Performance Report</h2>
-        <p style="font-size:13px;color:#82807a;margin-top:0;margin-bottom:18px;">${monthLabel(month)} · ${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}</p>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
-      </div>`;
-    }
-
-    // Base64url-encodes a minimal RFC 2822 MIME message with an HTML body for the Gmail API.
-    function buildMimeMessage(to, subject, html) {
-      const subjectEncoded = `=?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`;
-      const message =
-        `To: ${to}\r\n` +
-        `Subject: ${subjectEncoded}\r\n` +
-        `MIME-Version: 1.0\r\n` +
-        `Content-Type: text/html; charset="UTF-8"\r\n\r\n` +
-        html;
-      return btoa(unescape(encodeURIComponent(message)))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
-
-    async function sendGmailReport() {
+    async function openMailAppWithCopy() {
       const targetMonth = el('reportMonthPicker').value;
       const monthEntries = await getReportEntries(targetMonth);
       if (monthEntries.length === 0) return alert('No data to export.');
 
-      const recipient = el('reportRecipient').value.trim();
-      if (!recipient) return alert('Enter a recipient email first.');
-
-      if (!accessToken) {
-        alert('Sign in with Google first — the report is sent from your own Gmail account.');
-        return;
-      }
-
-      const subject = `Monthly Performance Report - ${targetMonth}`;
-      const html = buildReportHTML(targetMonth, monthEntries);
-      const btn = el('exportReportBtn');
-      btn.disabled = true;
-      updateSyncStatus('syncing', 'Sending...');
-
-      try {
-        const raw = buildMimeMessage(recipient, subject, html);
-        const res = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages/send', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raw })
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          if (res.status === 401 || res.status === 403) {
-            // Existing session likely predates the gmail.send scope — ask for consent again.
-            tokenClient.requestAccessToken({ prompt: 'consent' });
-            throw new Error('Needs one-time Gmail permission — please try Send again after approving.');
-          }
-          throw new Error(errData.error?.message || 'Send failed');
-        }
-
-        updateSyncStatus('online', 'Report sent');
-        alert('Report emailed to ' + recipient);
-      } catch (err) {
-        updateSyncStatus('', 'Send failed');
-        alert(err.message);
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function openMailtoFallback() {
-      const targetMonth = el('reportMonthPicker').value;
-      const monthEntries = await getReportEntries(targetMonth);
-      if (monthEntries.length === 0) return alert('No data to export.');
-
-      let body = `Performance Summary Report - ${targetMonth}\n\n`;
+      let formattedText = `MONTHLY PERFORMANCE REPORT (${targetMonth})\n===========================================\n\n`;
       monthEntries.forEach((a, i) => {
-        body += `${i + 1}. [${a.type}] ${a.title}\nDate Added: ${new Date(a.timestamp).toLocaleDateString()}\nDetails: ${a.desc || 'N/A'}\n-------------------------------------------\n\n`;
+        formattedText += `[${i + 1}] ${a.type.toUpperCase()}: ${a.title}\n`;
+        formattedText += `Date: ${new Date(a.timestamp).toLocaleDateString()}\n`;
+        formattedText += `Details: ${a.desc || 'N/A'}\n`;
+        formattedText += `-------------------------------------------\n\n`;
       });
 
-      const recipient = el('reportRecipient').value.trim();
-      window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent('Monthly Performance Report - ' + targetMonth)}&body=${encodeURIComponent(body)}`;
+      try {
+        await navigator.clipboard.writeText(formattedText);
+        alert('Task report copied to clipboard! Opening your mail application...');
+      } catch (err) {
+        console.warn('Clipboard write deferred or blocked:', err);
+      }
+
+      const defaultTo = settings.recipients ? encodeURIComponent(settings.recipients) : '';
+      const subject = encodeURIComponent(`Monthly Performance Report - ${targetMonth}`);
+      
+      window.location.href = `mailto:${defaultTo}?subject=${subject}`;
     }
 
-    el('exportReportBtn').addEventListener('click', sendGmailReport);
-    el('mailtoFallbackBtn').addEventListener('click', openMailtoFallback);
+    /* Palette Selection Listener */
+    document.querySelectorAll('.swatch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        settings.palette = e.target.getAttribute('data-palette');
+        document.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        document.documentElement.setAttribute('data-color-palette', settings.palette);
+      });
+    });
 
-    // Event Bindings
+    /* Global Binding Setup */
+    el('exportReportBtn').addEventListener('click', openMailAppWithCopy);
+    el('saveSettingsBtn').addEventListener('click', saveSettings);
     el('addTaskTableBtn').addEventListener('click', () => { resetForm(); switchView('viewEntry'); });
     el('cancelEditBtn').addEventListener('click', resetForm);
     el('syncTrigger').addEventListener('click', pullFromDrive);
@@ -689,6 +739,7 @@
     el('reportMonthPicker').addEventListener('change', renderReportPreview);
 
     window.addEventListener('DOMContentLoaded', async () => {
+      loadSettings();
       await initDB();
       render();
       if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); }
