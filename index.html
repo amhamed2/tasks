@@ -123,7 +123,7 @@
     .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; }
     .action-icon-btn.delete:hover { color: var(--danger); }
 
-    /* Dropdown Search */
+    /* Searchable Select */
     .searchable-select { position: relative; }
     .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; }
     .history-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid var(--card-border); }
@@ -281,13 +281,17 @@
       </div>
 
       <div class="card">
-        <div class="card-title">App Preferences</div>
+        <div class="card-title">App & User Preferences</div>
+
+        <label>Preferred Username / Full Name</label>
+        <input type="text" id="usernameInput" placeholder="e.g. Alex Morgan">
+        <p class="field-hint">Displayed across monthly executive reports instead of default account fallbacks.</p>
 
         <label>Default Email Recipients</label>
         <input type="text" id="defaultRecipientsInput" placeholder="boss@company.com, team@company.com">
         <p class="field-hint">Comma-separated email addresses pre-filled when triggering reports.</p>
 
-        <label>Color Palette Visual Selection</label>
+        <label>Color Palette Selection</label>
         <div class="grid-swatch" id="palettePicker">
           <button class="swatch-btn" data-palette="sage"><span class="palette-dot" style="background:#6b8299;"></span>Sage</button>
           <button class="swatch-btn" data-palette="ocean"><span class="palette-dot" style="background:#2563eb;"></span>Ocean</button>
@@ -367,12 +371,12 @@
     const DB_NAME = 'TaskTrackerDB';
     let db = null;
 
-    let currentUser = { id: 'usr_default', email: 'User' };
+    let currentUser = { id: 'usr_default', email: 'User', username: '' };
     let isAdmin = false;
     let adminPassword = localStorage.getItem(STORAGE_KEY_ADMIN_PASS) || "IDSC4Ever@2026";
 
     /* Preferences State */
-    let savedSettings = { recipients: '', palette: 'sage', theme: 'light', uiStyle: 'default' };
+    let savedSettings = { username: '', recipients: '', palette: 'sage', theme: 'light', uiStyle: 'default' };
     let activeSettings = { ...savedSettings };
 
     function loadSettings() {
@@ -387,6 +391,7 @@
     }
 
     function syncSettingsFormValues() {
+      el('usernameInput').value = activeSettings.username;
       el('defaultRecipientsInput').value = activeSettings.recipients;
       el('themeModeSelect').value = activeSettings.theme;
 
@@ -407,6 +412,7 @@
 
     function checkSettingsDirty() {
       const isDirty = (
+        activeSettings.username !== savedSettings.username ||
         activeSettings.recipients !== savedSettings.recipients ||
         activeSettings.palette !== savedSettings.palette ||
         activeSettings.theme !== savedSettings.theme ||
@@ -415,10 +421,11 @@
       el('saveSettingsBtn').disabled = !isDirty;
     }
 
-    function saveSettings() {
+    async function saveSettings() {
       savedSettings = { ...activeSettings };
       localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
       checkSettingsDirty();
+      await syncToDrive();
     }
 
     /* Database Setup */
@@ -469,15 +476,6 @@
     let accessToken = null;
     let tokenClient = null;
 
-    function parseJwt(token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-        return JSON.parse(jsonPayload);
-      } catch (e) { return null; }
-    }
-
     function initGoogleAuth() {
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
@@ -486,7 +484,6 @@
           if (response.error) return alert("Login Failed: " + response.error);
           accessToken = response.access_token;
           
-          // Obtain User Profile details
           try {
             const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
             const profile = await userInfoRes.json();
@@ -547,8 +544,24 @@
         const fileId = await findDriveFileId();
         if (fileId) {
           const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
-          const remoteEntries = await res.json();
-          if (Array.isArray(remoteEntries)) { await dbOps.bulkReplace(remoteEntries); render(); }
+          const payload = await res.json();
+          
+          if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+            if (payload.settings) {
+              savedSettings = { ...savedSettings, ...payload.settings };
+              activeSettings = { ...savedSettings };
+              localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+              applyLiveUI(activeSettings);
+              syncSettingsFormValues();
+              checkSettingsDirty();
+            }
+            if (Array.isArray(payload.entries)) {
+              await dbOps.bulkReplace(payload.entries);
+            }
+          } else if (Array.isArray(payload)) {
+            await dbOps.bulkReplace(payload);
+          }
+          render();
         }
         updateSyncStatus('online', 'Synced');
       } catch (err) { updateSyncStatus('', 'Offline Mode'); }
@@ -559,8 +572,12 @@
       updateSyncStatus('syncing', 'Saving...');
       try {
         const localEntries = await dbOps.getAll();
+        const fullPayload = {
+          settings: savedSettings,
+          entries: localEntries
+        };
         const fileId = await findDriveFileId();
-        const blob = new Blob([JSON.stringify(localEntries, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
 
         if (fileId) {
           await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
@@ -602,7 +619,6 @@
     async function render() {
       const allEntries = await dbOps.getAll();
       
-      // Admin sees all entries; regular user sees only their own
       const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => !e.userId || e.userId === currentUser.id);
       
       const monthEntries = visibleEntries
@@ -620,6 +636,7 @@
           const tr = document.createElement('tr');
           const badgeClass = item.type === 'Achievement' ? 'badge-achievement' : 'badge-task';
           const isOwnTask = !item.userId || item.userId === currentUser.id;
+          const displayName = item.username || item.userName || 'User';
 
           let actionsHtml = '';
           if (isOwnTask) {
@@ -636,7 +653,7 @@
           }
 
           tr.innerHTML = `
-            ${isAdmin ? `<td style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">${escapeHTML(item.userName || 'User')}</td>` : ''}
+            ${isAdmin ? `<td style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">${escapeHTML(displayName)}</td>` : ''}
             <td><span class="badge ${badgeClass}">${item.type}</span></td>
             <td style="font-weight: 600;">${escapeHTML(item.title)}</td>
             <td style="color: var(--text-muted); font-size: 0.82rem;">${escapeHTML(item.desc || '-')}</td>
@@ -647,7 +664,7 @@
       }
     }
 
-    /* History Clone Logic */
+    /* History Search Logic */
     let historyDebounceTimer;
     el('historySearchInput').addEventListener('input', (e) => {
       clearTimeout(historyDebounceTimer);
@@ -702,10 +719,13 @@
 
       if (!title) return alert('Title is required');
 
+      const userDisplayName = savedSettings.username.trim() || currentUser.email || 'User';
+
       const record = {
         id: editingId || 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
         userId: currentUser.id,
         userName: currentUser.email,
+        username: userDisplayName,
         month: currentSelectedMonth,
         title,
         type,
@@ -827,10 +847,12 @@
       monthEntries.forEach((item, idx) => {
         const card = document.createElement('div');
         card.className = `report-card ${item.type.toLowerCase()}`;
+        const displayName = item.username || item.userName || savedSettings.username || 'User';
+
         card.innerHTML = `
           <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:4px; display:flex; justify-content:space-between;">
             <span>${idx + 1}. [${item.type.toUpperCase()}] - ${new Date(item.timestamp).toLocaleDateString()}</span>
-            ${isAdmin ? `<span style="color:var(--primary); font-weight:bold;">${escapeHTML(item.userName || 'User')}</span>` : ''}
+            <span style="color:var(--primary); font-weight:bold;">${escapeHTML(displayName)}</span>
           </div>
           <div style="font-weight:700; color:var(--text); font-size:0.95rem;">${escapeHTML(item.title)}</div>
           <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">${escapeHTML(item.desc || '')}</div>
@@ -846,8 +868,9 @@
 
       let formattedText = `${isAdmin ? 'FULL SYSTEM' : 'PERSONAL'} PERFORMANCE REPORT (${targetMonth})\n===========================================\n\n`;
       monthEntries.forEach((a, i) => {
+        const displayName = a.username || a.userName || savedSettings.username || 'User';
         formattedText += `[${i + 1}] ${a.type.toUpperCase()}: ${a.title}\n`;
-        if (isAdmin) formattedText += `User: ${a.userName || 'User'}\n`;
+        formattedText += `User: ${displayName}\n`;
         formattedText += `Date: ${new Date(a.timestamp).toLocaleDateString()}\n`;
         formattedText += `Details: ${a.desc || 'N/A'}\n`;
         formattedText += `-------------------------------------------\n\n`;
@@ -866,6 +889,11 @@
     }
 
     /* Live Interactive Preference Listeners */
+    el('usernameInput').addEventListener('input', (e) => {
+      activeSettings.username = e.target.value.trim();
+      checkSettingsDirty();
+    });
+
     el('themeModeSelect').addEventListener('change', (e) => {
       activeSettings.theme = e.target.value;
       applyLiveUI(activeSettings);
