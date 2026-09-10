@@ -333,7 +333,7 @@
           <span class="nav-text">Analytics Reports</span>
         </button>
         <button class="nav-item" data-target="viewSettings">
-          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c-.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c-.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6 z"/></svg>
           <span class="nav-text">Settings</span>
         </button>
         <button class="nav-item logout-item" id="navLogoutBtn">
@@ -407,9 +407,6 @@
               <option value="Achievement">Achievement</option>
             </select>
 
-            <label>Department</label>
-            <input type="text" id="taskDepartment" placeholder="e.g. IT, Operations, Finance">
-
             <label>Title</label>
             <input type="text" id="taskTitle" placeholder="e.g. Database Index Optimization">
 
@@ -434,9 +431,6 @@
 
             <label>Assignee (Team Member)</label>
             <select id="assignUserSelect"></select>
-
-            <label>Department</label>
-            <input type="text" id="assignDepartment" placeholder="e.g. IT, Operations">
 
             <label>Importance / Priority Level</label>
             <select id="assignPriority">
@@ -505,12 +499,6 @@
                   <option value="ALL">All Users</option>
                 </select>
               </div>
-              <div id="adminDeptFilterWrap" class="hidden">
-                <label>Filter By Department</label>
-                <select id="reportDeptSelect">
-                  <option value="ALL">All Departments</option>
-                </select>
-              </div>
             </div>
 
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -528,7 +516,6 @@
                 <thead>
                   <tr>
                     <th>User / Category</th>
-                    <th>Department</th>
                     <th>Total Tasks</th>
                     <th>Regular Hours</th>
                     <th>Overtime / After-Work</th>
@@ -557,7 +544,6 @@
                 <thead>
                   <tr>
                     <th>Assignee</th>
-                    <th>Department</th>
                     <th>Title</th>
                     <th>Priority</th>
                     <th>Time Frame</th>
@@ -621,9 +607,6 @@
             <label>Preferred Username / Full Name</label>
             <input type="text" id="usernameInput" placeholder="e.g. Alex Morgan">
 
-            <label>Department</label>
-            <input type="text" id="departmentInput" placeholder="e.g. IT, Operations, Finance">
-
             <label>Default Email Recipients</label>
             <input type="text" id="defaultRecipientsInput" placeholder="boss@company.com, hr@company.com">
 
@@ -670,7 +653,7 @@
 
           <!-- Task tracker Pro Version Banner -->
           <div style="text-align: center; margin-top: 24px; padding: 14px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); border-top: 1px solid var(--card-border);">
-            Task tracker Pro (Beta 0.90.6)
+            Task tracker Pro (Beta 0.90.7)
           </div>
         </section>
 
@@ -688,11 +671,11 @@
     const DB_NAME = 'TaskTrackerDB';
     let db = null;
 
-    let currentUser = { id: 'usr_default', email: 'User', username: '', department: '' };
+    let currentUser = { id: 'usr_default', email: 'User', username: '' };
     let isAdmin = false;
     let adminPassword = localStorage.getItem(STORAGE_KEY_ADMIN_PASS) || "IDSC4Ever@2026";
 
-    let savedSettings = { username: '', department: '', recipients: '', palette: 'sage', theme: 'light', uiStyle: 'default' };
+    let savedSettings = { username: '', recipients: '', palette: 'sage', theme: 'light', uiStyle: 'default' };
     let activeSettings = { ...savedSettings };
 
     const el = id => document.getElementById(id);
@@ -769,7 +752,7 @@
       return false;
     }
 
-    /* Distinct Users & Departments Extraction Helpers */
+    /* Distinct Users Extraction Helper */
     function getDistinctUsers(allEntries) {
       const userMap = new Map();
       const currentName = (savedSettings.username || currentUser.email || 'Current User').trim();
@@ -791,15 +774,6 @@
       });
 
       return Array.from(userMap.values());
-    }
-
-    function getDistinctDepartments(allEntries) {
-      const deptSet = new Set();
-      if (savedSettings.department) deptSet.add(savedSettings.department.trim());
-      allEntries.forEach(e => {
-        if (e.department) deptSet.add(e.department.trim());
-      });
-      return Array.from(deptSet);
     }
 
     /* Work Hour Auto Detection */
@@ -877,7 +851,7 @@
     function handleLogout() {
       if (confirm("Are you sure you want to log out?")) {
         accessToken = null;
-        currentUser = { id: 'usr_default', email: 'User', username: '', department: '' };
+        currentUser = { id: 'usr_default', email: 'User', username: '' };
         localStorage.removeItem(STORAGE_KEY_SESSION);
         if (isAdmin) logoutAdmin();
         applyAuthState();
@@ -1009,7 +983,6 @@
       const workType = item.workType || calculateWorkType(item.datetime);
       const isMyTask = isUserMatch(item);
       const displayName = item.username || item.userName || 'User';
-      const deptName = item.department || savedSettings.department || 'General';
 
       let workBadgeClass = 'badge-regular';
       if (workType === 'Overtime') workBadgeClass = 'badge-overtime';
@@ -1061,7 +1034,6 @@
           <div class="record-card-meta">
             ${isPushed ? `<span class="badge ${statusBadgeClass}">Status: ${escapeHTML(currentStatus)}</span>` : ''}
             <span class="badge ${workBadgeClass}">${workType}</span>
-            <span class="badge badge-task">Dept: ${escapeHTML(deptName)}</span>
             ${item.priority ? `<span class="badge badge-urgent">Priority: ${escapeHTML(item.priority)}</span>` : ''}
             ${item.timeframe ? `<span class="badge badge-assigned">Timeframe: ${escapeHTML(item.timeframe)}</span>` : ''}
             ${isAdmin ? `<span class="badge badge-admin">${escapeHTML(displayName)}</span>` : ''}
@@ -1095,7 +1067,6 @@
     async function handleSave() {
       const title = el('taskTitle').value.trim();
       const type = el('taskType').value;
-      const department = el('taskDepartment').value.trim() || savedSettings.department || 'General';
       const desc = el('taskDesc').value.trim();
       const datetime = el('taskDatetime').value;
 
@@ -1111,7 +1082,6 @@
         userId: currentUser.id,
         userName: currentUser.email,
         username: userDisplayName,
-        department: department,
         month: monthStr,
         datetime: datetime,
         title,
@@ -1133,7 +1103,6 @@
       el('taskTitle').value = '';
       el('taskDesc').value = '';
       el('historySearchInput').value = '';
-      el('taskDepartment').value = savedSettings.department || '';
       el('taskDatetime').value = getNowDatetimeLocal();
       el('formHeaderTitle').innerText = 'New Entry';
       el('saveTaskBtn').innerText = 'Save Entry';
@@ -1159,7 +1128,6 @@
       editingId = target.id;
       el('taskTitle').value = target.title;
       el('taskType').value = target.type;
-      el('taskDepartment').value = target.department || savedSettings.department || '';
       el('taskDesc').value = target.desc || '';
       el('taskDatetime').value = target.datetime || getNowDatetimeLocal();
       el('formHeaderTitle').innerText = 'Edit Entry';
@@ -1199,13 +1167,11 @@
       if (currentValue && Array.from(select.options).some(o => o.value === currentValue)) {
         select.value = currentValue;
       }
-      el('assignDepartment').value = savedSettings.department || '';
     }
 
     async function dispatchAssignTask() {
       const title = el('assignTitle').value.trim();
       const targetUserId = el('assignUserSelect').value;
-      const department = el('assignDepartment').value.trim() || savedSettings.department || 'General';
       const priority = el('assignPriority').value;
       const timeframe = el('assignTimeframe').value;
       const datetime = el('assignDatetime').value;
@@ -1220,7 +1186,6 @@
         userId: targetUserId,
         userName: targetOptionText,
         username: targetOptionText,
-        department: department,
         assignedBy: savedSettings.username || currentUser.email || 'Admin',
         month: datetime.substring(0, 7),
         title,
@@ -1285,7 +1250,7 @@
       }
     }
 
-    /* ANALYTICS & REPORTS SYSTEM WITH CUSTOM RANGE & DEPARTMENT REPORTING */
+    /* ANALYTICS & REPORTS SYSTEM WITH CUSTOM RANGE */
     async function getFilteredReportData() {
       const all = await dbOps.getAll();
       const timeframeMode = el('reportTimeframeSelect').value;
@@ -1293,16 +1258,11 @@
       const startDateVal = el('reportStartDate').value;
       const endDateVal = el('reportEndDate').value;
       const selectedUser = el('reportUserSelect').value;
-      const selectedDept = el('reportDeptSelect').value;
 
       let filtered = isAdmin ? all : all.filter(e => isUserMatch(e));
 
       if (isAdmin && selectedUser !== 'ALL') {
         filtered = filtered.filter(e => e.userId === selectedUser || e.username === selectedUser || e.userName === selectedUser);
-      }
-
-      if (isAdmin && selectedDept !== 'ALL') {
-        filtered = filtered.filter(e => (e.department || '').toLowerCase() === selectedDept.toLowerCase());
       }
 
       if (timeframeMode === 'month') {
@@ -1342,20 +1302,6 @@
       if (curUserVal && Array.from(userSelect.options).some(o => o.value === curUserVal)) {
         userSelect.value = curUserVal;
       }
-
-      // Dept filter
-      const deptSelect = el('reportDeptSelect');
-      const curDeptVal = deptSelect.value;
-      deptSelect.innerHTML = '<option value="ALL">All Departments</option>';
-      getDistinctDepartments(all).forEach(dept => {
-        const opt = document.createElement('option');
-        opt.value = dept;
-        opt.textContent = dept;
-        deptSelect.appendChild(opt);
-      });
-      if (curDeptVal && Array.from(deptSelect.options).some(o => o.value === curDeptVal)) {
-        deptSelect.value = curDeptVal;
-      }
     }
 
     async function renderReportsView() {
@@ -1388,33 +1334,30 @@
       const tbody = el('summaryTableBody');
       tbody.innerHTML = '';
 
-      const statsByUserDept = {};
+      const statsByUser = {};
 
       entries.forEach(e => {
         const userKey = e.username || e.userName || 'User';
-        const deptKey = e.department || savedSettings.department || 'General';
-        const mapKey = `${userKey}__${deptKey}`;
 
-        if (!statsByUserDept[mapKey]) {
-          statsByUserDept[mapKey] = { user: userKey, dept: deptKey, total: 0, regular: 0, overtime: 0, holiday: 0 };
+        if (!statsByUser[userKey]) {
+          statsByUser[userKey] = { user: userKey, total: 0, regular: 0, overtime: 0, holiday: 0 };
         }
-        statsByUserDept[mapKey].total++;
+        statsByUser[userKey].total++;
         const wt = e.workType || calculateWorkType(e.datetime);
-        if (wt === 'Regular') statsByUserDept[mapKey].regular++;
-        else if (wt === 'Overtime') statsByUserDept[mapKey].overtime++;
-        else if (wt === 'Holiday') statsByUserDept[mapKey].holiday++;
+        if (wt === 'Regular') statsByUser[userKey].regular++;
+        else if (wt === 'Overtime') statsByUser[userKey].overtime++;
+        else if (wt === 'Holiday') statsByUser[userKey].holiday++;
       });
 
-      if (Object.keys(statsByUserDept).length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No records found for current filters.</td></tr>`;
+      if (Object.keys(statsByUser).length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No records found for current filters.</td></tr>`;
         return;
       }
 
-      for (const data of Object.values(statsByUserDept)) {
+      for (const data of Object.values(statsByUser)) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td style="font-weight:700;">${escapeHTML(data.user)}</td>
-          <td><span class="badge badge-task">${escapeHTML(data.dept)}</span></td>
           <td>${data.total}</td>
           <td><span class="badge badge-regular">${data.regular}</span></td>
           <td><span class="badge badge-overtime">${data.overtime}</span></td>
@@ -1430,7 +1373,7 @@
       const assigned = entries.filter(e => e.isAssigned || e.isPushed);
 
       if (assigned.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted);">No pushed/assigned tasks logged.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No pushed/assigned tasks logged.</td></tr>`;
         return;
       }
 
@@ -1439,7 +1382,6 @@
         const isDone = item.status === 'Completed';
         tr.innerHTML = `
           <td>${escapeHTML(item.username || item.userName || 'User')}</td>
-          <td><span class="badge badge-task">${escapeHTML(item.department || 'General')}</span></td>
           <td style="font-weight:600;">${escapeHTML(item.title)}</td>
           <td><span class="badge badge-urgent">${item.priority || 'Normal'}</span></td>
           <td><span class="badge badge-assigned">${item.timeframe || 'Scheduled'}</span></td>
@@ -1546,7 +1488,6 @@
       filtered.forEach((a, i) => {
         formattedText += `[${i + 1}] ${a.type.toUpperCase()}: ${a.title}\n`;
         formattedText += `User: ${a.username || a.userName || 'User'}\n`;
-        formattedText += `Department: ${a.department || 'General'}\n`;
         formattedText += `Status: ${a.status || 'Completed'}\n`;
         if (a.userResponse) formattedText += `Response Note: ${a.userResponse}\n`;
         formattedText += `Date/Time: ${a.datetime ? new Date(a.datetime).toLocaleString() : 'N/A'}\n`;
@@ -1566,12 +1507,11 @@
       const filtered = await getFilteredReportData();
       if (filtered.length === 0) return alert('No data available to export.');
 
-      let csv = 'ID,User,Department,Type,Title,Status,User Response,Priority,Timeframe,Work Type,Date Time,Details\n';
+      let csv = 'ID,User,Type,Title,Status,User Response,Priority,Timeframe,Work Type,Date Time,Details\n';
       filtered.forEach(e => {
         const row = [
           `"${e.id}"`,
           `"${e.username || e.userName || 'User'}"`,
-          `"${e.department || 'General'}"`,
           `"${e.type}"`,
           `"${(e.title || '').replace(/"/g, '""')}"`,
           `"${e.status || 'Completed'}"`,
@@ -1625,7 +1565,6 @@
         div.onclick = () => {
           el('taskTitle').value = item.title;
           el('taskType').value = item.type;
-          el('taskDepartment').value = item.department || savedSettings.department || '';
           el('taskDesc').value = item.desc || '';
           el('historySearchInput').value = item.title;
           resultsContainer.style.display = 'none';
@@ -1647,7 +1586,6 @@
 
     function syncSettingsFormValues() {
       el('usernameInput').value = activeSettings.username;
-      el('departmentInput').value = activeSettings.department;
       el('defaultRecipientsInput').value = activeSettings.recipients;
       el('themeModeSelect').value = activeSettings.theme;
 
@@ -1668,7 +1606,6 @@
     function checkSettingsDirty() {
       const isDirty = (
         activeSettings.username !== savedSettings.username ||
-        activeSettings.department !== savedSettings.department ||
         activeSettings.recipients !== savedSettings.recipients ||
         activeSettings.palette !== savedSettings.palette ||
         activeSettings.theme !== savedSettings.theme ||
@@ -1714,13 +1651,12 @@
       el('adminLoginBox').classList.toggle('hidden', isAdmin);
       el('adminPanelBox').classList.toggle('hidden', !isAdmin);
       el('adminUserFilterWrap').classList.toggle('hidden', !isAdmin);
-      el('adminDeptFilterWrap').classList.toggle('hidden', !isAdmin);
 
       document.querySelectorAll('.admin-only').forEach(e => e.classList.toggle('hidden', !isAdmin));
 
       const scopeBadge = el('reportScopeBadge');
       if (isAdmin) {
-        scopeBadge.innerText = 'Full System Report (All Users / Departments)';
+        scopeBadge.innerText = 'Full System Report (All Users)';
         scopeBadge.className = 'badge badge-admin';
         await populateAdminReportFilters();
       } else {
@@ -1762,7 +1698,6 @@
     el('reportStartDate').addEventListener('change', renderReportsView);
     el('reportEndDate').addEventListener('change', renderReportsView);
     el('reportUserSelect').addEventListener('change', renderReportsView);
-    el('reportDeptSelect').addEventListener('change', renderReportsView);
 
     el('exportReportBtn').addEventListener('click', openMailAppWithCopy);
     el('exportCsvBtn').addEventListener('click', downloadReportCSV);
@@ -1773,7 +1708,6 @@
     el('updateAdminPassBtn').addEventListener('click', updateAdminPassword);
 
     el('usernameInput').addEventListener('input', (e) => { activeSettings.username = e.target.value.trim(); checkSettingsDirty(); });
-    el('departmentInput').addEventListener('input', (e) => { activeSettings.department = e.target.value.trim(); checkSettingsDirty(); });
     el('defaultRecipientsInput').addEventListener('input', (e) => { activeSettings.recipients = e.target.value.trim(); checkSettingsDirty(); });
     el('themeModeSelect').addEventListener('change', (e) => { activeSettings.theme = e.target.value; applyLiveUI(activeSettings); checkSettingsDirty(); });
     el('saveSettingsBtn').addEventListener('click', saveSettings);
