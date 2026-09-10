@@ -1,222 +1,673 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light" data-ui-style="default" data-color-palette="sage">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#f1f5f9">
+  <meta name="theme-color" content="#8a9a91">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>TaskTracker Pro</title>
   <link rel="manifest" href="./manifest.json">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* ==========================================================================
+       THEME & COLOR PALETTE ENGINE
+       ========================================================================== */
     :root {
-      --bg: #f8fafc;
+      --primary: #6b8299;
+      --primary-hover: #5a6f83;
+      --primary-soft: #eaeff3;
+      --accent: #6b8299;
+      --success: #7a9b7e;
+      --success-soft: #eef4ef;
+      --warning: #d97706;
+      --warning-soft: #fef3c7;
+      --purple: #8b5cf6;
+      --purple-soft: #f3e8ff;
+      --danger: #b5695a;
+      --danger-soft: #faf1ee;
+
+      --bg: #f6f5f2;
       --surface: #ffffff;
-      --card-border: #e2e8f0;
-      --accent: #6366f1;
-      --accent-soft: #e0e7ff;
-      --accent-hover: #4f46e5;
-      --text: #1e293b;
-      --text-muted: #64748b;
-      --danger: #ef4444;
-      --danger-soft: #fef2f2;
-      --success: #10b981;
-      --success-soft: #ecfdf5;
+      --card-border: #e6e3da;
+      --text: #33332f;
+      --text-muted: #82807a;
+      --sidebar-bg: #ffffff;
+      --header-bg: rgba(255, 255, 255, 0.85);
       --radius: 12px;
-      --nav-height: 64px;
+      --sidebar-width: 240px;
+      --sidebar-collapsed-width: 70px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); display: flex; flex-direction: column; }
+    [data-color-palette="sage"] { --primary: #6b8299; --primary-hover: #5a6f83; --primary-soft: #eaeff3; }
+    [data-color-palette="ocean"] { --primary: #2563eb; --primary-hover: #1d4ed8; --primary-soft: #dbeafe; }
+    [data-color-palette="slate"] { --primary: #475569; --primary-hover: #334155; --primary-soft: #f1f5f9; }
+    [data-color-palette="sunset"] { --primary: #ea580c; --primary-hover: #c2410c; --primary-soft: #ffedd5; }
+    [data-color-palette="emerald"] { --primary: #059669; --primary-hover: #047857; --primary-soft: #d1fae5; }
+    [data-color-palette="berry"] { --primary: #9333ea; --primary-hover: #7e22ce; --primary-soft: #f3e8ff; }
 
-    header { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 90; padding: 14px 20px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+    [data-theme="dark"] {
+      --bg: #121214;
+      --surface: #1e1e22;
+      --card-border: #2e2e34;
+      --text: #e4e4e7;
+      --text-muted: #a1a1aa;
+      --sidebar-bg: #1e1e22;
+      --header-bg: rgba(30, 30, 34, 0.85);
+      --primary-soft: #2d3748;
+      --success-soft: #1c3323;
+      --warning-soft: #3a2e19;
+      --purple-soft: #2e1d42;
+      --danger-soft: #3c1e1e;
+      --shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    [data-ui-style="default"] { --radius: 12px; }
+    [data-ui-style="compact"] { --radius: 4px; --shadow: none; }
+    [data-ui-style="compact"] .card { padding: 12px; margin-bottom: 8px; }
+    [data-ui-style="neumorphic"] { --radius: 16px; --bg: #e0e5ec; --surface: #e0e5ec; --card-border: transparent; --shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff; }
+    [data-theme="dark"][data-ui-style="neumorphic"] { --bg: #1a1b1e; --surface: #1a1b1e; --shadow: 5px 5px 10px #121315, -5px -5px 10px #222327; }
+    [data-ui-style="glass"] { --radius: 20px; --surface: rgba(255, 255, 255, 0.45); --card-border: rgba(255, 255, 255, 0.3); }
+    [data-theme="dark"][data-ui-style="glass"] { --surface: rgba(30, 30, 34, 0.45); --card-border: rgba(255, 255, 255, 0.08); }
+    [data-ui-style="glass"] .card { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    [data-ui-style="terminal"] { --radius: 0px; --card-border: var(--primary); --shadow: none; }
+    [data-ui-style="terminal"] .card { border-width: 2px; }
+    [data-ui-style="bordered"] { --radius: 8px; --shadow: none; --card-border: #d1d5db; }
+    [data-theme="dark"][data-ui-style="bordered"] { --card-border: #4b5563; }
+
+    /* ==========================================================================
+       BASE LAYOUT & SIDEBAR NAVIGATION
+       ========================================================================== */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; transition: background 0.2s, color 0.2s; }
+
+    .app-container { display: flex; width: 100%; min-height: 100vh; }
+
+    /* Collapsible Sidebar */
+    aside.sidebar {
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; bottom: 0; left: 0;
+      z-index: 120;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body.sidebar-collapsed aside.sidebar { width: var(--sidebar-collapsed-width); }
+
+    .sidebar-header {
+      height: 64px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .brand-group { display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; }
     .brand-title { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
-    
+    body.sidebar-collapsed .brand-title { display: none; }
+
+    .sidebar-toggle-btn {
+      background: none; border: none; cursor: pointer; color: var(--text-muted);
+      padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    }
+    .sidebar-toggle-btn:hover { background: var(--primary-soft); color: var(--primary); }
+
+    .sidebar-nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px;
+      color: var(--text-muted); border-radius: 8px; border: none; background: none;
+      cursor: pointer; font-size: 0.88rem; font-weight: 600; text-decoration: none;
+      width: 100%; text-align: left; transition: background 0.15s, color 0.15s; white-space: nowrap;
+    }
+    .nav-item svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
+    .nav-item:hover { background: var(--primary-soft); color: var(--primary); }
+    .nav-item.active { background: var(--primary-soft); color: var(--primary); }
+    body.sidebar-collapsed .nav-text { display: none; }
+
+    /* Main Content Wrapper */
+    .main-wrapper {
+      flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column;
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); min-width: 0;
+    }
+    body.sidebar-collapsed .main-wrapper { margin-left: var(--sidebar-collapsed-width); }
+
+    header {
+      background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 90; padding: 14px 24px; border-bottom: 1px solid var(--card-border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .mobile-menu-btn { display: none; background: none; border: none; color: var(--text); cursor: pointer; }
+
     .sync-badge { font-size: 0.75rem; background: var(--bg); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; }
     .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
     .dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
-    .dot.syncing { background: var(--accent); animation: pulse 1s infinite; }
+    .dot.syncing { background: var(--primary); animation: pulse 1s infinite; }
     @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
-    main { padding: 16px; max-width: 768px; margin: 0 auto; width: 100%; flex: 1; }
+    main { padding: 24px; max-width: 1100px; margin: 0 auto; width: 100%; flex: 1; }
     .view { display: none; }
     .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--card-border); padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-    .card-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--card-border); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); transition: all 0.2s; }
+    .card-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 
     label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-top: 14px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
     input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
-    input:focus, select:focus, textarea:focus { border-color: var(--accent); background: #fff; }
-    
-    .btn { width: 100%; background: var(--accent); color: #ffffff; font-weight: 600; border: none; padding: 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background 0.2s; margin-top: 14px; }
-    .btn:hover { background: var(--accent-hover); }
-    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--card-border); }
-    .btn-secondary:hover { background: #f1f5f9; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    .field-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; line-height: 1.3; }
 
-    /* Table Component */
-    .table-container { width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .btn { width: 100%; background: var(--primary); color: #ffffff; font-weight: 600; border: none; padding: 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: opacity 0.2s, background 0.2s; margin-top: 14px; }
+    .btn:hover:not(:disabled) { opacity: 0.9; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--card-border); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-warning { background: var(--warning); color: #fff; }
+    .btn-inline { width: auto; margin-top: 0; padding: 6px 12px; font-size: 0.8rem; }
+
+    /* Badges */
+    .badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; }
+    .badge-task { background: var(--primary-soft); color: var(--primary); }
+    .badge-achievement { background: var(--success-soft); color: var(--success); }
+    .badge-assigned { background: var(--purple-soft); color: var(--purple); }
+    .badge-admin { background: var(--warning-soft); color: var(--warning); }
+    .badge-regular { background: var(--success-soft); color: var(--success); }
+    .badge-overtime { background: var(--warning-soft); color: var(--warning); }
+    .badge-holiday { background: var(--purple-soft); color: var(--purple); }
+    .badge-urgent { background: var(--danger-soft); color: var(--danger); }
+
+    /* CARD GRID VIEW FOR RECORDS */
+    .records-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
+    .record-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
+    
+    /* Highlighted Pushed Tasks Styling */
+    .record-card.pushed-task-highlight {
+      border: 2px solid var(--warning) !important;
+      background: var(--warning-soft) !important;
+      box-shadow: 0 0 12px rgba(217, 119, 6, 0.35) !important;
+      animation: pulsePushedTask 2.5s infinite ease-in-out;
+    }
+    @keyframes pulsePushedTask {
+      0% { border-color: var(--warning); box-shadow: 0 0 4px rgba(217, 119, 6, 0.2); }
+      50% { border-color: var(--danger); box-shadow: 0 0 14px rgba(217, 119, 6, 0.5); }
+      100% { border-color: var(--warning); box-shadow: 0 0 4px rgba(217, 119, 6, 0.2); }
+    }
+
+    .record-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+    .record-card-title { font-weight: 700; font-size: 0.95rem; color: var(--text); line-height: 1.3; }
+    .record-card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .record-card-body { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4; flex: 1; }
+    .record-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--card-border); padding-top: 10px; margin-top: 6px; }
+    .record-actions { display: flex; gap: 6px; }
+
+    /* Tables */
+    .table-container { width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 16px; box-shadow: var(--shadow); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
-    th { background: #f1f5f9; padding: 12px 14px; font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--card-border); }
+    th { background: var(--bg); padding: 12px 14px; font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--card-border); }
     td { padding: 12px 14px; border-bottom: 1px solid var(--card-border); color: var(--text); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f8fafc; }
 
-    .badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; display: inline-block; text-transform: uppercase; }
-    .badge-task { background: var(--accent-soft); color: var(--accent-hover); }
-    .badge-achievement { background: var(--success-soft); color: var(--success); }
+    /* Charts Layout Grid */
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; margin-top: 16px; }
+    .chart-container { position: relative; width: 100%; min-height: 250px; }
 
-    .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; transition: all 0.15s; }
-    .action-icon-btn:hover { color: var(--text); background: #e2e8f0; }
-    .action-icon-btn.delete:hover { color: var(--danger); background: var(--danger-soft); }
+    .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; }
+    .action-icon-btn.delete:hover { color: var(--danger); }
+    .action-icon-btn.edit:hover { color: var(--primary); }
 
-    /* Searchable Dropdown */
+    /* Searchable Select */
     .searchable-select { position: relative; }
-    .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; max-height: 180px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: none; }
+    .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; }
     .history-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid var(--card-border); }
-    .history-item:hover { background: var(--accent-soft); color: var(--accent-hover); }
+    .history-item:hover { background: var(--primary-soft); color: var(--primary); }
 
-    /* Bottom Navigation */
-    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height); background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; font-size: 0.7rem; font-weight: 600; gap: 4px; background: none; border: none; padding: 0; margin: 0; cursor: pointer; width: 33.3%; height: 100%; }
-    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
-    .nav-item.active { color: var(--accent); }
-
-    /* Report HTML Card Styling */
-    .report-card-wrapper { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
-    .report-card-header { font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 4px; }
-    .report-card-title { font-weight: 700; color: #1e293b; font-size: 0.95rem; }
-    .report-card-body { font-size: 0.85rem; color: #475569; margin-top: 4px; line-height: 1.4; }
+    /* Swatches */
+    .grid-swatch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+    .swatch-btn { padding: 10px 8px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg); cursor: pointer; font-size: 0.78rem; font-weight: 600; text-align: center; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+    .swatch-btn.active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+    .palette-dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
+    .preset-card { border: 1px solid var(--card-border); padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; background: var(--bg); }
+    .preset-card.active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+    .preset-preview-box { width: 100%; height: 28px; border: 1px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; }
 
     .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 110; }
     .hidden { display: none !important; }
+
+    /* Mobile Responsive Logic */
+    @media (max-width: 768px) {
+      aside.sidebar { transform: translateX(-100%); width: 240px !important; }
+      body.sidebar-open aside.sidebar { transform: translateX(0); }
+      body.sidebar-open .sidebar-overlay { display: block; }
+      .main-wrapper { margin-left: 0 !important; }
+      .mobile-menu-btn { display: flex; }
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    @media print {
+      aside.sidebar, header, .btn, .no-print { display: none !important; }
+      .main-wrapper { margin-left: 0 !important; }
+      body { background: #fff; color: #000; }
+      .card { border: 1px solid #ccc; box-shadow: none; }
+    }
   </style>
 </head>
 <body>
 
+  <!-- Auth Screen -->
   <div id="authScreen" class="auth-overlay">
     <div style="text-align: center; max-width: 320px;">
       <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">TaskTracker Pro</h2>
       <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">Secure task management synchronized directly to your private Google Drive storage.</p>
-      <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #1e293b; border: 1px solid var(--card-border); font-weight: 600;">
+      <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #333; border: 1px solid var(--card-border); font-weight: 600;">
         <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
         Sign in with Google
       </button>
     </div>
   </div>
 
-  <header>
-    <span class="brand-title">TaskTracker</span>
-    <div class="sync-badge" id="syncTrigger">
-      <span id="syncDot" class="dot"></span>
-      <span id="syncText">Offline Mode</span>
+  <!-- Response Modal for Pushed Tasks -->
+  <div id="responseModal" class="auth-overlay hidden" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1100;">
+    <div class="card" style="max-width: 480px; width: 100%; margin: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <div class="card-title" style="margin-bottom: 12px;">
+        <span>Respond to Pushed Task</span>
+        <button id="closeResponseModalBtn" class="action-icon-btn" style="font-size: 1.2rem; line-height: 1;">&times;</button>
+      </div>
+      <div id="modalTaskSummary" style="font-size: 0.85rem; color: var(--text-muted); background: var(--bg); padding: 10px; border-radius: 8px; margin-bottom: 12px; line-height: 1.4;"></div>
+      
+      <label style="margin-top: 0;">Update Status</label>
+      <select id="responseStatusSelect">
+        <option value="Completed">✓ Task Completed</option>
+        <option value="Not Complete / Cannot Be Done">❌ Cannot Be Done / Blocked</option>
+        <option value="More Time Requested">⏳ Request More Time</option>
+        <option value="Pending">📌 Pending / In Progress</option>
+      </select>
+
+      <label>Response / Explanation / Notes</label>
+      <textarea id="responseTextarea" rows="3" placeholder="Provide details, reason for delay, or progress updates..."></textarea>
+
+      <div style="display: flex; gap: 10px; margin-top: 16px;">
+        <button id="saveResponseBtn" class="btn btn-success" style="margin-top:0;">Save Response</button>
+        <button id="cancelResponseBtn" class="btn btn-secondary" style="margin-top:0;">Cancel</button>
+      </div>
     </div>
-  </header>
+  </div>
 
-  <main id="appContent" class="hidden">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- DEFAULT HOME VIEW: Current Month Records Table -->
-    <section id="viewRecords" class="view active">
-      <div class="card" style="padding: 14px 18px; margin-bottom: 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size:0.85rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Month View</span>
-          <input type="month" id="monthPicker" style="width: auto; margin: 0; padding: 6px 10px; font-size: 0.85rem;">
+  <div class="app-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-group">
+          <span class="brand-title">TaskTracker</span>
         </div>
-      </div>
-
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Title</th>
-              <th>Details</th>
-              <th style="text-align: right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-
-      <button id="addTaskTableBtn" class="btn">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Add New Task
-      </button>
-    </section>
-
-    <!-- FORM VIEW: Add / Edit -->
-    <section id="viewEntry" class="view">
-      <div class="card">
-        <div class="card-title">
-          <span id="formHeaderTitle">New Entry</span>
-          <button id="cancelEditBtn" class="btn btn-secondary hidden" style="width:auto; padding:4px 10px; font-size:0.75rem; margin:0;">Cancel</button>
-        </div>
-
-        <label>Search & Clone Previous Task</label>
-        <div class="searchable-select">
-          <input type="text" id="historySearchInput" placeholder="Type to filter past tasks..." autocomplete="off">
-          <div id="historyResults" class="history-results"></div>
-        </div>
-
-        <label>Type</label>
-        <select id="taskType">
-          <option value="Task">Task</option>
-          <option value="Achievement">Achievement</option>
-        </select>
-
-        <label>Title</label>
-        <input type="text" id="taskTitle" placeholder="e.g. Infrastructure Deployment">
-
-        <label>Details & Outcomes</label>
-        <textarea id="taskDesc" rows="4" placeholder="Log execution metrics or details..."></textarea>
-
-        <button id="saveTaskBtn" class="btn">Save Entry</button>
-      </div>
-    </section>
-
-    <!-- REPORT VIEW -->
-    <section id="viewReports" class="view">
-      <div class="card">
-        <div class="card-title">Monthly Executive Summary</div>
-        
-        <label>Select Month</label>
-        <input type="month" id="reportMonthPicker" style="margin-bottom: 16px;">
-
-        <div id="reportPreviewContainer" style="margin-bottom: 16px;"></div>
-
-        <button id="exportReportBtn" class="btn" style="background: var(--success);">
-          ✉️ Send Formatted HTML Report
+        <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Navigation">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
       </div>
-    </section>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-target="viewRecords">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+          <span class="nav-text">Records Grid</span>
+        </button>
+        <button class="nav-item" data-target="viewEntry">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          <span class="nav-text">Add / Edit Task</span>
+        </button>
+        <button class="nav-item admin-only hidden" data-target="viewAssign">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <span class="nav-text">Push / Assign Tasks</span>
+        </button>
+        <button class="nav-item" data-target="viewReports">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
+          <span class="nav-text">Analytics Reports</span>
+        </button>
+        <button class="nav-item" data-target="viewSettings">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          <span class="nav-text">Settings</span>
+        </button>
+      </nav>
+    </aside>
 
-  </main>
+    <!-- Main Content Area -->
+    <div class="main-wrapper">
+      <header>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <span id="adminHeaderBadge" class="badge badge-admin hidden">Admin Mode</span>
+        </div>
+        <div class="sync-badge" id="syncTrigger">
+          <span id="syncDot" class="dot"></span>
+          <span id="syncText">Offline Mode</span>
+        </div>
+      </header>
 
-  <nav class="bottom-nav">
-    <button class="nav-item active" data-target="viewRecords">
-      <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
-      Records
-    </button>
-    <button class="nav-item" data-target="viewEntry">
-      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-      Add Task
-    </button>
-    <button class="nav-item" data-target="viewReports">
-      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
-      Reports
-    </button>
-  </nav>
+      <main id="appContent" class="hidden">
+
+        <!-- VIEW 1: Cards View Records -->
+        <section id="viewRecords" class="view active">
+          <div class="card" style="padding: 14px 18px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <span style="font-size:0.85rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Filter Month</span>
+              <input type="month" id="monthPicker" style="width: auto; margin: 0; padding: 6px 10px; font-size: 0.85rem;">
+            </div>
+          </div>
+
+          <!-- Assigned / Pushed Tasks Section -->
+          <div id="assignedSectionContainer" class="hidden" style="margin-bottom: 24px;">
+            <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--warning); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+              Pushed Tasks Assigned To Me (Action / Response Required)
+            </h3>
+            <div id="assignedCardsGrid" class="records-grid"></div>
+          </div>
+
+          <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase;">Task Records</h3>
+          <div id="cardsGrid" class="records-grid"></div>
+
+          <button id="addTaskTableBtn" class="btn" style="margin-top: 20px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add New Entry
+          </button>
+        </section>
+
+        <!-- VIEW 2: Entry Form -->
+        <section id="viewEntry" class="view">
+          <div class="card">
+            <div class="card-title">
+              <span id="formHeaderTitle">New Entry</span>
+              <button id="cancelEditBtn" class="btn btn-secondary hidden btn-inline">Cancel</button>
+            </div>
+
+            <label>Search & Clone Previous Task</label>
+            <div class="searchable-select">
+              <input type="text" id="historySearchInput" placeholder="Type to filter past tasks..." autocomplete="off">
+              <div id="historyResults" class="history-results"></div>
+            </div>
+
+            <label>Type</label>
+            <select id="taskType">
+              <option value="Task">Task</option>
+              <option value="Achievement">Achievement</option>
+            </select>
+
+            <label>Title</label>
+            <input type="text" id="taskTitle" placeholder="e.g. Database Index Optimization">
+
+            <label>Date & Time (Overtime / Holiday Auto-Detection)</label>
+            <input type="datetime-local" id="taskDatetime">
+            <div id="workTypeBadgePreview" style="margin-top: 6px;"></div>
+
+            <label>Details & Outcomes</label>
+            <textarea id="taskDesc" rows="4" placeholder="Log execution metrics, scope, or achievements..."></textarea>
+
+            <button id="saveTaskBtn" class="btn">Save Entry</button>
+          </div>
+        </section>
+
+        <!-- VIEW 3: Admin Push Task Assignment (Admin Only) -->
+        <section id="viewAssign" class="view">
+          <div class="card">
+            <div class="card-title">Push Task to Team Member</div>
+
+            <label>Task Title</label>
+            <input type="text" id="assignTitle" placeholder="e.g. Prepare Quarter Audit Summary">
+
+            <label>Assignee (Team Member)</label>
+            <select id="assignUserSelect"></select>
+
+            <label>Importance / Priority Level</label>
+            <select id="assignPriority">
+              <option value="Urgent">🔥 Urgent (Immediate Action)</option>
+              <option value="High">⚡ High Priority</option>
+              <option value="Medium">Medium Priority</option>
+              <option value="Low">Low Priority</option>
+            </select>
+
+            <label>Time Frame & Target Deadline</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div>
+                <select id="assignTimeframe">
+                  <option value="24 Hours">24 Hours (Immediate)</option>
+                  <option value="3 Days">3 Days (Short-term)</option>
+                  <option value="1 Week">1 Week (Medium-term)</option>
+                  <option value="Custom">Custom Schedule</option>
+                </select>
+              </div>
+              <div>
+                <input type="datetime-local" id="assignDatetime">
+              </div>
+            </div>
+
+            <label>Description & Instructions</label>
+            <textarea id="assignDesc" rows="3" placeholder="Specify instructions, deliverables or expectations..."></textarea>
+
+            <button id="dispatchAssignBtn" class="btn btn-warning">🚀 Dispatch Pushed Task</button>
+          </div>
+        </section>
+
+        <!-- VIEW 4: Analytics Reports -->
+        <section id="viewReports" class="view">
+          <!-- Report Header Controls -->
+          <div class="card">
+            <div class="card-title">
+              <span>Executive Dashboard & Reports</span>
+              <span id="reportScopeBadge" class="badge badge-task">Personal Report</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label>Timeframe Mode</label>
+                <select id="reportTimeframeSelect">
+                  <option value="month">Specific Month</option>
+                  <option value="last3">Last 3 Months</option>
+                  <option value="all">All Time</option>
+                </select>
+              </div>
+              <div id="monthPickerWrap">
+                <label>Select Month</label>
+                <input type="month" id="reportMonthPicker">
+              </div>
+              <div id="adminUserFilterWrap" class="hidden">
+                <label>Filter By User</label>
+                <select id="reportUserSelect">
+                  <option value="ALL">All Users</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button id="exportReportBtn" class="btn btn-success btn-inline">✉️ Copy & Open Mail</button>
+              <button id="exportCsvBtn" class="btn btn-secondary btn-inline">📥 Download CSV</button>
+              <button id="printPdfBtn" class="btn btn-secondary btn-inline">🖨️ Print / Save PDF</button>
+            </div>
+          </div>
+
+          <!-- Structured Summary Data Table -->
+          <div class="card">
+            <div class="card-title">Aggregate Work Hours Breakdown</div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>User / Category</th>
+                    <th>Total Tasks</th>
+                    <th>Regular Hours</th>
+                    <th>Overtime / After-Work</th>
+                    <th>Holiday Tasks</th>
+                  </tr>
+                </thead>
+                <tbody id="summaryTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Assigned Tasks Report Section -->
+          <div class="card">
+            <div class="card-title">Admin Pushed Tasks Log</div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Assignee</th>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Time Frame</th>
+                    <th>Status</th>
+                    <th>Response / Note</th>
+                    <th>Deadline</th>
+                  </tr>
+                </thead>
+                <tbody id="assignedTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Interactive Charts Canvas Section -->
+          <div class="charts-grid">
+            <div class="card">
+              <div class="card-title">Task Count (Selected Month vs Past 3 Months)</div>
+              <div class="chart-container"><canvas id="chartMonthlyCanvas"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Work Hours Classification</div>
+              <div class="chart-container"><canvas id="chartWorkHoursCanvas"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Admin Comparative Charts -->
+          <div id="adminChartsContainer" class="charts-grid hidden" style="margin-top: 16px;">
+            <div class="card">
+              <div class="card-title">Team Performance Comparison (All Users)</div>
+              <div class="chart-container"><canvas id="chartAdminUsersCanvas"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Overtime & Holiday Rewards Comparison</div>
+              <div class="chart-container"><canvas id="chartAdminOvertimeCanvas"></canvas></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 5: Settings -->
+        <section id="viewSettings" class="view">
+          <div class="card" style="border-left: 4px solid var(--warning);">
+            <div class="card-title">Admin Rights & Controls</div>
+            <div id="adminLoginBox">
+              <p class="field-hint" style="margin-bottom: 10px;">Login as Admin to push tasks, view team performance, and compare reward metrics.</p>
+              <label>Admin Password</label>
+              <input type="password" id="adminPassInput" placeholder="Enter admin password">
+              <button id="adminLoginBtn" class="btn btn-secondary" style="margin-top: 10px;">Login as Admin</button>
+            </div>
+            <div id="adminPanelBox" class="hidden">
+              <p style="font-size:0.85rem; color:var(--success); font-weight:700; margin-bottom: 12px;">✓ Active Administrator Session</p>
+              <label>Change Admin Password</label>
+              <input type="password" id="newAdminPassInput" placeholder="Enter new password">
+              <button id="updateAdminPassBtn" class="btn btn-secondary" style="margin-top: 10px;">Update Password</button>
+              <button id="adminLogoutBtn" class="btn btn-secondary" style="margin-top: 8px; color: var(--danger);">Logout Admin</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">App & User Preferences</div>
+
+            <label>Preferred Username / Full Name</label>
+            <input type="text" id="usernameInput" placeholder="e.g. Alex Morgan">
+
+            <label>Default Email Recipients</label>
+            <input type="text" id="defaultRecipientsInput" placeholder="boss@company.com, hr@company.com">
+
+            <label>Color Palette Selection</label>
+            <div class="grid-swatch" id="palettePicker">
+              <button class="swatch-btn" data-palette="sage"><span class="palette-dot" style="background:#6b8299;"></span>Sage</button>
+              <button class="swatch-btn" data-palette="ocean"><span class="palette-dot" style="background:#2563eb;"></span>Ocean</button>
+              <button class="swatch-btn" data-palette="slate"><span class="palette-dot" style="background:#475569;"></span>Slate</button>
+              <button class="swatch-btn" data-palette="sunset"><span class="palette-dot" style="background:#ea580c;"></span>Sunset</button>
+              <button class="swatch-btn" data-palette="emerald"><span class="palette-dot" style="background:#059669;"></span>Emerald</button>
+              <button class="swatch-btn" data-palette="berry"><span class="palette-dot" style="background:#9333ea;"></span>Berry</button>
+            </div>
+
+            <label>Theme Mode (Live Switch)</label>
+            <select id="themeModeSelect">
+              <option value="light">☀️ Light Mode</option>
+              <option value="dark">🌙 Dark Mode</option>
+            </select>
+
+            <label>UI Design Preset Preview</label>
+            <div class="grid-swatch" id="uiStylePicker">
+              <div class="preset-card swatch-btn" data-preset="default" style="border-radius:12px;">
+                <div class="preset-preview-box" style="border-radius:8px;">Default</div>Cards
+              </div>
+              <div class="preset-card swatch-btn" data-preset="compact" style="border-radius:4px; padding:6px;">
+                <div class="preset-preview-box" style="border-radius:2px;">Compact</div>Minimal
+              </div>
+              <div class="preset-card swatch-btn" data-preset="neumorphic" style="border-radius:16px;">
+                <div class="preset-preview-box" style="border-radius:8px;">Soft</div>Neumorphic
+              </div>
+              <div class="preset-card swatch-btn" data-preset="glass" style="border-radius:14px;">
+                <div class="preset-preview-box" style="border-radius:10px;">Glass</div>Rounded
+              </div>
+              <div class="preset-card swatch-btn" data-preset="terminal" style="border-radius:0px; border-width:2px;">
+                <div class="preset-preview-box" style="border-radius:0px;">Terminal</div>Terminal
+              </div>
+              <div class="preset-card swatch-btn" data-preset="bordered" style="border-radius:6px; border:1px solid #9ca3af;">
+                <div class="preset-preview-box" style="border-radius:4px;">Bordered</div>Bordered
+              </div>
+            </div>
+
+            <button id="saveSettingsBtn" class="btn" disabled>Save Preferences</button>
+          </div>
+
+          <!-- Task tracker Pro Version Banner -->
+          <div style="text-align: center; margin-top: 24px; padding: 14px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); border-top: 1px solid var(--card-border);">
+            Task tracker Pro (Beta 0.9.02)
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
 
   <script>
     const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
     const DRIVE_FILE_NAME = 'tasktracker_db.json';
     const STORAGE_KEY_SESSION = 'tasktracker_google_session';
+    const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
+    const STORAGE_KEY_ADMIN_PASS = 'tasktracker_admin_pass';
     const DB_NAME = 'TaskTrackerDB';
     let db = null;
 
+    let currentUser = { id: 'usr_default', email: 'User', username: '' };
+    let isAdmin = false;
+    let adminPassword = localStorage.getItem(STORAGE_KEY_ADMIN_PASS) || "IDSC4Ever@2026";
+
+    let savedSettings = { username: '', recipients: '', palette: 'sage', theme: 'light', uiStyle: 'default' };
+    let activeSettings = { ...savedSettings };
+
+    const el = id => document.getElementById(id);
+
+    /* Chart instances */
+    let chartMonthlyInstance = null;
+    let chartWorkHoursInstance = null;
+    let chartAdminUsersInstance = null;
+    let chartAdminOvertimeInstance = null;
+    let activeResponseTaskId = null;
+
+    /* Initialize DB */
     function initDB() {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 1);
+        const request = indexedDB.open(DB_NAME, 3);
         request.onupgradeneeded = (e) => {
           const database = e.target.result;
           if (!database.objectStoreNames.contains('entries')) {
@@ -239,7 +690,7 @@
         return new Promise((resolve) => {
           const tx = db.transaction('entries', 'readonly');
           const request = tx.objectStore('entries').getAll();
-          request.onsuccess = () => resolve(request.result);
+          request.onsuccess = () => resolve(request.result || []);
         });
       },
       async bulkReplace(entries) {
@@ -257,17 +708,92 @@
       }
     };
 
+    /* User Match Helper for Assignee and Author verification */
+    function isUserMatch(item) {
+      if (!item) return false;
+      const uId = (currentUser.id || '').toLowerCase();
+      const uEmail = (currentUser.email || '').toLowerCase();
+      const uName = (savedSettings.username || '').trim().toLowerCase();
+
+      const itemUserId = (item.userId || '').toLowerCase();
+      const itemUserName = (item.userName || '').toLowerCase();
+      const itemUsername = (item.username || '').toLowerCase();
+
+      if (!item.userId && !item.userName && !item.username) return true;
+
+      if (uId && (itemUserId === uId || itemUserName === uId || itemUsername === uId)) return true;
+      if (uEmail && (itemUserId === uEmail || itemUserName === uEmail || itemUsername === uEmail)) return true;
+      if (uName && (itemUserId === uName || itemUserName === uName || itemUsername === uName)) return true;
+
+      return false;
+    }
+
+    /* Distinct Users Extraction Helper */
+    function getDistinctUsers(allEntries) {
+      const userMap = new Map();
+      const currentName = (savedSettings.username || currentUser.email || 'Current User').trim();
+      const currentId = currentUser.id || currentUser.email || currentName;
+
+      if (currentName) {
+        userMap.set(currentName.toLowerCase(), { id: currentId, name: currentName });
+      }
+
+      allEntries.forEach(e => {
+        const name = (e.username || e.userName || e.userId || '').trim();
+        const id = e.userId || e.userName || e.username || name;
+        if (name) {
+          const key = name.toLowerCase();
+          if (!userMap.has(key)) {
+            userMap.set(key, { id: id, name: name });
+          }
+        }
+      });
+
+      return Array.from(userMap.values());
+    }
+
+    /* Work Hour Auto Detection (Sun-Thu 8:30 to 16:00 = Regular, Fri/Sat = Holiday, Else = Overtime) */
+    function calculateWorkType(datetimeStr) {
+      if (!datetimeStr) return 'Regular';
+      const dt = new Date(datetimeStr);
+      if (isNaN(dt.getTime())) return 'Regular';
+      
+      const day = dt.getDay(); // 0: Sun, 1: Mon, ..., 5: Fri, 6: Sat
+      const hours = dt.getHours();
+      const minutes = dt.getMinutes();
+      const totalMinutes = hours * 60 + minutes;
+
+      if (day === 5 || day === 6) {
+        return 'Holiday';
+      }
+      if (totalMinutes >= 510 && totalMinutes <= 960) {
+        return 'Regular';
+      }
+      return 'Overtime';
+    }
+
+    /* Google Authentication */
     let accessToken = null;
     let tokenClient = null;
 
     function initGoogleAuth() {
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/drive.appdata',
+        scope: GOOGLE_SCOPES,
         callback: async (response) => {
           if (response.error) return alert("Login Failed: " + response.error);
           accessToken = response.access_token;
-          localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ access_token: accessToken, expiry: Date.now() + ((response.expires_in || 3600) * 1000) }));
+          try {
+            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
+            const profile = await userInfoRes.json();
+            currentUser = { id: profile.sub || profile.email, email: profile.email || profile.name || 'User' };
+          } catch(err) {}
+
+          localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ 
+            access_token: accessToken, 
+            user: currentUser,
+            expiry: Date.now() + ((response.expires_in || 3600) * 1000) 
+          }));
           await applyAuthState();
         },
       });
@@ -279,7 +805,10 @@
       if (!raw) return;
       try {
         const session = JSON.parse(raw);
-        if (session.access_token && Date.now() < (session.expiry - 300000)) accessToken = session.access_token;
+        if (session.access_token && Date.now() < (session.expiry - 300000)) {
+          accessToken = session.access_token;
+          if (session.user) currentUser = session.user;
+        }
       } catch (err) { localStorage.removeItem(STORAGE_KEY_SESSION); }
     }
 
@@ -314,8 +843,21 @@
         const fileId = await findDriveFileId();
         if (fileId) {
           const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
-          const remoteEntries = await res.json();
-          if (Array.isArray(remoteEntries)) { await dbOps.bulkReplace(remoteEntries); render(); }
+          const payload = await res.json();
+          if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+            if (payload.settings) {
+              savedSettings = { ...savedSettings, ...payload.settings };
+              activeSettings = { ...savedSettings };
+              localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+              applyLiveUI(activeSettings);
+              syncSettingsFormValues();
+              checkSettingsDirty();
+            }
+            if (Array.isArray(payload.entries)) await dbOps.bulkReplace(payload.entries);
+          } else if (Array.isArray(payload)) {
+            await dbOps.bulkReplace(payload);
+          }
+          render();
         }
         updateSyncStatus('online', 'Synced');
       } catch (err) { updateSyncStatus('', 'Offline Mode'); }
@@ -326,8 +868,9 @@
       updateSyncStatus('syncing', 'Saving...');
       try {
         const localEntries = await dbOps.getAll();
+        const fullPayload = { settings: savedSettings, entries: localEntries };
         const fileId = await findDriveFileId();
-        const blob = new Blob([JSON.stringify(localEntries, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
 
         if (fileId) {
           await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
@@ -344,104 +887,177 @@
       } catch (err) { updateSyncStatus('', 'Save Failed'); }
     }
 
+    /* UI State & Routing */
     const now = new Date();
     let currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     let editingId = null;
 
-    const el = id => document.getElementById(id);
-
-    document.querySelectorAll('.nav-item').forEach(btn => {
-      btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
-    });
-
     function switchView(viewId) {
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      
+
       const activeNav = document.querySelector(`.nav-item[data-target="${viewId}"]`);
       if (activeNav) activeNav.classList.add('active');
       el(viewId).classList.add('active');
 
-      if (viewId === 'viewReports') renderReportPreview();
+      document.body.classList.remove('sidebar-open');
+
+      if (viewId === 'viewReports') renderReportsView();
+      if (viewId === 'viewAssign') populateAssigneeDropdown();
     }
 
+    /* Render Records Card Grid */
     async function render() {
       const allEntries = await dbOps.getAll();
-      const monthEntries = allEntries
-        .filter(e => e.month === currentSelectedMonth)
-        .sort((a, b) => b.timestamp - a.timestamp);
+      
+      const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => isUserMatch(e));
 
-      const tbody = el('tableBody');
-      tbody.innerHTML = '';
+      // Pushed / Assigned Tasks Section for User or Admin
+      const assignedPending = allEntries.filter(e => (e.isAssigned || e.isPushed) && (isUserMatch(e) || isAdmin));
+      const assignedContainer = el('assignedSectionContainer');
+      const assignedGrid = el('assignedCardsGrid');
+      
+      if (assignedPending.length > 0) {
+        assignedContainer.classList.remove('hidden');
+        assignedGrid.innerHTML = '';
+        assignedPending.forEach(item => assignedGrid.appendChild(createTaskCard(item, true)));
+      } else {
+        assignedContainer.classList.add('hidden');
+      }
+
+      // Filter Month Entries
+      const monthEntries = visibleEntries
+        .filter(e => e.month === currentSelectedMonth)
+        .sort((a, b) => new Date(b.datetime || b.timestamp) - new Date(a.datetime || a.timestamp));
+
+      const cardsGrid = el('cardsGrid');
+      cardsGrid.innerHTML = '';
 
       if (monthEntries.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">No records found for this month.</td></tr>`;
+        cardsGrid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 30px;" class="card">No task records found for ${currentSelectedMonth}.</div>`;
       } else {
-        monthEntries.forEach(item => {
-          const tr = document.createElement('tr');
-          const badgeClass = item.type === 'Achievement' ? 'badge-achievement' : 'badge-task';
-          tr.innerHTML = `
-            <td><span class="badge ${badgeClass}">${item.type}</span></td>
-            <td style="font-weight: 600;">${escapeHTML(item.title)}</td>
-            <td style="color: var(--text-muted); font-size: 0.82rem;">${escapeHTML(item.desc || '-')}</td>
-            <td style="text-align: right; white-space: nowrap;">
-              <button onclick="editEntry('${item.id}')" class="action-icon-btn" title="Edit">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-              </button>
-              <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              </button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
+        monthEntries.forEach(item => cardsGrid.appendChild(createTaskCard(item, false)));
       }
     }
 
-    el('historySearchInput').addEventListener('input', async (e) => {
-      const query = e.target.value.toLowerCase().trim();
-      const resultsContainer = el('historyResults');
-      if (!query) { resultsContainer.style.display = 'none'; return; }
+    function createTaskCard(item, isAssignedPending) {
+      const card = document.createElement('div');
+      const isPushed = item.isAssigned || item.isPushed;
 
-      const all = await dbOps.getAll();
-      const matches = all.filter(item => item.title.toLowerCase().includes(query) || item.desc.toLowerCase().includes(query));
+      card.className = 'record-card' + (isPushed && (!item.status || item.status === 'Pending') ? ' pushed-task-highlight' : '');
 
-      resultsContainer.innerHTML = '';
-      if (matches.length === 0) {
-        resultsContainer.style.display = 'none';
-        return;
+      const workType = item.workType || calculateWorkType(item.datetime);
+      const isMyTask = isUserMatch(item);
+      const displayName = item.username || item.userName || 'User';
+
+      let workBadgeClass = 'badge-regular';
+      if (workType === 'Overtime') workBadgeClass = 'badge-overtime';
+      if (workType === 'Holiday') workBadgeClass = 'badge-holiday';
+
+      let typeBadgeClass = 'badge-task';
+      if (item.type === 'Achievement') typeBadgeClass = 'badge-achievement';
+      if (item.type === 'Assigned Task' || item.type === 'Pushed Task') typeBadgeClass = 'badge-assigned';
+
+      // Status Badge Logic
+      let statusBadgeClass = 'badge-task';
+      const currentStatus = item.status || 'Pending';
+      if (currentStatus === 'Completed') statusBadgeClass = 'badge-achievement';
+      else if (currentStatus.includes('Cannot') || currentStatus.includes('Not Complete')) statusBadgeClass = 'badge-urgent';
+      else if (currentStatus.includes('More Time')) statusBadgeClass = 'badge-overtime';
+      else if (currentStatus === 'Pending') statusBadgeClass = 'badge-admin';
+
+      const formattedDt = item.datetime ? new Date(item.datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : new Date(item.timestamp).toLocaleDateString();
+
+      let actionsHtml = '';
+      if (isPushed && (isMyTask || isAdmin)) {
+        const buttonText = item.userResponse || (item.status && item.status !== 'Pending') ? '✏️ Edit Response' : '💬 Respond';
+        actionsHtml = `
+          <div class="record-actions" style="align-items: center; gap: 6px;">
+            <button onclick="openResponseModal('${item.id}')" class="btn btn-warning btn-inline" style="margin:0;">${buttonText}</button>
+            <button onclick="editEntry('${item.id}')" class="action-icon-btn edit" title="Edit Task"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+            <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+          </div>`;
+      } else if (isMyTask || isAdmin) {
+        actionsHtml = `
+          <div class="record-actions">
+            <button onclick="editEntry('${item.id}')" class="action-icon-btn edit" title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+            <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+          </div>`;
+      } else {
+        actionsHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Read-Only</span>`;
       }
 
-      matches.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.textContent = `[${item.month}] ${item.title}`;
-        div.onclick = () => {
-          el('taskTitle').value = item.title;
-          el('taskType').value = item.type;
-          el('taskDesc').value = item.desc;
-          el('historySearchInput').value = item.title;
-          resultsContainer.style.display = 'none';
-        };
-        resultsContainer.appendChild(div);
-      });
-      resultsContainer.style.display = 'block';
-    });
+      let userResponseBox = '';
+      if (item.userResponse) {
+        userResponseBox = `<div style="font-size:0.8rem; background:var(--primary-soft); color:var(--text); padding:8px 10px; border-radius:6px; margin-top:8px; border-left:3px solid var(--primary);"><strong>Response Note:</strong> ${escapeHTML(item.userResponse)}</div>`;
+      }
 
+      card.innerHTML = `
+        <div>
+          <div class="record-card-header">
+            <span class="record-card-title">${escapeHTML(item.title)}</span>
+            <span class="badge ${typeBadgeClass}">${item.type}</span>
+          </div>
+          <div class="record-card-meta">
+            ${isPushed ? `<span class="badge ${statusBadgeClass}">Status: ${escapeHTML(currentStatus)}</span>` : ''}
+            <span class="badge ${workBadgeClass}">${workType}</span>
+            ${item.priority ? `<span class="badge badge-urgent">Priority: ${escapeHTML(item.priority)}</span>` : ''}
+            ${item.timeframe ? `<span class="badge badge-assigned">Timeframe: ${escapeHTML(item.timeframe)}</span>` : ''}
+            ${isAdmin ? `<span class="badge badge-admin">${escapeHTML(displayName)}</span>` : ''}
+          </div>
+          <div class="record-card-body">
+            ${escapeHTML(item.desc || 'No additional details logged.')}
+            ${userResponseBox}
+          </div>
+        </div>
+        <div class="record-card-footer">
+          <span>🕒 Target: ${formattedDt}</span>
+          ${actionsHtml}
+        </div>
+      `;
+      return card;
+    }
+
+    /* Live Work Type Detection in Entry Form */
+    function updateWorkTypePreview() {
+      const dtVal = el('taskDatetime').value;
+      if (!dtVal) { el('workTypeBadgePreview').innerHTML = ''; return; }
+      const detected = calculateWorkType(dtVal);
+      let badgeClass = 'badge-regular';
+      if (detected === 'Overtime') badgeClass = 'badge-overtime';
+      if (detected === 'Holiday') badgeClass = 'badge-holiday';
+      el('workTypeBadgePreview').innerHTML = `<span class="badge ${badgeClass}">Auto-Detected: ${detected} Hours</span>`;
+    }
+
+    el('taskDatetime').addEventListener('input', updateWorkTypePreview);
+
+    /* Save Task Execution */
     async function handleSave() {
       const title = el('taskTitle').value.trim();
       const type = el('taskType').value;
       const desc = el('taskDesc').value.trim();
+      const datetime = el('taskDatetime').value;
 
       if (!title) return alert('Title is required');
+      if (!datetime) return alert('Date & Time is required');
+
+      const userDisplayName = savedSettings.username.trim() || currentUser.email || 'User';
+      const monthStr = datetime.substring(0, 7);
+      const detectedWorkType = calculateWorkType(datetime);
 
       const record = {
         id: editingId || 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-        month: currentSelectedMonth,
+        userId: currentUser.id,
+        userName: currentUser.email,
+        username: userDisplayName,
+        month: monthStr,
+        datetime: datetime,
         title,
         type,
         desc,
-        timestamp: Date.now()
+        workType: detectedWorkType,
+        status: 'Completed',
+        timestamp: new Date(datetime).getTime() || Date.now()
       };
 
       await dbOps.save(record);
@@ -455,9 +1071,17 @@
       el('taskTitle').value = '';
       el('taskDesc').value = '';
       el('historySearchInput').value = '';
+      el('taskDatetime').value = getNowDatetimeLocal();
       el('formHeaderTitle').innerText = 'New Entry';
       el('saveTaskBtn').innerText = 'Save Entry';
       el('cancelEditBtn').classList.add('hidden');
+      updateWorkTypePreview();
+    }
+
+    function getNowDatetimeLocal() {
+      const d = new Date();
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 16);
     }
 
     window.editEntry = async (id) => {
@@ -465,92 +1089,605 @@
       const target = all.find(e => e.id === id);
       if (!target) return;
 
+      if (!isAdmin && !isUserMatch(target)) {
+        return alert("You can only edit your own or assigned tasks.");
+      }
+
       editingId = target.id;
       el('taskTitle').value = target.title;
       el('taskType').value = target.type;
-      el('taskDesc').value = target.desc;
+      el('taskDesc').value = target.desc || '';
+      el('taskDatetime').value = target.datetime || getNowDatetimeLocal();
       el('formHeaderTitle').innerText = 'Edit Entry';
       el('saveTaskBtn').innerText = 'Update Entry';
       el('cancelEditBtn').classList.remove('hidden');
+      updateWorkTypePreview();
       switchView('viewEntry');
     };
 
     window.deleteEntry = async (id) => {
+      const all = await dbOps.getAll();
+      const target = all.find(e => e.id === id);
+      if (target && !isAdmin && !isUserMatch(target)) {
+        return alert("You can only delete your own or assigned tasks.");
+      }
       if (confirm('Delete this record?')) {
         await dbOps.delete(id);
         render();
       }
     };
 
-    async function renderReportPreview() {
-      const targetMonth = el('reportMonthPicker').value;
+    /* Admin Task Assignment & Pushing */
+    async function populateAssigneeDropdown() {
       const all = await dbOps.getAll();
-      const monthEntries = all
-        .filter(e => e.month === targetMonth)
-        .sort((a, b) => a.timestamp - b.timestamp);
+      const select = el('assignUserSelect');
+      const currentValue = select.value;
+      select.innerHTML = '';
 
-      const container = el('reportPreviewContainer');
-      container.innerHTML = '';
+      const distinctUsers = getDistinctUsers(all);
+      distinctUsers.forEach(user => {
+        const opt = document.createElement('option');
+        opt.value = user.id;
+        opt.textContent = user.name;
+        select.appendChild(opt);
+      });
 
-      if (monthEntries.length === 0) {
-        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">No tasks logged for ${targetMonth}.</p>`;
+      if (currentValue && Array.from(select.options).some(o => o.value === currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    async function dispatchAssignTask() {
+      const title = el('assignTitle').value.trim();
+      const targetUserId = el('assignUserSelect').value;
+      const priority = el('assignPriority').value;
+      const timeframe = el('assignTimeframe').value;
+      const datetime = el('assignDatetime').value;
+      const desc = el('assignDesc').value.trim();
+
+      if (!title || !datetime) return alert('Title and Deadline Date/Time are required');
+
+      const targetOptionText = el('assignUserSelect').options[el('assignUserSelect').selectedIndex].text;
+
+      const assignedRecord = {
+        id: 'pushed_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7),
+        userId: targetUserId,
+        userName: targetOptionText,
+        username: targetOptionText,
+        assignedBy: savedSettings.username || currentUser.email || 'Admin',
+        month: datetime.substring(0, 7),
+        title,
+        type: 'Pushed Task',
+        desc,
+        datetime: datetime,
+        priority: priority,
+        timeframe: timeframe,
+        isAssigned: true,
+        isPushed: true,
+        status: 'Pending',
+        userResponse: '',
+        workType: calculateWorkType(datetime),
+        timestamp: new Date(datetime).getTime()
+      };
+
+      await dbOps.save(assignedRecord);
+      alert('Task successfully pushed to ' + targetOptionText);
+      el('assignTitle').value = '';
+      el('assignDesc').value = '';
+      render();
+      switchView('viewRecords');
+    }
+
+    /* Pushed Task Response Modal Logic */
+    window.openResponseModal = async (id) => {
+      const all = await dbOps.getAll();
+      const target = all.find(e => e.id === id);
+      if (!target) return;
+
+      activeResponseTaskId = id;
+      el('modalTaskSummary').innerHTML = `
+        <strong>Title:</strong> ${escapeHTML(target.title)}<br>
+        <strong>Assigned By:</strong> ${escapeHTML(target.assignedBy || 'Admin')}<br>
+        <strong>Instructions:</strong> ${escapeHTML(target.desc || 'None')}
+      `;
+      el('responseStatusSelect').value = target.status || 'Completed';
+      el('responseTextarea').value = target.userResponse || '';
+      el('responseModal').classList.remove('hidden');
+    };
+
+    function closeResponseModal() {
+      activeResponseTaskId = null;
+      el('responseModal').classList.add('hidden');
+    }
+
+    async function saveTaskResponse() {
+      if (!activeResponseTaskId) return;
+      const all = await dbOps.getAll();
+      const target = all.find(e => e.id === activeResponseTaskId);
+      if (target) {
+        target.status = el('responseStatusSelect').value;
+        target.userResponse = el('responseTextarea').value.trim();
+        target.responseTimestamp = Date.now();
+
+        await dbOps.save(target);
+        closeResponseModal();
+        await render();
+        if (el('viewReports').classList.contains('active')) {
+          renderReportsView();
+        }
+      }
+    }
+
+    /* ANALYTICS & REPORTS SYSTEM */
+    async function getFilteredReportData() {
+      const all = await dbOps.getAll();
+      const timeframeMode = el('reportTimeframeSelect').value;
+      const selectedMonth = el('reportMonthPicker').value;
+      const selectedUser = el('reportUserSelect').value;
+
+      let filtered = isAdmin ? all : all.filter(e => isUserMatch(e));
+
+      if (isAdmin && selectedUser !== 'ALL') {
+        filtered = filtered.filter(e => e.userId === selectedUser || e.username === selectedUser || e.userName === selectedUser || (e.username && e.username.toLowerCase() === selectedUser.toLowerCase()) || (e.userName && e.userName.toLowerCase() === selectedUser.toLowerCase()));
+      }
+
+      if (timeframeMode === 'month') {
+        filtered = filtered.filter(e => e.month === selectedMonth);
+      } else if (timeframeMode === 'last3') {
+        const d = new Date(selectedMonth + '-01');
+        const past = new Date(d);
+        past.setMonth(past.getMonth() - 2);
+        filtered = filtered.filter(e => {
+          const itemDt = new Date(e.datetime || e.timestamp);
+          return itemDt >= past && itemDt <= new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        });
+      }
+      return filtered;
+    }
+
+    /* Dynamically lookup distinct usernames from database task records */
+    async function populateAdminUsersFilter() {
+      const all = await dbOps.getAll();
+      const select = el('reportUserSelect');
+      const currentValue = select.value;
+      select.innerHTML = '<option value="ALL">All Users</option>';
+      
+      const distinctUsers = getDistinctUsers(all);
+      distinctUsers.forEach(user => {
+        const opt = document.createElement('option');
+        opt.value = user.id;
+        opt.textContent = user.name;
+        select.appendChild(opt);
+      });
+
+      if (currentValue && Array.from(select.options).some(o => o.value === currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    async function renderReportsView() {
+      if (isAdmin) {
+        await populateAdminUsersFilter();
+      }
+      const filtered = await getFilteredReportData();
+      renderSummaryTable(filtered);
+      renderAssignedTable(filtered);
+      renderCharts(filtered);
+    }
+
+    function renderSummaryTable(entries) {
+      const tbody = el('summaryTableBody');
+      tbody.innerHTML = '';
+
+      const statsByUser = {};
+
+      entries.forEach(e => {
+        const key = e.username || e.userName || 'User';
+        if (!statsByUser[key]) statsByUser[key] = { total: 0, regular: 0, overtime: 0, holiday: 0 };
+        statsByUser[key].total++;
+        const wt = e.workType || calculateWorkType(e.datetime);
+        if (wt === 'Regular') statsByUser[key].regular++;
+        else if (wt === 'Overtime') statsByUser[key].overtime++;
+        else if (wt === 'Holiday') statsByUser[key].holiday++;
+      });
+
+      if (Object.keys(statsByUser).length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No records found for current filters.</td></tr>`;
         return;
       }
 
-      monthEntries.forEach((item, idx) => {
-        const card = document.createElement('div');
-        card.className = 'report-card-wrapper';
-        card.innerHTML = `
-          <div class="report-card-header">#${idx + 1} | [${item.type.toUpperCase()}] &bull; ${new Date(item.timestamp).toLocaleDateString()}</div>
-          <div class="report-card-title">${escapeHTML(item.title)}</div>
-          <div class="report-card-body">${escapeHTML(item.desc || 'No additional details provided.')}</div>
+      for (const [user, data] of Object.entries(statsByUser)) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-weight:700;">${escapeHTML(user)}</td>
+          <td>${data.total}</td>
+          <td><span class="badge badge-regular">${data.regular}</span></td>
+          <td><span class="badge badge-overtime">${data.overtime}</span></td>
+          <td><span class="badge badge-holiday">${data.holiday}</span></td>
         `;
-        container.appendChild(card);
+        tbody.appendChild(tr);
+      }
+    }
+
+    function renderAssignedTable(entries) {
+      const tbody = el('assignedTableBody');
+      tbody.innerHTML = '';
+      const assigned = entries.filter(e => e.isAssigned || e.isPushed);
+
+      if (assigned.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No pushed/assigned tasks logged.</td></tr>`;
+        return;
+      }
+
+      assigned.forEach(item => {
+        const tr = document.createElement('tr');
+        const isDone = item.status === 'Completed';
+        tr.innerHTML = `
+          <td>${escapeHTML(item.username || item.userName || 'User')}</td>
+          <td style="font-weight:600;">${escapeHTML(item.title)}</td>
+          <td><span class="badge badge-urgent">${item.priority || 'Normal'}</span></td>
+          <td><span class="badge badge-assigned">${item.timeframe || 'Scheduled'}</span></td>
+          <td><span class="badge ${isDone ? 'badge-achievement' : 'badge-task'}">${item.status || 'Pending'}</span></td>
+          <td style="font-size:0.8rem;">${escapeHTML(item.userResponse || '-')}</td>
+          <td style="font-size:0.8rem; color:var(--text-muted);">${item.datetime ? new Date(item.datetime).toLocaleString() : '-'}</td>
+        `;
+        tbody.appendChild(tr);
       });
     }
 
-    el('exportReportBtn').addEventListener('click', async () => {
-      const targetMonth = el('reportMonthPicker').value;
-      const all = await dbOps.getAll();
-      const monthEntries = all
-        .filter(e => e.month === targetMonth)
-        .sort((a, b) => a.timestamp - b.timestamp);
+    async function renderCharts(filteredEntries) {
+      const selectedMonth = el('reportMonthPicker').value;
+      const allEntries = await dbOps.getAll();
 
-      if (monthEntries.length === 0) return alert('No data to export.');
+      // 1. Chart: Monthly Task Count (Current Month vs Preceding 3 Months)
+      const baseDt = new Date(selectedMonth + '-01');
+      const monthsLabels = [];
+      const monthCounts = [0, 0, 0, 0];
 
-      let formattedCardsText = `MONTHLY PERFORMANCE REPORT (${targetMonth})\n===========================================\n\n`;
-      monthEntries.forEach((a, i) => {
-        formattedCardsText += `┌──────────────────────────────────────────┐\n`;
-        formattedCardsText += `│ #${i + 1} [${a.type.toUpperCase()}] - ${new Date(a.timestamp).toLocaleDateString()}\n`;
-        formattedCardsText += `│ Title: ${a.title}\n`;
-        formattedCardsText += `│ Details: ${a.desc || 'N/A'}\n`;
-        formattedCardsText += `└──────────────────────────────────────────┘\n\n`;
+      for (let i = 3; i >= 0; i--) {
+        const m = new Date(baseDt.getFullYear(), baseDt.getMonth() - i, 1);
+        const mStr = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`;
+        monthsLabels.push(m.toLocaleString('default', { month: 'short', year: '2-digit' }));
+        monthCounts[3 - i] = allEntries.filter(e => e.month === mStr && (!isAdmin || el('reportUserSelect').value === 'ALL' || e.userId === el('reportUserSelect').value || e.username === el('reportUserSelect').value)).length;
+      }
+
+      if (chartMonthlyInstance) chartMonthlyInstance.destroy();
+      chartMonthlyInstance = new Chart(el('chartMonthlyCanvas'), {
+        type: 'bar',
+        data: {
+          labels: monthsLabels,
+          datasets: [{ label: 'Tasks Total', data: monthCounts, backgroundColor: '#6b8299', borderRadius: 6 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
       });
 
-      window.location.href = `mailto:?subject=${encodeURIComponent('Monthly Performance Report - ' + targetMonth)}&body=${encodeURIComponent(formattedCardsText)}`;
+      // 2. Chart: Work Hours Classification
+      let reg = 0, over = 0, hol = 0;
+      filteredEntries.forEach(e => {
+        const wt = e.workType || calculateWorkType(e.datetime);
+        if (wt === 'Regular') reg++;
+        else if (wt === 'Overtime') over++;
+        else if (wt === 'Holiday') hol++;
+      });
+
+      if (chartWorkHoursInstance) chartWorkHoursInstance.destroy();
+      chartWorkHoursInstance = new Chart(el('chartWorkHoursCanvas'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Regular Work Hours', 'After-Hours Overtime', 'Holidays'],
+          datasets: [{ data: [reg, over, hol], backgroundColor: ['#7a9b7e', '#d97706', '#8b5cf6'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      // Admin Charts
+      if (isAdmin) {
+        el('adminChartsContainer').classList.remove('hidden');
+
+        const userTotals = {};
+        const userOvertime = {};
+
+        allEntries.forEach(e => {
+          if (e.month === selectedMonth) {
+            const u = e.username || e.userName || 'User';
+            userTotals[u] = (userTotals[u] || 0) + 1;
+            const wt = e.workType || calculateWorkType(e.datetime);
+            if (wt === 'Overtime' || wt === 'Holiday') {
+              userOvertime[u] = (userOvertime[u] || 0) + 1;
+            }
+          }
+        });
+
+        const adminLabels = Object.keys(userTotals);
+
+        if (chartAdminUsersInstance) chartAdminUsersInstance.destroy();
+        chartAdminUsersInstance = new Chart(el('chartAdminUsersCanvas'), {
+          type: 'bar',
+          data: {
+            labels: adminLabels,
+            datasets: [{ label: 'Total Tasks Completed', data: adminLabels.map(k => userTotals[k]), backgroundColor: '#2563eb', borderRadius: 6 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        if (chartAdminOvertimeInstance) chartAdminOvertimeInstance.destroy();
+        chartAdminOvertimeInstance = new Chart(el('chartAdminOvertimeCanvas'), {
+          type: 'bar',
+          data: {
+            labels: adminLabels,
+            datasets: [{ label: 'Overtime & Holiday Tasks', data: adminLabels.map(k => userOvertime[k] || 0), backgroundColor: '#d97706', borderRadius: 6 }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        });
+      } else {
+        el('adminChartsContainer').classList.add('hidden');
+      }
+    }
+
+    /* Export Functions */
+    async function openMailAppWithCopy() {
+      const filtered = await getFilteredReportData();
+      if (filtered.length === 0) return alert('No data to export.');
+
+      let formattedText = `${isAdmin ? 'FULL SYSTEM' : 'PERSONAL'} PERFORMANCE REPORT\n===========================================\n\n`;
+      filtered.forEach((a, i) => {
+        formattedText += `[${i + 1}] ${a.type.toUpperCase()}: ${a.title}\n`;
+        formattedText += `User: ${a.username || a.userName || 'User'}\n`;
+        formattedText += `Status: ${a.status || 'Completed'}\n`;
+        if (a.userResponse) formattedText += `Response Note: ${a.userResponse}\n`;
+        formattedText += `Date/Time: ${a.datetime ? new Date(a.datetime).toLocaleString() : 'N/A'}\n`;
+        formattedText += `Category: ${a.workType || 'Regular'}\n`;
+        formattedText += `Details: ${a.desc || 'N/A'}\n`;
+        formattedText += `-------------------------------------------\n\n`;
+      });
+
+      try { await navigator.clipboard.writeText(formattedText); } catch (err) {}
+
+      const defaultTo = activeSettings.recipients ? encodeURIComponent(activeSettings.recipients) : '';
+      const subject = encodeURIComponent(`${isAdmin ? 'Full System' : 'Monthly'} Performance Report`);
+      window.location.href = `mailto:${defaultTo}?subject=${subject}`;
+    }
+
+    async function downloadReportCSV() {
+      const filtered = await getFilteredReportData();
+      if (filtered.length === 0) return alert('No data available to export.');
+
+      let csv = 'ID,User,Type,Title,Status,User Response,Priority,Timeframe,Work Type,Date Time,Details\n';
+      filtered.forEach(e => {
+        const row = [
+          `"${e.id}"`,
+          `"${e.username || e.userName || 'User'}"`,
+          `"${e.type}"`,
+          `"${(e.title || '').replace(/"/g, '""')}"`,
+          `"${e.status || 'Completed'}"`,
+          `"${(e.userResponse || '').replace(/"/g, '""')}"`,
+          `"${e.priority || 'Normal'}"`,
+          `"${e.timeframe || 'Standard'}"`,
+          `"${e.workType || 'Regular'}"`,
+          `"${e.datetime || new Date(e.timestamp).toISOString()}"`,
+          `"${(e.desc || '').replace(/"/g, '""')}"`
+        ];
+        csv += row.join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `TaskTracker_Report_${currentSelectedMonth}.csv`;
+      a.click();
+    }
+
+    /* History Clone Logic */
+    let historyDebounceTimer;
+    el('historySearchInput').addEventListener('input', (e) => {
+      clearTimeout(historyDebounceTimer);
+      const value = e.target.value;
+      historyDebounceTimer = setTimeout(() => runHistorySearch(value), 150);
     });
 
+    async function runHistorySearch(rawQuery) {
+      const query = rawQuery.toLowerCase().trim();
+      const resultsContainer = el('historyResults');
+      if (!query) { resultsContainer.style.display = 'none'; resultsContainer.innerHTML = ''; return; }
+
+      const all = await dbOps.getAll();
+      const matches = all
+        .filter(item => isUserMatch(item))
+        .filter(item => item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query))
+        .slice(0, 15);
+
+      resultsContainer.innerHTML = '';
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="history-item" style="color:var(--text-muted); cursor:default;">No matches</div>`;
+        resultsContainer.style.display = 'block';
+        return;
+      }
+
+      matches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `<span style="color:var(--text-muted); font-size:0.75rem; margin-right:6px;">${item.month}</span>${escapeHTML(item.title)}`;
+        div.onclick = () => {
+          el('taskTitle').value = item.title;
+          el('taskType').value = item.type;
+          el('taskDesc').value = item.desc || '';
+          el('historySearchInput').value = item.title;
+          resultsContainer.style.display = 'none';
+        };
+        resultsContainer.appendChild(div);
+      });
+      resultsContainer.style.display = 'block';
+    }
+
+    /* Preferences Engine */
+    function loadSettings() {
+      const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+      if (raw) { try { savedSettings = { ...savedSettings, ...JSON.parse(raw) }; } catch(e){} }
+      activeSettings = { ...savedSettings };
+      applyLiveUI(activeSettings);
+      syncSettingsFormValues();
+      checkSettingsDirty();
+    }
+
+    function syncSettingsFormValues() {
+      el('usernameInput').value = activeSettings.username;
+      el('defaultRecipientsInput').value = activeSettings.recipients;
+      el('themeModeSelect').value = activeSettings.theme;
+
+      document.querySelectorAll('#palettePicker .swatch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-palette') === activeSettings.palette);
+      });
+      document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-preset') === activeSettings.uiStyle);
+      });
+    }
+
+    function applyLiveUI(cfg) {
+      document.documentElement.setAttribute('data-theme', cfg.theme);
+      document.documentElement.setAttribute('data-color-palette', cfg.palette);
+      document.documentElement.setAttribute('data-ui-style', cfg.uiStyle);
+    }
+
+    function checkSettingsDirty() {
+      const isDirty = (
+        activeSettings.username !== savedSettings.username ||
+        activeSettings.recipients !== savedSettings.recipients ||
+        activeSettings.palette !== savedSettings.palette ||
+        activeSettings.theme !== savedSettings.theme ||
+        activeSettings.uiStyle !== savedSettings.uiStyle
+      );
+      el('saveSettingsBtn').disabled = !isDirty;
+    }
+
+    async function saveSettings() {
+      savedSettings = { ...activeSettings };
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+      checkSettingsDirty();
+      await syncToDrive();
+    }
+
+    /* Admin Auth Toggle */
+    function loginAdmin() {
+      if (el('adminPassInput').value === adminPassword) {
+        isAdmin = true;
+        el('adminPassInput').value = '';
+        updateAdminUIState();
+        render();
+      } else { alert('Incorrect Admin Password'); }
+    }
+
+    function logoutAdmin() {
+      isAdmin = false;
+      updateAdminUIState();
+      render();
+    }
+
+    function updateAdminPassword() {
+      const newPass = el('newAdminPassInput').value.trim();
+      if (!newPass) return alert('Password cannot be empty');
+      adminPassword = newPass;
+      localStorage.setItem(STORAGE_KEY_ADMIN_PASS, adminPassword);
+      el('newAdminPassInput').value = '';
+      alert('Admin password updated successfully.');
+    }
+
+    async function updateAdminUIState() {
+      el('adminHeaderBadge').classList.toggle('hidden', !isAdmin);
+      el('adminLoginBox').classList.toggle('hidden', isAdmin);
+      el('adminPanelBox').classList.toggle('hidden', !isAdmin);
+      el('adminUserFilterWrap').classList.toggle('hidden', !isAdmin);
+
+      document.querySelectorAll('.admin-only').forEach(e => e.classList.toggle('hidden', !isAdmin));
+
+      const scopeBadge = el('reportScopeBadge');
+      if (isAdmin) {
+        scopeBadge.innerText = 'Full System Report (All Users)';
+        scopeBadge.className = 'badge badge-admin';
+        await populateAdminUsersFilter();
+      } else {
+        scopeBadge.innerText = 'Personal Report';
+        scopeBadge.className = 'badge badge-task';
+      }
+    }
+
+    /* Global Navigation & Event Wiring */
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => {
+      btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
+    });
+
+    el('sidebarToggle').addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
+    el('mobileMenuBtn').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+    el('sidebarOverlay').addEventListener('click', () => document.body.classList.remove('sidebar-open'));
+
+    el('saveTaskBtn').addEventListener('click', handleSave);
     el('addTaskTableBtn').addEventListener('click', () => { resetForm(); switchView('viewEntry'); });
     el('cancelEditBtn').addEventListener('click', resetForm);
+    el('dispatchAssignBtn').addEventListener('click', dispatchAssignTask);
+
+    el('saveResponseBtn').addEventListener('click', saveTaskResponse);
+    el('cancelResponseBtn').addEventListener('click', closeResponseModal);
+    el('closeResponseModalBtn').addEventListener('click', closeResponseModal);
+
+    el('reportTimeframeSelect').addEventListener('change', (e) => {
+      el('monthPickerWrap').classList.toggle('hidden', e.target.value !== 'month');
+      renderReportsView();
+    });
+    el('reportMonthPicker').addEventListener('change', renderReportsView);
+    el('reportUserSelect').addEventListener('change', renderReportsView);
+
+    el('exportReportBtn').addEventListener('click', openMailAppWithCopy);
+    el('exportCsvBtn').addEventListener('click', downloadReportCSV);
+    el('printPdfBtn').addEventListener('click', () => window.print());
+
+    el('adminLoginBtn').addEventListener('click', loginAdmin);
+    el('adminLogoutBtn').addEventListener('click', logoutAdmin);
+    el('updateAdminPassBtn').addEventListener('click', updateAdminPassword);
+
+    el('usernameInput').addEventListener('input', (e) => { activeSettings.username = e.target.value.trim(); checkSettingsDirty(); });
+    el('defaultRecipientsInput').addEventListener('input', (e) => { activeSettings.recipients = e.target.value.trim(); checkSettingsDirty(); });
+    el('themeModeSelect').addEventListener('change', (e) => { activeSettings.theme = e.target.value; applyLiveUI(activeSettings); checkSettingsDirty(); });
+    el('saveSettingsBtn').addEventListener('click', saveSettings);
+
+    document.querySelectorAll('#palettePicker .swatch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        activeSettings.palette = e.currentTarget.getAttribute('data-palette');
+        document.querySelectorAll('#palettePicker .swatch-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        applyLiveUI(activeSettings);
+        checkSettingsDirty();
+      });
+    });
+
+    document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        activeSettings.uiStyle = e.currentTarget.getAttribute('data-preset');
+        document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        applyLiveUI(activeSettings);
+        checkSettingsDirty();
+      });
+    });
+
     el('syncTrigger').addEventListener('click', pullFromDrive);
     el('googleSignInBtn').addEventListener('click', () => tokenClient && tokenClient.requestAccessToken({ prompt: '' }));
-    el('saveTaskBtn').addEventListener('click', handleSave);
 
     el('monthPicker').value = currentSelectedMonth;
     el('reportMonthPicker').value = currentSelectedMonth;
-    
     el('monthPicker').addEventListener('change', (e) => { currentSelectedMonth = e.target.value; render(); });
-    el('reportMonthPicker').addEventListener('change', renderReportPreview);
 
     window.addEventListener('DOMContentLoaded', async () => {
+      loadSettings();
       await initDB();
+      el('taskDatetime').value = getNowDatetimeLocal();
+      el('assignDatetime').value = getNowDatetimeLocal();
+      updateWorkTypePreview();
       render();
       if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); }
       else window.addEventListener('load', async () => { if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); } });
     });
 
     function escapeHTML(str) {
-      return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+      return String(str || '').replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
     }
   </script>
 </body>
