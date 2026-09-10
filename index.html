@@ -129,6 +129,7 @@
     .nav-item svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
     .nav-item:hover { background: var(--primary-soft); color: var(--primary); }
     .nav-item.active { background: var(--primary-soft); color: var(--primary); }
+    .nav-item.logout-item:hover { background: var(--danger-soft); color: var(--danger); }
     body.sidebar-collapsed .nav-text { display: none; }
 
     /* Main Content Wrapper */
@@ -321,7 +322,7 @@
         </button>
         <button class="nav-item" data-target="viewEntry">
           <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          <span class="nav-text">Add / Edit Task</span>
+          <span class="nav-text">Add Task</span>
         </button>
         <button class="nav-item admin-only hidden" data-target="viewAssign">
           <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
@@ -332,8 +333,12 @@
           <span class="nav-text">Analytics Reports</span>
         </button>
         <button class="nav-item" data-target="viewSettings">
-          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6z"/></svg>
           <span class="nav-text">Settings</span>
+        </button>
+        <button class="nav-item logout-item" id="navLogoutBtn">
+          <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+          <span class="nav-text">Logout</span>
         </button>
       </nav>
     </aside>
@@ -422,7 +427,7 @@
             <div class="card-title">Push Task to Team Member</div>
 
             <label>Task Title</label>
-            <input type="text" id="assignTitle" placeholder="e.g. Prepare Quarter Audit Summary">
+            <input type="text" id="assignTitle" placeholder="e.g. Prepare Quarter Audit Summary" value="">
 
             <label>Assignee (Team Member)</label>
             <select id="assignUserSelect"></select>
@@ -511,6 +516,15 @@
                 <tbody id="summaryTableBody"></tbody>
               </table>
             </div>
+          </div>
+
+          <!-- Pushed Tasks Grid Section -->
+          <div class="card">
+            <div class="card-title">
+              <span>Pushed Tasks Overview</span>
+              <span class="badge badge-assigned">Action & Tracking</span>
+            </div>
+            <div id="pushedTasksReportGrid" class="records-grid"></div>
           </div>
 
           <!-- Assigned Tasks Report Section -->
@@ -630,7 +644,7 @@
 
           <!-- Task tracker Pro Version Banner -->
           <div style="text-align: center; margin-top: 24px; padding: 14px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); border-top: 1px solid var(--card-border);">
-            Task tracker Pro (Beta 0.9.02)
+            Task tracker Pro (Beta 0.90.3)
           </div>
         </section>
 
@@ -824,6 +838,18 @@
       }
     }
 
+    function handleLogout() {
+      if (confirm("Are you sure you want to log out?")) {
+        accessToken = null;
+        currentUser = { id: 'usr_default', email: 'User', username: '' };
+        localStorage.removeItem(STORAGE_KEY_SESSION);
+        if (isAdmin) {
+          logoutAdmin();
+        }
+        applyAuthState();
+      }
+    }
+
     function updateSyncStatus(state, text) {
       el('syncDot').className = 'dot ' + state;
       el('syncText').innerText = text;
@@ -912,8 +938,8 @@
       
       const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => isUserMatch(e));
 
-      // Pushed / Assigned Tasks Section for User or Admin
-      const assignedPending = allEntries.filter(e => (e.isAssigned || e.isPushed) && (isUserMatch(e) || isAdmin));
+      // Pushed / Assigned Tasks Section (Unresponded / Action Required)
+      const assignedPending = allEntries.filter(e => (e.isAssigned || e.isPushed) && (isUserMatch(e) || isAdmin) && (!e.status || e.status === 'Pending'));
       const assignedContainer = el('assignedSectionContainer');
       const assignedGrid = el('assignedCardsGrid');
       
@@ -925,9 +951,9 @@
         assignedContainer.classList.add('hidden');
       }
 
-      // Filter Month Entries
+      // Filter Month Entries (Includes regular tasks and responded pushed tasks)
       const monthEntries = visibleEntries
-        .filter(e => e.month === currentSelectedMonth)
+        .filter(e => e.month === currentSelectedMonth && (!(e.isAssigned || e.isPushed) || (e.status && e.status !== 'Pending')))
         .sort((a, b) => new Date(b.datetime || b.timestamp) - new Date(a.datetime || a.timestamp));
 
       const cardsGrid = el('cardsGrid');
@@ -944,7 +970,7 @@
       const card = document.createElement('div');
       const isPushed = item.isAssigned || item.isPushed;
 
-      card.className = 'record-card' + (isPushed && (!item.status || item.status === 'Pending') ? ' pushed-task-highlight' : '');
+      card.className = 'record-card' + (isPushed ? ' pushed-task-highlight' : '');
 
       const workType = item.workType || calculateWorkType(item.datetime);
       const isMyTask = isUserMatch(item);
@@ -1147,7 +1173,7 @@
 
       if (!title || !datetime) return alert('Title and Deadline Date/Time are required');
 
-      const targetOptionText = el('assignUserSelect').options[el('assignUserSelect').selectedIndex].text;
+      const targetOptionText = el('assignUserSelect').options[el('assignUserSelect').selectedIndex]?.text || 'User';
 
       const assignedRecord = {
         id: 'pushed_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7),
@@ -1271,8 +1297,24 @@
       }
       const filtered = await getFilteredReportData();
       renderSummaryTable(filtered);
+      renderPushedTasksReportGrid(filtered);
       renderAssignedTable(filtered);
       renderCharts(filtered);
+    }
+
+    function renderPushedTasksReportGrid(entries) {
+      const grid = el('pushedTasksReportGrid');
+      grid.innerHTML = '';
+      const pushedEntries = entries.filter(e => e.isAssigned || e.isPushed);
+
+      if (pushedEntries.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 20px;">No pushed tasks found for current criteria.</div>`;
+        return;
+      }
+
+      pushedEntries.forEach(item => {
+        grid.appendChild(createTaskCard(item, false));
+      });
     }
 
     function renderSummaryTable(entries) {
@@ -1612,8 +1654,12 @@
 
     /* Global Navigation & Event Wiring */
     document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => {
-      btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
+      if (btn.id !== 'navLogoutBtn') {
+        btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
+      }
     });
+
+    el('navLogoutBtn').addEventListener('click', handleLogout);
 
     el('sidebarToggle').addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
     el('mobileMenuBtn').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
