@@ -274,6 +274,33 @@
     </div>
   </div>
 
+  <!-- Response Modal for Pushed Tasks -->
+  <div id="responseModal" class="auth-overlay hidden" style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1100;">
+    <div class="card" style="max-width: 480px; width: 100%; margin: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <div class="card-title" style="margin-bottom: 12px;">
+        <span>Respond to Pushed Task</span>
+        <button id="closeResponseModalBtn" class="action-icon-btn" style="font-size: 1.2rem; line-height: 1;">&times;</button>
+      </div>
+      <div id="modalTaskSummary" style="font-size: 0.85rem; color: var(--text-muted); background: var(--bg); padding: 10px; border-radius: 8px; margin-bottom: 12px; line-height: 1.4;"></div>
+      
+      <label style="margin-top: 0;">Update Status</label>
+      <select id="responseStatusSelect">
+        <option value="Completed">✓ Task Completed</option>
+        <option value="Not Complete / Cannot Be Done">❌ Cannot Be Done / Blocked</option>
+        <option value="More Time Requested">⏳ Request More Time</option>
+        <option value="Pending">📌 Pending / In Progress</option>
+      </select>
+
+      <label>Response / Explanation / Notes</label>
+      <textarea id="responseTextarea" rows="3" placeholder="Provide details, reason for delay, or progress updates..."></textarea>
+
+      <div style="display: flex; gap: 10px; margin-top: 16px;">
+        <button id="saveResponseBtn" class="btn btn-success" style="margin-top:0;">Save Response</button>
+        <button id="cancelResponseBtn" class="btn btn-secondary" style="margin-top:0;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <div class="app-container">
@@ -337,11 +364,11 @@
             </div>
           </div>
 
-          <!-- Assigned / Pushed To Me Section -->
+          <!-- Assigned / Pushed Tasks Section -->
           <div id="assignedSectionContainer" class="hidden" style="margin-bottom: 24px;">
             <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--warning); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-              Pushed Tasks Assigned To Me (Action Required)
+              Pushed Tasks Assigned To Me (Action / Response Required)
             </h3>
             <div id="assignedCardsGrid" class="records-grid"></div>
           </div>
@@ -498,6 +525,7 @@
                     <th>Priority</th>
                     <th>Time Frame</th>
                     <th>Status</th>
+                    <th>Response / Note</th>
                     <th>Deadline</th>
                   </tr>
                 </thead>
@@ -634,6 +662,7 @@
     let chartWorkHoursInstance = null;
     let chartAdminUsersInstance = null;
     let chartAdminOvertimeInstance = null;
+    let activeResponseTaskId = null;
 
     /* Initialize DB */
     function initDB() {
@@ -836,10 +865,18 @@
     /* Render Records Card Grid */
     async function render() {
       const allEntries = await dbOps.getAll();
-      const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => !e.userId || e.userId === currentUser.id);
+      
+      // Filter entries visible to user or admin
+      const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => 
+        !e.userId || 
+        e.userId === currentUser.id || 
+        e.userId === currentUser.email ||
+        (e.username && savedSettings.username && e.username.toLowerCase() === savedSettings.username.toLowerCase()) ||
+        (e.userName && currentUser.email && e.userName.toLowerCase() === currentUser.email.toLowerCase())
+      );
 
-      // Pending Assigned / Pushed Tasks for User
-      const assignedPending = visibleEntries.filter(e => e.isAssigned && e.status === 'Pending' && (e.userId === currentUser.id || isAdmin));
+      // Pushed / Assigned Tasks Section for User
+      const assignedPending = visibleEntries.filter(e => e.isAssigned && (e.userId === currentUser.id || e.userId === currentUser.email || isAdmin));
       const assignedContainer = el('assignedSectionContainer');
       const assignedGrid = el('assignedCardsGrid');
       
@@ -851,9 +888,9 @@
         assignedContainer.classList.add('hidden');
       }
 
-      // Filter Month Entries
+      // Filter Month Entries (All user tasks including pushed tasks for current month)
       const monthEntries = visibleEntries
-        .filter(e => (!e.isAssigned || e.status === 'Completed') && e.month === currentSelectedMonth)
+        .filter(e => e.month === currentSelectedMonth)
         .sort((a, b) => new Date(b.datetime || b.timestamp) - new Date(a.datetime || a.timestamp));
 
       const cardsGrid = el('cardsGrid');
@@ -870,11 +907,11 @@
       const card = document.createElement('div');
       const isPushed = item.isAssigned || item.isPushed;
 
-      // Apply distinct highlight style for pending pushed tasks
-      card.className = 'record-card' + (isPushed && item.status === 'Pending' ? ' pushed-task-highlight' : '');
+      // Highlight pushed task if still pending action
+      card.className = 'record-card' + (isPushed && (!item.status || item.status === 'Pending') ? ' pushed-task-highlight' : '');
 
       const workType = item.workType || calculateWorkType(item.datetime);
-      const isOwnTask = !item.userId || item.userId === currentUser.id;
+      const isOwnTask = !item.userId || item.userId === currentUser.id || item.userId === currentUser.email;
       const displayName = item.username || item.userName || 'User';
 
       let workBadgeClass = 'badge-regular';
@@ -885,11 +922,24 @@
       if (item.type === 'Achievement') typeBadgeClass = 'badge-achievement';
       if (item.type === 'Assigned Task' || item.type === 'Pushed Task') typeBadgeClass = 'badge-assigned';
 
+      // Status Badge Logic
+      let statusBadgeClass = 'badge-task';
+      const currentStatus = item.status || 'Pending';
+      if (currentStatus === 'Completed') statusBadgeClass = 'badge-achievement';
+      else if (currentStatus.includes('Cannot') || currentStatus.includes('Not Complete')) statusBadgeClass = 'badge-urgent';
+      else if (currentStatus.includes('More Time')) statusBadgeClass = 'badge-overtime';
+      else if (currentStatus === 'Pending') statusBadgeClass = 'badge-admin';
+
       const formattedDt = item.datetime ? new Date(item.datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : new Date(item.timestamp).toLocaleDateString();
 
       let actionsHtml = '';
-      if (isAssignedPending && (item.userId === currentUser.id || isAdmin)) {
-        actionsHtml = `<button onclick="markAssignedComplete('${item.id}')" class="btn btn-success btn-inline">✓ Complete Task</button>`;
+      if (isPushed && (isOwnTask || isAdmin)) {
+        const buttonText = item.userResponse || (item.status && item.status !== 'Pending') ? '✏️ Edit Response' : '💬 Respond';
+        actionsHtml = `
+          <div class="record-actions" style="align-items: center;">
+            <button onclick="openResponseModal('${item.id}')" class="btn btn-warning btn-inline" style="margin:0;">${buttonText}</button>
+            ${isOwnTask ? `<button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : ''}
+          </div>`;
       } else if (isOwnTask) {
         actionsHtml = `
           <div class="record-actions">
@@ -900,6 +950,11 @@
         actionsHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Read-Only</span>`;
       }
 
+      let userResponseBox = '';
+      if (item.userResponse) {
+        userResponseBox = `<div style="font-size:0.8rem; background:var(--primary-soft); color:var(--text); padding:8px 10px; border-radius:6px; margin-top:8px; border-left:3px solid var(--primary);"><strong>Response Note:</strong> ${escapeHTML(item.userResponse)}</div>`;
+      }
+
       card.innerHTML = `
         <div>
           <div class="record-card-header">
@@ -907,13 +962,16 @@
             <span class="badge ${typeBadgeClass}">${item.type}</span>
           </div>
           <div class="record-card-meta">
-            ${isPushed && item.status === 'Pending' ? `<span class="badge badge-urgent">📌 Pushed Task</span>` : ''}
+            ${isPushed ? `<span class="badge ${statusBadgeClass}">Status: ${escapeHTML(currentStatus)}</span>` : ''}
             <span class="badge ${workBadgeClass}">${workType}</span>
             ${item.priority ? `<span class="badge badge-urgent">Priority: ${escapeHTML(item.priority)}</span>` : ''}
             ${item.timeframe ? `<span class="badge badge-assigned">Timeframe: ${escapeHTML(item.timeframe)}</span>` : ''}
             ${isAdmin ? `<span class="badge badge-admin">${escapeHTML(displayName)}</span>` : ''}
           </div>
-          <div class="record-card-body">${escapeHTML(item.desc || 'No additional details logged.')}</div>
+          <div class="record-card-body">
+            ${escapeHTML(item.desc || 'No additional details logged.')}
+            ${userResponseBox}
+          </div>
         </div>
         <div class="record-card-footer">
           <span>🕒 Target: ${formattedDt}</span>
@@ -1075,6 +1133,7 @@
         isAssigned: true,
         isPushed: true,
         status: 'Pending',
+        userResponse: '',
         workType: calculateWorkType(datetime),
         timestamp: new Date(datetime).getTime()
       };
@@ -1087,18 +1146,45 @@
       switchView('viewRecords');
     }
 
-    window.markAssignedComplete = async (id) => {
+    /* Pushed Task Response Modal Logic */
+    window.openResponseModal = async (id) => {
       const all = await dbOps.getAll();
       const target = all.find(e => e.id === id);
-      if (target) {
-        target.status = 'Completed';
-        target.datetime = getNowDatetimeLocal();
-        target.month = target.datetime.substring(0, 7);
-        target.workType = calculateWorkType(target.datetime);
-        await dbOps.save(target);
-        render();
-      }
+      if (!target) return;
+
+      activeResponseTaskId = id;
+      el('modalTaskSummary').innerHTML = `
+        <strong>Title:</strong> ${escapeHTML(target.title)}<br>
+        <strong>Assigned By:</strong> ${escapeHTML(target.assignedBy || 'Admin')}<br>
+        <strong>Instructions:</strong> ${escapeHTML(target.desc || 'None')}
+      `;
+      el('responseStatusSelect').value = target.status || 'Completed';
+      el('responseTextarea').value = target.userResponse || '';
+      el('responseModal').classList.remove('hidden');
     };
+
+    function closeResponseModal() {
+      activeResponseTaskId = null;
+      el('responseModal').classList.add('hidden');
+    }
+
+    async function saveTaskResponse() {
+      if (!activeResponseTaskId) return;
+      const all = await dbOps.getAll();
+      const target = all.find(e => e.id === activeResponseTaskId);
+      if (target) {
+        target.status = el('responseStatusSelect').value;
+        target.userResponse = el('responseTextarea').value.trim();
+        target.responseTimestamp = Date.now();
+
+        await dbOps.save(target);
+        closeResponseModal();
+        await render();
+        if (el('viewReports').classList.contains('active')) {
+          renderReportsView();
+        }
+      }
+    }
 
     /* ANALYTICS & REPORTS SYSTEM */
     async function getFilteredReportData() {
@@ -1206,7 +1292,7 @@
       const assigned = entries.filter(e => e.isAssigned);
 
       if (assigned.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">No pushed/assigned tasks logged.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No pushed/assigned tasks logged.</td></tr>`;
         return;
       }
 
@@ -1218,7 +1304,8 @@
           <td style="font-weight:600;">${escapeHTML(item.title)}</td>
           <td><span class="badge badge-urgent">${item.priority || 'Normal'}</span></td>
           <td><span class="badge badge-assigned">${item.timeframe || 'Scheduled'}</span></td>
-          <td><span class="badge ${isDone ? 'badge-achievement' : 'badge-task'}">${item.status}</span></td>
+          <td><span class="badge ${isDone ? 'badge-achievement' : 'badge-task'}">${item.status || 'Pending'}</span></td>
+          <td style="font-size:0.8rem;">${escapeHTML(item.userResponse || '-')}</td>
           <td style="font-size:0.8rem; color:var(--text-muted);">${item.datetime ? new Date(item.datetime).toLocaleString() : '-'}</td>
         `;
         tbody.appendChild(tr);
@@ -1323,6 +1410,8 @@
       filtered.forEach((a, i) => {
         formattedText += `[${i + 1}] ${a.type.toUpperCase()}: ${a.title}\n`;
         formattedText += `User: ${a.username || a.userName || 'User'}\n`;
+        formattedText += `Status: ${a.status || 'Completed'}\n`;
+        if (a.userResponse) formattedText += `Response Note: ${a.userResponse}\n`;
         formattedText += `Date/Time: ${a.datetime ? new Date(a.datetime).toLocaleString() : 'N/A'}\n`;
         formattedText += `Category: ${a.workType || 'Regular'}\n`;
         formattedText += `Details: ${a.desc || 'N/A'}\n`;
@@ -1340,7 +1429,7 @@
       const filtered = await getFilteredReportData();
       if (filtered.length === 0) return alert('No data available to export.');
 
-      let csv = 'ID,User,Type,Title,Status,Priority,Timeframe,Work Type,Date Time,Details\n';
+      let csv = 'ID,User,Type,Title,Status,User Response,Priority,Timeframe,Work Type,Date Time,Details\n';
       filtered.forEach(e => {
         const row = [
           `"${e.id}"`,
@@ -1348,6 +1437,7 @@
           `"${e.type}"`,
           `"${(e.title || '').replace(/"/g, '""')}"`,
           `"${e.status || 'Completed'}"`,
+          `"${(e.userResponse || '').replace(/"/g, '""')}"`,
           `"${e.priority || 'Normal'}"`,
           `"${e.timeframe || 'Standard'}"`,
           `"${e.workType || 'Regular'}"`,
@@ -1510,6 +1600,10 @@
     el('addTaskTableBtn').addEventListener('click', () => { resetForm(); switchView('viewEntry'); });
     el('cancelEditBtn').addEventListener('click', resetForm);
     el('dispatchAssignBtn').addEventListener('click', dispatchAssignTask);
+
+    el('saveResponseBtn').addEventListener('click', saveTaskResponse);
+    el('cancelResponseBtn').addEventListener('click', closeResponseModal);
+    el('closeResponseModalBtn').addEventListener('click', closeResponseModal);
 
     el('reportTimeframeSelect').addEventListener('change', (e) => {
       el('monthPickerWrap').classList.toggle('hidden', e.target.value !== 'month');
