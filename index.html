@@ -129,7 +129,6 @@
     .nav-item svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
     .nav-item:hover { background: var(--primary-soft); color: var(--primary); }
     .nav-item.active { background: var(--primary-soft); color: var(--primary); }
-    .nav-item.logout-item:hover { background: var(--danger-soft); color: var(--danger); }
     body.sidebar-collapsed .nav-text { display: none; }
 
     /* Main Content Wrapper */
@@ -322,7 +321,7 @@
         </button>
         <button class="nav-item" data-target="viewEntry">
           <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          <span class="nav-text">Add Task</span>
+          <span class="nav-text">Add / Edit Task</span>
         </button>
         <button class="nav-item admin-only hidden" data-target="viewAssign">
           <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
@@ -333,12 +332,8 @@
           <span class="nav-text">Analytics Reports</span>
         </button>
         <button class="nav-item" data-target="viewSettings">
-          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c-.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6 z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
           <span class="nav-text">Settings</span>
-        </button>
-        <button class="nav-item logout-item" id="navLogoutBtn">
-          <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
-          <span class="nav-text">Logout</span>
         </button>
       </nav>
     </aside>
@@ -427,7 +422,7 @@
             <div class="card-title">Push Task to Team Member</div>
 
             <label>Task Title</label>
-            <input type="text" id="assignTitle" placeholder="e.g. Prepare Quarter Audit Summary" value="">
+            <input type="text" id="assignTitle" placeholder="e.g. Prepare Quarter Audit Summary">
 
             <label>Assignee (Team Member)</label>
             <select id="assignUserSelect"></select>
@@ -471,12 +466,11 @@
               <span id="reportScopeBadge" class="badge badge-task">Personal Report</span>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
               <div>
                 <label>Timeframe Mode</label>
                 <select id="reportTimeframeSelect">
                   <option value="month">Specific Month</option>
-                  <option value="custom">Custom Date Range</option>
                   <option value="last3">Last 3 Months</option>
                   <option value="all">All Time</option>
                 </select>
@@ -484,14 +478,6 @@
               <div id="monthPickerWrap">
                 <label>Select Month</label>
                 <input type="month" id="reportMonthPicker">
-              </div>
-              <div id="customDateStartWrap" class="hidden">
-                <label>Start Date</label>
-                <input type="date" id="reportStartDate">
-              </div>
-              <div id="customDateEndWrap" class="hidden">
-                <label>End Date</label>
-                <input type="date" id="reportEndDate">
               </div>
               <div id="adminUserFilterWrap" class="hidden">
                 <label>Filter By User</label>
@@ -527,15 +513,6 @@
             </div>
           </div>
 
-          <!-- Pushed Tasks Grid Section -->
-          <div class="card">
-            <div class="card-title">
-              <span>Pushed Tasks Overview</span>
-              <span class="badge badge-assigned">Action & Tracking</span>
-            </div>
-            <div id="pushedTasksReportGrid" class="records-grid"></div>
-          </div>
-
           <!-- Assigned Tasks Report Section -->
           <div class="card">
             <div class="card-title">Admin Pushed Tasks Log</div>
@@ -560,7 +537,7 @@
           <!-- Interactive Charts Canvas Section -->
           <div class="charts-grid">
             <div class="card">
-              <div class="card-title">Task Count (Selected Period vs Past)</div>
+              <div class="card-title">Task Count (Selected Month vs Past 3 Months)</div>
               <div class="chart-container"><canvas id="chartMonthlyCanvas"></canvas></div>
             </div>
             <div class="card">
@@ -653,7 +630,7 @@
 
           <!-- Task tracker Pro Version Banner -->
           <div style="text-align: center; margin-top: 24px; padding: 14px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); border-top: 1px solid var(--card-border);">
-            Task tracker Pro (Beta 0.9.09)
+            Task tracker Pro (Beta 0.9.02)
           </div>
         </section>
 
@@ -663,9 +640,8 @@
 
   <script>
     const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
-    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive';
-    const DRIVE_FILE_NAME = 'tasktracker_shared_db.json';
-    const SHARED_DRIVE_FILE_ID = ''; // Optional: paste the ID of the shared Drive file here. Leave blank to find it by name.
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+    const DRIVE_FILE_NAME = 'tasktracker_db.json';
     const STORAGE_KEY_SESSION = 'tasktracker_google_session';
     const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
     const STORAGE_KEY_ADMIN_PASS = 'tasktracker_admin_pass';
@@ -688,16 +664,15 @@
     let chartAdminOvertimeInstance = null;
     let activeResponseTaskId = null;
 
-    /* Initialize DB with Reset / Migration Schema v4 */
+    /* Initialize DB */
     function initDB() {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 4);
+        const request = indexedDB.open(DB_NAME, 3);
         request.onupgradeneeded = (e) => {
           const database = e.target.result;
-          if (database.objectStoreNames.contains('entries')) {
-            database.deleteObjectStore('entries');
+          if (!database.objectStoreNames.contains('entries')) {
+            database.createObjectStore('entries', { keyPath: 'id' });
           }
-          database.createObjectStore('entries', { keyPath: 'id' });
         };
         request.onsuccess = (e) => { db = e.target.result; resolve(); };
         request.onerror = (e) => reject(e.target.error);
@@ -777,13 +752,13 @@
       return Array.from(userMap.values());
     }
 
-    /* Work Hour Auto Detection */
+    /* Work Hour Auto Detection (Sun-Thu 8:30 to 16:00 = Regular, Fri/Sat = Holiday, Else = Overtime) */
     function calculateWorkType(datetimeStr) {
       if (!datetimeStr) return 'Regular';
       const dt = new Date(datetimeStr);
       if (isNaN(dt.getTime())) return 'Regular';
       
-      const day = dt.getDay(); 
+      const day = dt.getDay(); // 0: Sun, 1: Mon, ..., 5: Fri, 6: Sat
       const hours = dt.getHours();
       const minutes = dt.getMinutes();
       const totalMinutes = hours * 60 + minutes;
@@ -849,54 +824,16 @@
       }
     }
 
-    function handleLogout() {
-      if (confirm("Are you sure you want to log out?")) {
-        accessToken = null;
-        currentUser = { id: 'usr_default', email: 'User', username: '' };
-        localStorage.removeItem(STORAGE_KEY_SESSION);
-        if (isAdmin) logoutAdmin();
-        applyAuthState();
-      }
-    }
-
     function updateSyncStatus(state, text) {
       el('syncDot').className = 'dot ' + state;
       el('syncText').innerText = text;
     }
 
-    /* Shared Google Drive database
-       IMPORTANT: this uses normal Google Drive, not appDataFolder.
-       Create/share tasktracker_shared_db.json once from the owner account and share it with every user.
-       Optionally put that file ID in SHARED_DRIVE_FILE_ID above for deterministic access. */
     async function findDriveFileId() {
-      if (!accessToken) return null;
-      if (SHARED_DRIVE_FILE_ID) return SHARED_DRIVE_FILE_ID;
-
-      const q = encodeURIComponent(`name = '${DRIVE_FILE_NAME.replace(/'/g, "\\'")}' and trashed = false`);
-      const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime,owners)&orderBy=modifiedTime%20desc&pageSize=100`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
-      if (res.status === 401) {
-        accessToken = null;
-        await applyAuthState();
-        throw new Error('Unauthorized');
-      }
-      if (!res.ok) throw new Error('Unable to search shared Drive database');
+      const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder', { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (res.status === 401) { accessToken = null; applyAuthState(); throw new Error("Unauthorized"); }
       const data = await res.json();
-      return data.files?.[0]?.id || null;
-    }
-
-    function getUserSettingsKey() {
-      return currentUser.id || currentUser.email || 'default';
-    }
-
-    function buildSharedPayload(entries) {
-      return {
-        version: 2,
-        userSettings: {
-          [getUserSettingsKey()]: savedSettings
-        },
-        entries: entries || []
-      };
+      return data.files?.find(f => f.name === DRIVE_FILE_NAME)?.id || null;
     }
 
     async function pullFromDrive() {
@@ -904,44 +841,26 @@
       updateSyncStatus('syncing', 'Syncing...');
       try {
         const fileId = await findDriveFileId();
-        if (!fileId) {
-          updateSyncStatus('online', 'No shared database yet');
-          return;
-        }
-
-        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        });
-        if (!res.ok) throw new Error('Unable to read shared database');
-
-        const payload = await res.json();
-        if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-          // New shared format: settings are kept separately for each Google user.
-          const mySettings = payload.userSettings?.[getUserSettingsKey()];
-          if (mySettings) {
-            savedSettings = { ...savedSettings, ...mySettings };
-            activeSettings = { ...savedSettings };
-            localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
-            applyLiveUI(activeSettings);
-            syncSettingsFormValues();
-            checkSettingsDirty();
+        if (fileId) {
+          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+          const payload = await res.json();
+          if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+            if (payload.settings) {
+              savedSettings = { ...savedSettings, ...payload.settings };
+              activeSettings = { ...savedSettings };
+              localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+              applyLiveUI(activeSettings);
+              syncSettingsFormValues();
+              checkSettingsDirty();
+            }
+            if (Array.isArray(payload.entries)) await dbOps.bulkReplace(payload.entries);
+          } else if (Array.isArray(payload)) {
+            await dbOps.bulkReplace(payload);
           }
-
-          if (Array.isArray(payload.entries)) await dbOps.bulkReplace(payload.entries);
-        } else if (Array.isArray(payload)) {
-          await dbOps.bulkReplace(payload);
-        }
-
-        await render();
-        if (isAdmin) {
-          await populateAdminReportFilters();
-          await populateAssigneeDropdown();
+          render();
         }
         updateSyncStatus('online', 'Synced');
-      } catch (err) {
-        console.error(err);
-        updateSyncStatus('', 'Offline Mode');
-      }
+      } catch (err) { updateSyncStatus('', 'Offline Mode'); }
     }
 
     async function syncToDrive() {
@@ -949,52 +868,23 @@
       updateSyncStatus('syncing', 'Saving...');
       try {
         const localEntries = await dbOps.getAll();
+        const fullPayload = { settings: savedSettings, entries: localEntries };
         const fileId = await findDriveFileId();
-
-        // Preserve settings belonging to other users when updating the shared file.
-        let existingPayload = {};
-        if (fileId) {
-          try {
-            const currentRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            if (currentRes.ok) existingPayload = await currentRes.json();
-          } catch (_) {}
-        }
-
-        const userSettings = { ...(existingPayload?.userSettings || {}) };
-        userSettings[getUserSettingsKey()] = savedSettings;
-        const fullPayload = { version: 2, userSettings, entries: localEntries };
         const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
 
         if (fileId) {
-          const updateRes = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-            method: 'PATCH',
-            headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-            body: blob
+          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+            method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: blob
           });
-          if (!updateRes.ok) throw new Error('Unable to save shared database');
         } else {
-          // First user creates the shared database in normal Drive. The owner must share
-          // this file with the other users once, or set SHARED_DRIVE_FILE_ID above.
-          const metadata = { name: DRIVE_FILE_NAME, mimeType: 'application/json' };
+          const metadata = { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
           const form = new FormData();
           form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
           form.append('file', blob);
-          const createRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${accessToken}` },
-            body: form
-          });
-          if (!createRes.ok) throw new Error('Unable to create shared database');
-          const created = await createRes.json();
-          console.info('Shared TaskTracker database created:', created.id);
+          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form });
         }
         updateSyncStatus('online', 'Saved');
-      } catch (err) {
-        console.error(err);
-        updateSyncStatus('', 'Save Failed');
-      }
+      } catch (err) { updateSyncStatus('', 'Save Failed'); }
     }
 
     /* UI State & Routing */
@@ -1022,8 +912,8 @@
       
       const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => isUserMatch(e));
 
-      // Pushed / Assigned Tasks Section (Unresponded / Action Required)
-      const assignedPending = allEntries.filter(e => (e.isAssigned || e.isPushed) && (isUserMatch(e) || isAdmin) && (!e.status || e.status === 'Pending'));
+      // Pushed / Assigned Tasks Section for User or Admin
+      const assignedPending = allEntries.filter(e => (e.isAssigned || e.isPushed) && (isUserMatch(e) || isAdmin));
       const assignedContainer = el('assignedSectionContainer');
       const assignedGrid = el('assignedCardsGrid');
       
@@ -1037,7 +927,7 @@
 
       // Filter Month Entries
       const monthEntries = visibleEntries
-        .filter(e => e.month === currentSelectedMonth && (!(e.isAssigned || e.isPushed) || (e.status && e.status !== 'Pending')))
+        .filter(e => e.month === currentSelectedMonth)
         .sort((a, b) => new Date(b.datetime || b.timestamp) - new Date(a.datetime || a.timestamp));
 
       const cardsGrid = el('cardsGrid');
@@ -1054,7 +944,7 @@
       const card = document.createElement('div');
       const isPushed = item.isAssigned || item.isPushed;
 
-      card.className = 'record-card' + (isPushed ? ' pushed-task-highlight' : '');
+      card.className = 'record-card' + (isPushed && (!item.status || item.status === 'Pending') ? ' pushed-task-highlight' : '');
 
       const workType = item.workType || calculateWorkType(item.datetime);
       const isMyTask = isUserMatch(item);
@@ -1068,6 +958,7 @@
       if (item.type === 'Achievement') typeBadgeClass = 'badge-achievement';
       if (item.type === 'Assigned Task' || item.type === 'Pushed Task') typeBadgeClass = 'badge-assigned';
 
+      // Status Badge Logic
       let statusBadgeClass = 'badge-task';
       const currentStatus = item.status || 'Pending';
       if (currentStatus === 'Completed') statusBadgeClass = 'badge-achievement';
@@ -1127,6 +1018,7 @@
       return card;
     }
 
+    /* Live Work Type Detection in Entry Form */
     function updateWorkTypePreview() {
       const dtVal = el('taskDatetime').value;
       if (!dtVal) { el('workTypeBadgePreview').innerHTML = ''; return; }
@@ -1139,7 +1031,7 @@
 
     el('taskDatetime').addEventListener('input', updateWorkTypePreview);
 
-    /* Save Task Execution with Unique ID per User */
+    /* Save Task Execution */
     async function handleSave() {
       const title = el('taskTitle').value.trim();
       const type = el('taskType').value;
@@ -1154,7 +1046,7 @@
       const detectedWorkType = calculateWorkType(datetime);
 
       const record = {
-        id: editingId || ('task_' + (currentUser.id || 'usr') + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+        id: editingId || 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
         userId: currentUser.id,
         userName: currentUser.email,
         username: userDisplayName,
@@ -1255,10 +1147,10 @@
 
       if (!title || !datetime) return alert('Title and Deadline Date/Time are required');
 
-      const targetOptionText = el('assignUserSelect').options[el('assignUserSelect').selectedIndex]?.text || 'User';
+      const targetOptionText = el('assignUserSelect').options[el('assignUserSelect').selectedIndex].text;
 
       const assignedRecord = {
-        id: 'pushed_' + targetUserId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        id: 'pushed_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7),
         userId: targetUserId,
         userName: targetOptionText,
         username: targetOptionText,
@@ -1326,30 +1218,21 @@
       }
     }
 
-    /* ANALYTICS & REPORTS SYSTEM WITH CUSTOM RANGE */
+    /* ANALYTICS & REPORTS SYSTEM */
     async function getFilteredReportData() {
       const all = await dbOps.getAll();
       const timeframeMode = el('reportTimeframeSelect').value;
       const selectedMonth = el('reportMonthPicker').value;
-      const startDateVal = el('reportStartDate').value;
-      const endDateVal = el('reportEndDate').value;
       const selectedUser = el('reportUserSelect').value;
 
       let filtered = isAdmin ? all : all.filter(e => isUserMatch(e));
 
       if (isAdmin && selectedUser !== 'ALL') {
-        filtered = filtered.filter(e => e.userId === selectedUser || e.username === selectedUser || e.userName === selectedUser);
+        filtered = filtered.filter(e => e.userId === selectedUser || e.username === selectedUser || e.userName === selectedUser || (e.username && e.username.toLowerCase() === selectedUser.toLowerCase()) || (e.userName && e.userName.toLowerCase() === selectedUser.toLowerCase()));
       }
 
       if (timeframeMode === 'month') {
         filtered = filtered.filter(e => e.month === selectedMonth);
-      } else if (timeframeMode === 'custom' && startDateVal && endDateVal) {
-        const start = new Date(startDateVal + 'T00:00:00');
-        const end = new Date(endDateVal + 'T23:59:59');
-        filtered = filtered.filter(e => {
-          const itemDt = new Date(e.datetime || e.timestamp);
-          return itemDt >= start && itemDt <= end;
-        });
       } else if (timeframeMode === 'last3') {
         const d = new Date(selectedMonth + '-01');
         const past = new Date(d);
@@ -1362,48 +1245,34 @@
       return filtered;
     }
 
-    async function populateAdminReportFilters() {
+    /* Dynamically lookup distinct usernames from database task records */
+    async function populateAdminUsersFilter() {
       const all = await dbOps.getAll();
+      const select = el('reportUserSelect');
+      const currentValue = select.value;
+      select.innerHTML = '<option value="ALL">All Users</option>';
       
-      // User filter
-      const userSelect = el('reportUserSelect');
-      const curUserVal = userSelect.value;
-      userSelect.innerHTML = '<option value="ALL">All Users</option>';
-      getDistinctUsers(all).forEach(user => {
+      const distinctUsers = getDistinctUsers(all);
+      distinctUsers.forEach(user => {
         const opt = document.createElement('option');
         opt.value = user.id;
         opt.textContent = user.name;
-        userSelect.appendChild(opt);
+        select.appendChild(opt);
       });
-      if (curUserVal && Array.from(userSelect.options).some(o => o.value === curUserVal)) {
-        userSelect.value = curUserVal;
+
+      if (currentValue && Array.from(select.options).some(o => o.value === currentValue)) {
+        select.value = currentValue;
       }
     }
 
     async function renderReportsView() {
       if (isAdmin) {
-        await populateAdminReportFilters();
+        await populateAdminUsersFilter();
       }
       const filtered = await getFilteredReportData();
       renderSummaryTable(filtered);
-      renderPushedTasksReportGrid(filtered);
       renderAssignedTable(filtered);
       renderCharts(filtered);
-    }
-
-    function renderPushedTasksReportGrid(entries) {
-      const grid = el('pushedTasksReportGrid');
-      grid.innerHTML = '';
-      const pushedEntries = entries.filter(e => e.isAssigned || e.isPushed);
-
-      if (pushedEntries.length === 0) {
-        grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 20px;">No pushed tasks found for current criteria.</div>`;
-        return;
-      }
-
-      pushedEntries.forEach(item => {
-        grid.appendChild(createTaskCard(item, false));
-      });
     }
 
     function renderSummaryTable(entries) {
@@ -1413,16 +1282,13 @@
       const statsByUser = {};
 
       entries.forEach(e => {
-        const userKey = e.username || e.userName || 'User';
-
-        if (!statsByUser[userKey]) {
-          statsByUser[userKey] = { user: userKey, total: 0, regular: 0, overtime: 0, holiday: 0 };
-        }
-        statsByUser[userKey].total++;
+        const key = e.username || e.userName || 'User';
+        if (!statsByUser[key]) statsByUser[key] = { total: 0, regular: 0, overtime: 0, holiday: 0 };
+        statsByUser[key].total++;
         const wt = e.workType || calculateWorkType(e.datetime);
-        if (wt === 'Regular') statsByUser[userKey].regular++;
-        else if (wt === 'Overtime') statsByUser[userKey].overtime++;
-        else if (wt === 'Holiday') statsByUser[userKey].holiday++;
+        if (wt === 'Regular') statsByUser[key].regular++;
+        else if (wt === 'Overtime') statsByUser[key].overtime++;
+        else if (wt === 'Holiday') statsByUser[key].holiday++;
       });
 
       if (Object.keys(statsByUser).length === 0) {
@@ -1430,10 +1296,10 @@
         return;
       }
 
-      for (const data of Object.values(statsByUser)) {
+      for (const [user, data] of Object.entries(statsByUser)) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="font-weight:700;">${escapeHTML(data.user)}</td>
+          <td style="font-weight:700;">${escapeHTML(user)}</td>
           <td>${data.total}</td>
           <td><span class="badge badge-regular">${data.regular}</span></td>
           <td><span class="badge badge-overtime">${data.overtime}</span></td>
@@ -1473,6 +1339,7 @@
       const selectedMonth = el('reportMonthPicker').value;
       const allEntries = await dbOps.getAll();
 
+      // 1. Chart: Monthly Task Count (Current Month vs Preceding 3 Months)
       const baseDt = new Date(selectedMonth + '-01');
       const monthsLabels = [];
       const monthCounts = [0, 0, 0, 0];
@@ -1481,7 +1348,7 @@
         const m = new Date(baseDt.getFullYear(), baseDt.getMonth() - i, 1);
         const mStr = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`;
         monthsLabels.push(m.toLocaleString('default', { month: 'short', year: '2-digit' }));
-        monthCounts[3 - i] = allEntries.filter(e => e.month === mStr && (!isAdmin || el('reportUserSelect').value === 'ALL' || e.userId === el('reportUserSelect').value)).length;
+        monthCounts[3 - i] = allEntries.filter(e => e.month === mStr && (!isAdmin || el('reportUserSelect').value === 'ALL' || e.userId === el('reportUserSelect').value || e.username === el('reportUserSelect').value)).length;
       }
 
       if (chartMonthlyInstance) chartMonthlyInstance.destroy();
@@ -1494,6 +1361,7 @@
         options: { responsive: true, maintainAspectRatio: false }
       });
 
+      // 2. Chart: Work Hours Classification
       let reg = 0, over = 0, hol = 0;
       filteredEntries.forEach(e => {
         const wt = e.workType || calculateWorkType(e.datetime);
@@ -1512,6 +1380,7 @@
         options: { responsive: true, maintainAspectRatio: false }
       });
 
+      // Admin Charts
       if (isAdmin) {
         el('adminChartsContainer').classList.remove('hidden');
 
@@ -1623,7 +1492,7 @@
 
       const all = await dbOps.getAll();
       const matches = all
-        .filter(item => isAdmin || isUserMatch(item))
+        .filter(item => isUserMatch(item))
         .filter(item => item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query))
         .slice(0, 15);
 
@@ -1704,8 +1573,6 @@
         el('adminPassInput').value = '';
         updateAdminUIState();
         render();
-        populateAssigneeDropdown();
-        populateAdminReportFilters();
       } else { alert('Incorrect Admin Password'); }
     }
 
@@ -1736,7 +1603,7 @@
       if (isAdmin) {
         scopeBadge.innerText = 'Full System Report (All Users)';
         scopeBadge.className = 'badge badge-admin';
-        await populateAdminReportFilters();
+        await populateAdminUsersFilter();
       } else {
         scopeBadge.innerText = 'Personal Report';
         scopeBadge.className = 'badge badge-task';
@@ -1745,12 +1612,8 @@
 
     /* Global Navigation & Event Wiring */
     document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => {
-      if (btn.id !== 'navLogoutBtn') {
-        btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
-      }
+      btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
     });
-
-    el('navLogoutBtn').addEventListener('click', handleLogout);
 
     el('sidebarToggle').addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
     el('mobileMenuBtn').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
@@ -1766,15 +1629,10 @@
     el('closeResponseModalBtn').addEventListener('click', closeResponseModal);
 
     el('reportTimeframeSelect').addEventListener('change', (e) => {
-      const val = e.target.value;
-      el('monthPickerWrap').classList.toggle('hidden', val !== 'month' && val !== 'last3');
-      el('customDateStartWrap').classList.toggle('hidden', val !== 'custom');
-      el('customDateEndWrap').classList.toggle('hidden', val !== 'custom');
+      el('monthPickerWrap').classList.toggle('hidden', e.target.value !== 'month');
       renderReportsView();
     });
     el('reportMonthPicker').addEventListener('change', renderReportsView);
-    el('reportStartDate').addEventListener('change', renderReportsView);
-    el('reportEndDate').addEventListener('change', renderReportsView);
     el('reportUserSelect').addEventListener('change', renderReportsView);
 
     el('exportReportBtn').addEventListener('click', openMailAppWithCopy);
