@@ -1,546 +1,963 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light" data-ui-style="default" data-color-palette="sage">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task & Performance Tracker</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .sidebar-transition { transition: width 0.3s ease, margin 0.3s ease; }
-        .badge-regular { background-color: #E0E7FF; color: #3730A3; }
-        .badge-overtime { background-color: #FEF3C7; color: #92400E; }
-        .badge-holiday { background-color: #FEE2E2; color: #991B1B; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#8a9a91">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>TaskTracker Pro</title>
+  <link rel="manifest" href="./manifest.json">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    /* ==========================================================================
+       THEME & COLOR PALETTE ENGINE
+       ========================================================================== */
+    :root {
+      /* Base Defaults (Sage Palette) */
+      --primary: #6b8299;
+      --primary-hover: #5a6f83;
+      --primary-soft: #eaeff3;
+      --accent: #6b8299;
+      --success: #7a9b7e;
+      --success-soft: #eef4ef;
+      --danger: #b5695a;
+      --danger-soft: #faf1ee;
+
+      /* Light Theme Variables */
+      --bg: #f6f5f2;
+      --surface: #ffffff;
+      --card-border: #e6e3da;
+      --text: #33332f;
+      --text-muted: #82807a;
+      --nav-bg: rgba(255, 255, 255, 0.95);
+      --header-bg: rgba(255, 255, 255, 0.85);
+      --radius: 12px;
+      --nav-height: 64px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    /* Color Palettes */
+    [data-color-palette="sage"] { --primary: #6b8299; --primary-hover: #5a6f83; --primary-soft: #eaeff3; }
+    [data-color-palette="ocean"] { --primary: #2563eb; --primary-hover: #1d4ed8; --primary-soft: #dbeafe; }
+    [data-color-palette="slate"] { --primary: #475569; --primary-hover: #334155; --primary-soft: #f1f5f9; }
+    [data-color-palette="sunset"] { --primary: #ea580c; --primary-hover: #c2410c; --primary-soft: #ffedd5; }
+    [data-color-palette="emerald"] { --primary: #059669; --primary-hover: #047857; --primary-soft: #d1fae5; }
+    [data-color-palette="berry"] { --primary: #9333ea; --primary-hover: #7e22ce; --primary-soft: #f3e8ff; }
+
+    /* Dark Mode Overrides */
+    [data-theme="dark"] {
+      --bg: #121214;
+      --surface: #1e1e22;
+      --card-border: #2e2e34;
+      --text: #e4e4e7;
+      --text-muted: #a1a1aa;
+      --nav-bg: rgba(30, 30, 34, 0.95);
+      --header-bg: rgba(30, 30, 34, 0.85);
+      --primary-soft: #2d3748;
+      --success-soft: #1c3323;
+      --danger-soft: #3c1e1e;
+      --shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    /* UI Design Presets Engine */
+    [data-ui-style="default"] { --radius: 12px; }
+    [data-ui-style="compact"] { --radius: 4px; --shadow: none; }
+    [data-ui-style="compact"] .card { padding: 12px; margin-bottom: 8px; }
+    [data-ui-style="neumorphic"] { --radius: 16px; --bg: #e0e5ec; --surface: #e0e5ec; --card-border: transparent; --shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff; }
+    [data-theme="dark"][data-ui-style="neumorphic"] { --bg: #1a1b1e; --surface: #1a1b1e; --shadow: 5px 5px 10px #121315, -5px -5px 10px #222327; }
+    [data-ui-style="glass"] { --radius: 20px; --surface: rgba(255, 255, 255, 0.45); --card-border: rgba(255, 255, 255, 0.3); }
+    [data-theme="dark"][data-ui-style="glass"] { --surface: rgba(30, 30, 34, 0.45); --card-border: rgba(255, 255, 255, 0.08); }
+    [data-ui-style="glass"] .card { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    [data-ui-style="terminal"] { --radius: 0px; --card-border: var(--primary); --shadow: none; }
+    [data-ui-style="terminal"] .card { border-width: 2px; }
+    [data-ui-style="bordered"] { --radius: 8px; --shadow: none; --card-border: #d1d5db; }
+    [data-theme="dark"][data-ui-style="bordered"] { --card-border: #4b5563; }
+
+    /* ==========================================================================
+       BASE CSS & LAYOUT
+       ========================================================================== */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: calc(var(--nav-height) + 20px); display: flex; flex-direction: column; transition: background 0.2s, color 0.2s; }
+
+    header { background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 90; padding: 14px 20px; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center; }
+    .brand-title { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+
+    .sync-badge { font-size: 0.75rem; background: var(--bg); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
+    .dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .dot.syncing { background: var(--primary); animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
+    main { padding: 16px; max-width: 768px; margin: 0 auto; width: 100%; flex: 1; }
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--card-border); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow); transition: all 0.2s; }
+    .card-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+
+    label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-top: 14px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    .field-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; line-height: 1.3; }
+
+    .btn { width: 100%; background: var(--primary); color: #ffffff; font-weight: 600; border: none; padding: 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: opacity 0.2s, background 0.2s, filter 0.2s; margin-top: 14px; }
+    .btn:hover:not(:disabled) { opacity: 0.9; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--card-border); }
+    .btn-success { background: var(--success); color: #fff; }
+
+    /* Tables */
+    .table-container { width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 14px; box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th { background: var(--bg); padding: 12px 14px; font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--card-border); }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--card-border); color: var(--text); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+
+    .badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; display: inline-block; text-transform: uppercase; }
+    .badge-task { background: var(--primary-soft); color: var(--primary); }
+    .badge-achievement { background: var(--success-soft); color: var(--success); }
+    .badge-admin { background: #fef3c7; color: #d97706; }
+
+    .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; }
+    .action-icon-btn.delete:hover { color: var(--danger); }
+
+    /* Searchable Select */
+    .searchable-select { position: relative; }
+    .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; }
+    .history-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid var(--card-border); }
+    .history-item:hover { background: var(--primary-soft); color: var(--primary); }
+
+    /* Visual Grid Swatches for Palettes and UI Presets */
+    .grid-swatch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+    .swatch-btn { padding: 10px 8px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg); cursor: pointer; font-size: 0.78rem; font-weight: 600; text-align: center; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+    .swatch-btn.active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); ring: 2px solid var(--primary); }
+    .palette-dot { width: 18px; height: 18px; border-radius: 50%; display: inline-block; }
+
+    .preset-card { border: 1px solid var(--card-border); padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; background: var(--bg); transition: all 0.2s; }
+    .preset-card.active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+    .preset-preview-box { width: 100%; height: 28px; border: 1px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; }
+
+    /* Bottom Nav */
+    nav.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: var(--nav-height); background: var(--nav-bg); backdrop-filter: blur(16px); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-decoration: none; font-size: 0.7rem; font-weight: 600; gap: 4px; background: none; border: none; cursor: pointer; width: 25%; height: 100%; }
+    .nav-item svg { width: 20px; height: 20px; fill: currentColor; }
+    .nav-item.active { color: var(--primary); }
+
+    .report-card { background: var(--surface); border: 1px solid var(--card-border); border-left: 4px solid var(--primary); padding: 14px; border-radius: 8px; margin-bottom: 12px; }
+    .report-card.achievement { border-left-color: var(--success); }
+
+    .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .hidden { display: none !important; }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800 antialiased flex h-screen overflow-hidden">
+<body>
 
-    <!-- SIDEBAR NAVIGATION -->
-    <aside id="sidebar" class="bg-indigo-900 text-white w-64 flex flex-col justify-between sidebar-transition z-30 relative">
-        <div>
-            <!-- Sidebar Header / Toggle -->
-            <div class="flex items-center justify-between p-4 border-b border-indigo-800">
-                <div id="brand-logo" class="flex items-center space-x-3 overflow-hidden whitespace-nowrap">
-                    <i class="fa-solid fa-list-check text-2xl text-indigo-400"></i>
-                    <span class="font-bold text-lg tracking-wide">TaskTracker</span>
-                </div>
-                <button id="toggle-sidebar" class="p-1 rounded hover:bg-indigo-800 focus:outline-none">
-                    <i class="fa-solid fa-bars text-xl"></i>
-                </button>
-            </div>
-
-            <!-- Navigation Links -->
-            <nav class="mt-4 px-2 space-y-1">
-                <button onclick="switchTab('records')" class="nav-btn w-full flex items-center space-x-3 px-3 py-3 rounded-lg hover:bg-indigo-800 text-gray-200 transition">
-                    <i class="fa-solid fa-folder-open text-xl w-6"></i>
-                    <span class="nav-text font-medium">Task Records</span>
-                </button>
-                <button onclick="switchTab('assigned')" class="nav-btn w-full flex items-center space-x-3 px-3 py-3 rounded-lg hover:bg-indigo-800 text-gray-200 transition">
-                    <i class="fa-solid fa-tasks text-xl w-6"></i>
-                    <span class="nav-text font-medium">Assigned Tasks</span>
-                </button>
-                <button onclick="switchTab('user-reports')" class="nav-btn w-full flex items-center space-x-3 px-3 py-3 rounded-lg hover:bg-indigo-800 text-gray-200 transition">
-                    <i class="fa-solid fa-chart-pie text-xl w-6"></i>
-                    <span class="nav-text font-medium">My Reports</span>
-                </button>
-                <button onclick="switchTab('assign-task')" class="nav-btn admin-only hidden w-full flex items-center space-x-3 px-3 py-3 rounded-lg hover:bg-indigo-800 text-gray-200 transition">
-                    <i class="fa-solid fa-paper-plane text-xl w-6"></i>
-                    <span class="nav-text font-medium">Assign Task</span>
-                </button>
-                <button onclick="switchTab('admin-reports')" class="nav-btn admin-only hidden w-full flex items-center space-x-3 px-3 py-3 rounded-lg hover:bg-indigo-800 text-gray-200 transition">
-                    <i class="fa-solid fa-chart-line text-xl w-6"></i>
-                    <span class="nav-text font-medium">Admin Reports</span>
-                </button>
-            </nav>
-        </div>
-
-        <!-- Role Switcher & User Profile -->
-        <div class="p-4 border-t border-indigo-800">
-            <div class="flex items-center justify-between mb-3 overflow-hidden whitespace-nowrap">
-                <span class="nav-text text-xs text-indigo-300 uppercase font-semibold">Active Profile</span>
-                <select id="role-selector" onchange="toggleUserRole(this.value)" class="bg-indigo-800 text-xs text-white rounded px-2 py-1 outline-none">
-                    <option value="user">User: John Doe</option>
-                    <option value="admin">Admin: Sarah Connor</option>
-                </select>
-            </div>
-        </div>
-    </aside>
-
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 flex flex-col overflow-y-auto bg-gray-50">
-        
-        <!-- TOP HEADER -->
-        <header class="bg-white border-b px-6 py-4 flex justify-between items-center sticky top-0 z-20">
-            <h1 id="page-title" class="text-2xl font-bold text-gray-800">Task Records</h1>
-            <button onclick="openModal('task-modal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium shadow flex items-center space-x-2 transition">
-                <i class="fa-solid fa-plus"></i>
-                <span>Log New Task</span>
-            </button>
-        </header>
-
-        <div class="p-6 space-y-6 flex-1">
-
-            <!-- TAB 1: TASK RECORDS (CARD GRID VIEW) -->
-            <section id="tab-records" class="tab-content space-y-4">
-                <div id="records-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Task Cards injected via JS -->
-                </div>
-            </section>
-
-            <!-- TAB 2: ASSIGNED TASKS (USER WORKFLOW) -->
-            <section id="tab-assigned" class="tab-content hidden space-y-4">
-                <div class="bg-white rounded-xl shadow p-5">
-                    <h2 class="text-lg font-semibold mb-4 text-gray-700">Tasks Assigned to Me by Management</h2>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-100 border-b text-xs uppercase text-gray-600">
-                                    <th class="p-3">Title</th>
-                                    <th class="p-3">Priority</th>
-                                    <th class="p-3">Timeframe</th>
-                                    <th class="p-3">Description</th>
-                                    <th class="p-3">Status</th>
-                                    <th class="p-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="assigned-tasks-table-body" class="divide-y text-sm">
-                                <!-- Dynamic Rows -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 3: USER REPORTS -->
-            <section id="tab-user-reports" class="tab-content hidden space-y-6">
-                <!-- Summary Data Table -->
-                <div class="bg-white rounded-xl shadow p-5">
-                    <h3 class="text-md font-semibold text-gray-700 mb-3">Task Summary Breakdown</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse text-sm">
-                            <thead>
-                                <tr class="bg-gray-50 border-b text-xs uppercase text-gray-500">
-                                    <th class="p-3">Category</th>
-                                    <th class="p-3">Current Month</th>
-                                    <th class="p-3">Previous Month</th>
-                                    <th class="p-3">Total YTD</th>
-                                </tr>
-                            </thead>
-                            <tbody id="user-report-table" class="divide-y">
-                                <!-- Data populated via JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Charts Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-xl shadow p-5">
-                        <h3 class="text-md font-semibold text-gray-700 mb-4">4-Month Task Volume Trend</h3>
-                        <div class="h-64"><canvas id="userMonthlyChart"></canvas></div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-5">
-                        <h3 class="text-md font-semibold text-gray-700 mb-4">Official Work-Hours Execution</h3>
-                        <div class="h-64"><canvas id="userWorkHoursChart"></canvas></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 4: ADMIN - ASSIGN TASK -->
-            <section id="tab-assign-task" class="tab-content hidden space-y-4">
-                <div class="bg-white rounded-xl shadow p-6 max-w-2xl mx-auto">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">Push Task to Team Member</h2>
-                    <form id="assign-task-form" onsubmit="handleAssignTask(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
-                            <input type="text" id="assign-title" required class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Assignee</label>
-                                <select id="assign-user" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
-                                    <option value="John Doe">John Doe</option>
-                                    <option value="Jane Smith">Jane Smith</option>
-                                    <option value="Alex Johnson">Alex Johnson</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                                <select id="assign-priority" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
-                                    <option value="Urgent">Urgent</option>
-                                    <option value="High">High</option>
-                                    <option value="Medium" selected>Medium</option>
-                                    <option value="Low">Low</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Target Date & Time Frame</label>
-                            <input type="datetime-local" id="assign-timeframe" required class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <textarea id="assign-desc" rows="3" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg transition">Assign & Dispatch Task</button>
-                    </form>
-                </div>
-            </section>
-
-            <!-- TAB 5: ADMIN REPORTS -->
-            <section id="tab-admin-reports" class="tab-content hidden space-y-6">
-                <!-- Controls bar -->
-                <div class="bg-white rounded-xl shadow p-4 flex flex-wrap justify-between items-center gap-4">
-                    <div class="flex items-center space-x-3">
-                        <label class="text-sm font-medium text-gray-600">Timeframe Filter:</label>
-                        <select id="admin-time-filter" onchange="updateAdminCharts()" class="border rounded-lg px-3 py-1.5 text-sm outline-none">
-                            <option value="this-month">This Month</option>
-                            <option value="3-months">Last 3 Months</option>
-                        </select>
-                    </div>
-                    <button onclick="exportReportCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition">
-                        <i class="fa-solid fa-file-csv"></i>
-                        <span>Export Data (CSV)</span>
-                    </button>
-                </div>
-
-                <!-- Admin Comparative Charts -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-xl shadow p-5">
-                        <h3 class="text-md font-semibold text-gray-700 mb-4">Total Task Volume by Team Member</h3>
-                        <div class="h-64"><canvas id="adminTotalTasksChart"></canvas></div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow p-5">
-                        <h3 class="text-md font-semibold text-gray-700 mb-4">Overtime & Holiday Tasks Distribution</h3>
-                        <div class="h-64"><canvas id="adminOvertimeChart"></canvas></div>
-                    </div>
-                </div>
-            </section>
-
-        </div>
-    </main>
-
-    <!-- TASK CREATION / EDIT MODAL -->
-    <div id="task-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative">
-            <button onclick="closeModal('task-modal')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-            <h2 id="modal-title" class="text-xl font-bold mb-4">Log New Task</h2>
-            <form id="task-form" onsubmit="handleTaskSubmit(event)" class="space-y-4">
-                <input type="hidden" id="task-id">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Task Title</label>
-                    <input type="text" id="task-title" required class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Execution Date & Time</label>
-                    <input type="datetime-local" id="task-datetime" required class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <textarea id="task-desc" rows="3" class="w-full border rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
-                </div>
-                <div class="flex justify-end space-x-3 pt-2">
-                    <button type="button" onclick="closeModal('task-modal')" class="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-100">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Task</button>
-                </div>
-            </form>
-        </div>
+  <!-- Auth Screen -->
+  <div id="authScreen" class="auth-overlay">
+    <div style="text-align: center; max-width: 320px;">
+      <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">TaskTracker Pro</h2>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">Secure task management synchronized directly to your private Google Drive storage.</p>
+      <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #333; border: 1px solid var(--card-border); font-weight: 600;">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        Sign in with Google
+      </button>
     </div>
+  </div>
 
-    <!-- APPLICATION LOGIC -->
-    <script>
-        // DATA STATE MANAGEMENT
-        let currentUser = { name: "John Doe", role: "user" };
-        let tasks = [
-            { id: 101, title: "Database Migration", owner: "John Doe", datetime: "2026-09-06T09:00", desc: "Migrated production DB to new instance", category: "Regular" },
-            { id: 102, title: "Emergency Server Patch", owner: "John Doe", datetime: "2026-09-04T19:30", desc: "Applied critical security patch after hours", category: "Overtime" },
-            { id: 103, title: "Weekend Deployment", owner: "John Doe", datetime: "2026-09-05T11:00", desc: "Deployed version 2.4 during weekend window", category: "Holiday" },
-            { id: 104, title: "Client Support Call", owner: "Jane Smith", datetime: "2026-09-07T10:00", desc: "Resolved API integration issue", category: "Regular" },
-            { id: 105, title: "System Maintenance", owner: "Jane Smith", datetime: "2026-09-08T18:00", desc: "Routine cache clear", category: "Overtime" }
-        ];
+  <header>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span class="brand-title">TaskTracker</span>
+      <span id="adminHeaderBadge" class="badge badge-admin hidden">Admin</span>
+    </div>
+    <div class="sync-badge" id="syncTrigger">
+      <span id="syncDot" class="dot"></span>
+      <span id="syncText">Offline Mode</span>
+    </div>
+  </header>
 
-        let assignedTasks = [
-            { id: 201, title: "Audit User Security Logs", assignee: "John Doe", priority: "High", timeframe: "2026-09-12T17:00", desc: "Review all failed login attempts for Q3", status: "Pending" }
-        ];
+  <main id="appContent" class="hidden">
 
-        let chartInstances = {};
+    <!-- VIEW 1: Records Table -->
+    <section id="viewRecords" class="view active">
+      <div class="card" style="padding: 14px 18px; margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size:0.85rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Month View</span>
+          <input type="month" id="monthPicker" style="width: auto; margin: 0; padding: 6px 10px; font-size: 0.85rem;">
+        </div>
+      </div>
 
-        // INITIALIZATION
-        document.addEventListener('DOMContentLoaded', () => {
-            renderRecords();
-            renderAssignedTasks();
-            initCharts();
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th id="userColHeader" class="hidden">User</th>
+              <th>Type</th>
+              <th>Title</th>
+              <th>Details</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <button id="addTaskTableBtn" class="btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add New Entry
+      </button>
+    </section>
+
+    <!-- VIEW 2: Entry Form -->
+    <section id="viewEntry" class="view">
+      <div class="card">
+        <div class="card-title">
+          <span id="formHeaderTitle">New Entry</span>
+          <button id="cancelEditBtn" class="btn btn-secondary hidden" style="width:auto; padding:4px 10px; font-size:0.75rem; margin:0;">Cancel</button>
+        </div>
+
+        <label>Search & Clone Previous Task</label>
+        <div class="searchable-select">
+          <input type="text" id="historySearchInput" placeholder="Type to filter past tasks..." autocomplete="off">
+          <div id="historyResults" class="history-results"></div>
+        </div>
+
+        <label>Type</label>
+        <select id="taskType">
+          <option value="Task">Task</option>
+          <option value="Achievement">Achievement</option>
+        </select>
+
+        <label>Title</label>
+        <input type="text" id="taskTitle" placeholder="e.g. Database Index Optimization">
+
+        <label>Details & Outcomes</label>
+        <textarea id="taskDesc" rows="4" placeholder="Log execution metrics, scope, or achievements..."></textarea>
+
+        <button id="saveTaskBtn" class="btn">Save Entry</button>
+      </div>
+    </section>
+
+    <!-- VIEW 3: Reports -->
+    <section id="viewReports" class="view">
+      <div class="card">
+        <div class="card-title">
+          <span>Executive Summary</span>
+          <span id="reportScopeBadge" class="badge badge-task">Personal Report</span>
+        </div>
+
+        <label>Select Month</label>
+        <input type="month" id="reportMonthPicker" style="margin-bottom: 16px;">
+
+        <div id="reportPreviewContainer" style="margin-bottom: 8px;"></div>
+
+        <p class="field-hint" style="margin-bottom: 12px;">Exports tasks as formatted plain text to your clipboard and opens your default mail client.</p>
+
+        <button id="exportReportBtn" class="btn btn-success">
+          ✉️ Export & Open in Email App
+        </button>
+      </div>
+    </section>
+
+    <!-- VIEW 4: Settings -->
+    <section id="viewSettings" class="view">
+      <!-- Admin Management Card -->
+      <div class="card" style="border-left: 4px solid #d97706;">
+        <div class="card-title">Admin Rights & Controls</div>
+        <div id="adminLoginBox">
+          <p class="field-hint" style="margin-bottom: 10px;">Login as Admin to view all user tasks and generate system-wide reports.</p>
+          <label>Admin Password</label>
+          <input type="password" id="adminPassInput" placeholder="Enter admin password">
+          <button id="adminLoginBtn" class="btn btn-secondary" style="margin-top: 10px;">Login as Admin</button>
+        </div>
+        <div id="adminPanelBox" class="hidden">
+          <p style="font-size:0.85rem; color:var(--success); font-weight:700; margin-bottom: 12px;">✓ Active Administrator Session</p>
+          <label>Change Admin Password</label>
+          <input type="password" id="newAdminPassInput" placeholder="Enter new password">
+          <button id="updateAdminPassBtn" class="btn btn-secondary" style="margin-top: 10px;">Update Password</button>
+          <button id="adminLogoutBtn" class="btn btn-secondary" style="margin-top: 8px; color: var(--danger);">Logout Admin</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">App & User Preferences</div>
+
+        <label>Preferred Username / Full Name</label>
+        <input type="text" id="usernameInput" placeholder="e.g. Alex Morgan">
+        <p class="field-hint">Displayed across monthly executive reports instead of default account fallbacks.</p>
+
+        <label>Default Email Recipients</label>
+        <input type="text" id="defaultRecipientsInput" placeholder="boss@company.com, team@company.com">
+        <p class="field-hint">Comma-separated email addresses pre-filled when triggering reports.</p>
+
+        <label>Color Palette Selection</label>
+        <div class="grid-swatch" id="palettePicker">
+          <button class="swatch-btn" data-palette="sage"><span class="palette-dot" style="background:#6b8299;"></span>Sage</button>
+          <button class="swatch-btn" data-palette="ocean"><span class="palette-dot" style="background:#2563eb;"></span>Ocean</button>
+          <button class="swatch-btn" data-palette="slate"><span class="palette-dot" style="background:#475569;"></span>Slate</button>
+          <button class="swatch-btn" data-palette="sunset"><span class="palette-dot" style="background:#ea580c;"></span>Sunset</button>
+          <button class="swatch-btn" data-palette="emerald"><span class="palette-dot" style="background:#059669;"></span>Emerald</button>
+          <button class="swatch-btn" data-palette="berry"><span class="palette-dot" style="background:#9333ea;"></span>Berry</button>
+        </div>
+
+        <label>Theme Mode (Live Switch)</label>
+        <select id="themeModeSelect">
+          <option value="light">☀️ Light Mode</option>
+          <option value="dark">🌙 Dark Mode</option>
+        </select>
+
+        <label>UI Design Preset Preview</label>
+        <div class="grid-swatch" id="uiStylePicker">
+          <div class="preset-card swatch-btn" data-preset="default" style="border-radius:12px;">
+            <div class="preset-preview-box" style="border-radius:8px;">Default</div>
+            Cards
+          </div>
+          <div class="preset-card swatch-btn" data-preset="compact" style="border-radius:4px; padding:6px;">
+            <div class="preset-preview-box" style="border-radius:2px;">Compact</div>
+            Minimal
+          </div>
+          <div class="preset-card swatch-btn" data-preset="neumorphic" style="border-radius:12px; box-shadow: 2px 2px 4px #b8b9be;">
+            <div class="preset-preview-box" style="border-radius:8px;">Soft</div>
+            Neumorphic
+          </div>
+          <div class="preset-card swatch-btn" data-preset="glass" style="border-radius:14px; backdrop-filter:blur(4px);">
+            <div class="preset-preview-box" style="border-radius:10px;">Glass</div>
+            Rounded
+          </div>
+          <div class="preset-card swatch-btn" data-preset="terminal" style="border-radius:0px; border-width:2px;">
+            <div class="preset-preview-box" style="border-radius:0px;">Terminal</div>
+            High-Con
+          </div>
+          <div class="preset-card swatch-btn" data-preset="bordered" style="border-radius:6px; border:1px solid #9ca3af;">
+            <div class="preset-preview-box" style="border-radius:4px;">Bordered</div>
+            Clean
+          </div>
+        </div>
+
+        <button id="saveSettingsBtn" class="btn" disabled>Save Preferences</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-target="viewRecords">
+      <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+      Records
+    </button>
+    <button class="nav-item" data-target="viewEntry">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+      Add Task
+    </button>
+    <button class="nav-item" data-target="viewReports">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
+      Reports
+    </button>
+    <button class="nav-item" data-target="viewSettings">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+      Settings
+    </button>
+  </nav>
+
+  <script>
+    const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+    const DRIVE_FILE_NAME = 'tasktracker_db.json';
+    const STORAGE_KEY_SESSION = 'tasktracker_google_session';
+    const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
+    const STORAGE_KEY_ADMIN_PASS = 'tasktracker_admin_pass';
+    const DB_NAME = 'TaskTrackerDB';
+    let db = null;
+
+    let currentUser = { id: 'usr_default', email: 'User', username: '' };
+    let isAdmin = false;
+    let adminPassword = localStorage.getItem(STORAGE_KEY_ADMIN_PASS) || "IDSC4Ever@2026";
+
+    /* Preferences State */
+    let savedSettings = { username: '', recipients: '', palette: 'sage', theme: 'light', uiStyle: 'default' };
+    let activeSettings = { ...savedSettings };
+
+    function loadSettings() {
+      const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+      if (raw) {
+        try { savedSettings = { ...savedSettings, ...JSON.parse(raw) }; } catch(e){}
+      }
+      activeSettings = { ...savedSettings };
+      applyLiveUI(activeSettings);
+      syncSettingsFormValues();
+      checkSettingsDirty();
+    }
+
+    function syncSettingsFormValues() {
+      el('usernameInput').value = activeSettings.username;
+      el('defaultRecipientsInput').value = activeSettings.recipients;
+      el('themeModeSelect').value = activeSettings.theme;
+
+      document.querySelectorAll('#palettePicker .swatch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-palette') === activeSettings.palette);
+      });
+
+      document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-preset') === activeSettings.uiStyle);
+      });
+    }
+
+    function applyLiveUI(cfg) {
+      document.documentElement.setAttribute('data-theme', cfg.theme);
+      document.documentElement.setAttribute('data-color-palette', cfg.palette);
+      document.documentElement.setAttribute('data-ui-style', cfg.uiStyle);
+    }
+
+    function checkSettingsDirty() {
+      const isDirty = (
+        activeSettings.username !== savedSettings.username ||
+        activeSettings.recipients !== savedSettings.recipients ||
+        activeSettings.palette !== savedSettings.palette ||
+        activeSettings.theme !== savedSettings.theme ||
+        activeSettings.uiStyle !== savedSettings.uiStyle
+      );
+      el('saveSettingsBtn').disabled = !isDirty;
+    }
+
+    async function saveSettings() {
+      savedSettings = { ...activeSettings };
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+      checkSettingsDirty();
+      await syncToDrive();
+    }
+
+    /* Database Setup */
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 2);
+        request.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains('entries')) {
+            database.createObjectStore('entries', { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = (e) => { db = e.target.result; resolve(); };
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    const dbOps = {
+      async save(entry) {
+        const tx = db.transaction('entries', 'readwrite');
+        tx.objectStore('entries').put(entry);
+        await tx.complete;
+        syncToDrive();
+      },
+      async getAll() {
+        return new Promise((resolve) => {
+          const tx = db.transaction('entries', 'readonly');
+          const request = tx.objectStore('entries').getAll();
+          request.onsuccess = () => resolve(request.result || []);
         });
+      },
+      async bulkReplace(entries) {
+        const tx = db.transaction('entries', 'readwrite');
+        const store = tx.objectStore('entries');
+        store.clear();
+        entries.forEach(item => store.put(item));
+        return tx.complete;
+      },
+      async delete(id) {
+        const tx = db.transaction('entries', 'readwrite');
+        tx.objectStore('entries').delete(id);
+        await tx.complete;
+        syncToDrive();
+      }
+    };
 
-        // SIDEBAR TOGGLE
-        const sidebar = document.getElementById('sidebar');
-        document.getElementById('toggle-sidebar').addEventListener('click', () => {
-            sidebar.classList.toggle('w-64');
-            sidebar.classList.toggle('w-16');
-            document.querySelectorAll('.nav-text, #brand-logo span').forEach(el => el.classList.toggle('hidden'));
-        });
+    /* Google Authentication & Identity parsing */
+    let accessToken = null;
+    let tokenClient = null;
 
-        // ROLE SWITCHER
-        function toggleUserRole(role) {
-            currentUser.role = role;
-            currentUser.name = role === 'admin' ? 'Sarah Connor' : 'John Doe';
-            document.querySelectorAll('.admin-only').forEach(el => {
-                el.classList.toggle('hidden', role !== 'admin');
-            });
-            switchTab('records');
+    function initGoogleAuth() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: async (response) => {
+          if (response.error) return alert("Login Failed: " + response.error);
+          accessToken = response.access_token;
+          
+          try {
+            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
+            const profile = await userInfoRes.json();
+            currentUser = { id: profile.sub || profile.email, email: profile.email || profile.name || 'User' };
+          } catch(err) {}
+
+          localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ 
+            access_token: accessToken, 
+            user: currentUser,
+            expiry: Date.now() + ((response.expires_in || 3600) * 1000) 
+          }));
+          await applyAuthState();
+        },
+      });
+      restoreSession();
+    }
+
+    function restoreSession() {
+      const raw = localStorage.getItem(STORAGE_KEY_SESSION);
+      if (!raw) return;
+      try {
+        const session = JSON.parse(raw);
+        if (session.access_token && Date.now() < (session.expiry - 300000)) {
+          accessToken = session.access_token;
+          if (session.user) currentUser = session.user;
         }
+      } catch (err) { localStorage.removeItem(STORAGE_KEY_SESSION); }
+    }
 
-        // NAVIGATION
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            
-            const titleMap = {
-                'records': 'Task Records',
-                'assigned': 'Assigned Tasks',
-                'user-reports': 'Personal Performance Reports',
-                'assign-task': 'Assign Task to Team Member',
-                'admin-reports': 'Admin Team Analytics'
-            };
-            document.getElementById('page-title').innerText = titleMap[tabId];
+    async function applyAuthState() {
+      if (accessToken) {
+        el('authScreen').classList.add('hidden');
+        el('appContent').classList.remove('hidden');
+        updateSyncStatus('online', 'Connected');
+        await pullFromDrive();
+      } else {
+        el('authScreen').classList.remove('hidden');
+        el('appContent').classList.add('hidden');
+      }
+    }
 
-            if(tabId === 'user-reports') updateUserReports();
-            if(tabId === 'admin-reports') updateAdminCharts();
-        }
+    function updateSyncStatus(state, text) {
+      el('syncDot').className = 'dot ' + state;
+      el('syncText').innerText = text;
+    }
 
-        // WORK-HOURS / HOLIDAY CLASSIFICATION ENGINE
-        function classifyTaskTimestamp(dateTimeString) {
-            const date = new Date(dateTimeString);
-            const day = date.getDay(); // 0 = Sunday, 5 = Friday, 6 = Saturday
-            const hours = date.getHours();
-            const minutes = date.getMinutes();
-            const timeInMinutes = hours * 60 + minutes;
+    async function findDriveFileId() {
+      const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder', { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (res.status === 401) { accessToken = null; applyAuthState(); throw new Error("Unauthorized"); }
+      const data = await res.json();
+      return data.files?.find(f => f.name === DRIVE_FILE_NAME)?.id || null;
+    }
 
-            const workStart = 8 * 60 + 30; // 08:30 AM
-            const workEnd = 16 * 60;       // 04:00 PM
-
-            // Working days: Sunday (0) to Thursday (4)
-            const isWorkingDay = day >= 0 && day <= 4;
-
-            if (!isWorkingDay) return 'Holiday';
-            if (timeInMinutes >= workStart && timeInMinutes <= workEnd) return 'Regular';
-            return 'Overtime';
-        }
-
-        // TASK RENDERERS
-        function renderRecords() {
-            const grid = document.getElementById('records-grid');
-            grid.innerHTML = '';
-            
-            tasks.forEach(task => {
-                const badgeClass = task.category === 'Regular' ? 'badge-regular' : task.category === 'Overtime' ? 'badge-overtime' : 'badge-holiday';
-                const formattedDate = new Date(task.datetime).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
-
-                grid.innerHTML += `
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between hover:shadow-md transition">
-                        <div>
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${badgeClass}">${task.category}</span>
-                                <span class="text-xs text-gray-400"><i class="fa-regular fa-clock mr-1"></i>${formattedDate}</span>
-                            </div>
-                            <h3 class="font-bold text-gray-800 text-lg mb-1">${task.title}</h3>
-                            <p class="text-gray-600 text-sm mb-4">${task.desc}</p>
-                        </div>
-                        <div class="flex justify-between items-center pt-3 border-t text-xs text-gray-500">
-                            <span><i class="fa-regular fa-user mr-1"></i>${task.owner}</span>
-                            <div class="space-x-2">
-                                <button onclick="editTask(${task.id})" class="text-indigo-600 hover:text-indigo-800 font-medium">Edit</button>
-                                <button onclick="deleteTask(${task.id})" class="text-red-500 hover:text-red-700 font-medium">Delete</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        function renderAssignedTasks() {
-            const tbody = document.getElementById('assigned-tasks-table-body');
-            tbody.innerHTML = '';
-
-            assignedTasks.forEach(task => {
-                const formattedDate = new Date(task.timeframe).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="p-3 font-medium text-gray-800">${task.title}</td>
-                        <td class="p-3"><span class="px-2 py-0.5 text-xs rounded bg-red-100 text-red-700 font-semibold">${task.priority}</span></td>
-                        <td class="p-3 text-gray-500">${formattedDate}</td>
-                        <td class="p-3 text-gray-600">${task.desc}</td>
-                        <td class="p-3"><span class="text-xs font-semibold ${task.status === 'Completed' ? 'text-green-600' : 'text-amber-600'}">${task.status}</span></td>
-                        <td class="p-3 text-right">
-                            ${task.status === 'Pending' ? `<button onclick="completeAssignedTask(${task.id})" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded text-xs font-medium">Mark Done</button>` : '<i class="fa-solid fa-check text-green-500"></i>'}
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        // TASK ACTIONS
-        function handleTaskSubmit(e) {
-            e.preventDefault();
-            const id = document.getElementById('task-id').value;
-            const title = document.getElementById('task-title').value;
-            const datetime = document.getElementById('task-datetime').value;
-            const desc = document.getElementById('task-desc').value;
-            const category = classifyTaskTimestamp(datetime);
-
-            if(id) {
-                const idx = tasks.findIndex(t => t.id == id);
-                tasks[idx] = { ...tasks[idx], title, datetime, desc, category };
-            } else {
-                tasks.push({ id: Date.now(), title, owner: currentUser.name, datetime, desc, category });
+    async function pullFromDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Syncing...');
+      try {
+        const fileId = await findDriveFileId();
+        if (fileId) {
+          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+          const payload = await res.json();
+          
+          if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+            if (payload.settings) {
+              savedSettings = { ...savedSettings, ...payload.settings };
+              activeSettings = { ...savedSettings };
+              localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+              applyLiveUI(activeSettings);
+              syncSettingsFormValues();
+              checkSettingsDirty();
             }
-
-            closeModal('task-modal');
-            renderRecords();
+            if (Array.isArray(payload.entries)) {
+              await dbOps.bulkReplace(payload.entries);
+            }
+          } else if (Array.isArray(payload)) {
+            await dbOps.bulkReplace(payload);
+          }
+          render();
         }
+        updateSyncStatus('online', 'Synced');
+      } catch (err) { updateSyncStatus('', 'Offline Mode'); }
+    }
 
-        function editTask(id) {
-            const task = tasks.find(t => t.id === id);
-            document.getElementById('task-id').value = task.id;
-            document.getElementById('task-title').value = task.title;
-            document.getElementById('task-datetime').value = task.datetime;
-            document.getElementById('task-desc').value = task.desc;
-            document.getElementById('modal-title').innerText = "Edit Task";
-            openModal('task-modal');
+    async function syncToDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Saving...');
+      try {
+        const localEntries = await dbOps.getAll();
+        const fullPayload = {
+          settings: savedSettings,
+          entries: localEntries
+        };
+        const fileId = await findDriveFileId();
+        const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
+
+        if (fileId) {
+          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+            method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: blob
+          });
+        } else {
+          const metadata = { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          form.append('file', blob);
+          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form });
         }
+        updateSyncStatus('online', 'Saved');
+      } catch (err) { updateSyncStatus('', 'Save Failed'); }
+    }
 
-        function deleteTask(id) {
-            tasks = tasks.filter(t => t.id !== id);
-            renderRecords();
-        }
+    /* Core Application State & Actions */
+    const now = new Date();
+    let currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let editingId = null;
 
-        function handleAssignTask(e) {
-            e.preventDefault();
-            assignedTasks.push({
-                id: Date.now(),
-                title: document.getElementById('assign-title').value,
-                assignee: document.getElementById('assign-user').value,
-                priority: document.getElementById('assign-priority').value,
-                timeframe: document.getElementById('assign-timeframe').value,
-                desc: document.getElementById('assign-desc').value,
-                status: 'Pending'
-            });
-            e.target.reset();
-            alert("Task assigned successfully!");
-            renderAssignedTasks();
-        }
+    const el = id => document.getElementById(id);
 
-        function completeAssignedTask(id) {
-            const task = assignedTasks.find(t => t.id === id);
-            task.status = 'Completed';
-            tasks.push({
-                id: Date.now(),
-                title: `[Assigned] ${task.title}`,
-                owner: task.assignee,
-                datetime: new Date().toISOString().slice(0, 16),
-                desc: task.desc,
-                category: classifyTaskTimestamp(new Date().toISOString())
-            });
-            renderAssignedTasks();
-            renderRecords();
-        }
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
+    });
 
-        // MODAL HELPERS
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { 
-            document.getElementById(id).classList.add('hidden');
-            document.getElementById('task-form').reset();
-            document.getElementById('task-id').value = '';
-        }
+    function switchView(viewId) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
 
-        // CHARTS & REPORTS
-        function initCharts() {
-            // User Monthly Chart
-            const ctx1 = document.getElementById('userMonthlyChart').getContext('2d');
-            chartInstances.userMonthly = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: ['June', 'July', 'August', 'September'],
-                    datasets: [{ label: 'Tasks Completed', data: [12, 19, 15, 8], backgroundColor: '#6366F1' }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
+      const activeNav = document.querySelector(`.nav-item[data-target="${viewId}"]`);
+      if (activeNav) activeNav.classList.add('active');
+      el(viewId).classList.add('active');
 
-            // User Work Hours Chart
-            const ctx2 = document.getElementById('userWorkHoursChart').getContext('2d');
-            chartInstances.userWorkHours = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Official Hours (Sun-Thu 8:30-4:00)', 'After-Hours / Holidays'],
-                    datasets: [{ data: [70, 30], backgroundColor: ['#10B981', '#F59E0B'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
+      if (viewId === 'viewReports') renderReportPreview();
+    }
 
-            // Admin Total Chart
-            const ctx3 = document.getElementById('adminTotalTasksChart').getContext('2d');
-            chartInstances.adminTotal = new Chart(ctx3, {
-                type: 'bar',
-                data: {
-                    labels: ['John Doe', 'Jane Smith', 'Alex Johnson'],
-                    datasets: [{ label: 'Total Tasks', data: [15, 22, 18], backgroundColor: '#4F46E5' }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
+    async function render() {
+      const allEntries = await dbOps.getAll();
+      
+      const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => !e.userId || e.userId === currentUser.id);
+      
+      const monthEntries = visibleEntries
+        .filter(e => e.month === currentSelectedMonth)
+        .sort((a, b) => b.timestamp - a.timestamp);
 
-            // Admin Overtime Chart
-            const ctx4 = document.getElementById('adminOvertimeChart').getContext('2d');
-            chartInstances.adminOvertime = new Chart(ctx4, {
-                type: 'bar',
-                data: {
-                    labels: ['John Doe', 'Jane Smith', 'Alex Johnson'],
-                    datasets: [
-                        { label: 'After-Hours', data: [4, 2, 5], backgroundColor: '#F59E0B' },
-                        { label: 'Holidays', data: [2, 1, 3], backgroundColor: '#EF4444' }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
+      el('userColHeader').classList.toggle('hidden', !isAdmin);
+      const tbody = el('tableBody');
+      tbody.innerHTML = '';
 
-        function updateUserReports() {
-            const userTasks = tasks.filter(t => t.owner === currentUser.name);
-            const regCount = userTasks.filter(t => t.category === 'Regular').length;
-            const otCount = userTasks.filter(t => t.category === 'Overtime').length;
-            const holCount = userTasks.filter(t => t.category === 'Holiday').length;
+      if (monthEntries.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${isAdmin ? 5 : 4}" style="text-align:center; color:var(--text-muted); padding: 20px;">No entries recorded for this month.</td></tr>`;
+      } else {
+        monthEntries.forEach(item => {
+          const tr = document.createElement('tr');
+          const badgeClass = item.type === 'Achievement' ? 'badge-achievement' : 'badge-task';
+          const isOwnTask = !item.userId || item.userId === currentUser.id;
+          const displayName = item.username || item.userName || 'User';
 
-            document.getElementById('user-report-table').innerHTML = `
-                <tr><td class="p-3 font-medium">Regular Work Hours</td><td class="p-3">${regCount}</td><td class="p-3">12</td><td class="p-3">85</td></tr>
-                <tr><td class="p-3 font-medium text-amber-700">After-Hours Overtime</td><td class="p-3">${otCount}</td><td class="p-3">4</td><td class="p-3">22</td></tr>
-                <tr><td class="p-3 font-medium text-red-700">Holiday Execution</td><td class="p-3">${holCount}</td><td class="p-3">1</td><td class="p-3">9</td></tr>
+          let actionsHtml = '';
+          if (isOwnTask) {
+            actionsHtml = `
+              <button onclick="editEntry('${item.id}')" class="action-icon-btn" title="Edit">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
             `;
-        }
+          } else {
+            actionsHtml = `<span style="font-size:0.75rem; color:var(--text-muted); font-style:italic;">Read-Only</span>`;
+          }
 
-        function updateAdminCharts() {
-            // Placeholder logic for interactive filters
-            chartInstances.adminTotal.update();
-            chartInstances.adminOvertime.update();
-        }
+          tr.innerHTML = `
+            ${isAdmin ? `<td style="font-size:0.78rem; font-weight:600; color:var(--text-muted);">${escapeHTML(displayName)}</td>` : ''}
+            <td><span class="badge ${badgeClass}">${item.type}</span></td>
+            <td style="font-weight: 600;">${escapeHTML(item.title)}</td>
+            <td style="color: var(--text-muted); font-size: 0.82rem;">${escapeHTML(item.desc || '-')}</td>
+            <td style="text-align: right; white-space: nowrap;">${actionsHtml}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
 
-        function exportReportCSV() {
-            let csvContent = "data:text/csv;charset=utf-8,ID,Title,Owner,DateTime,Category\n";
-            tasks.forEach(t => {
-                csvContent += `${t.id},"${t.title}","${t.owner}","${t.datetime}",${t.category}\n`;
-            });
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Task_Report_Summary.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    </script>
+    /* History Search Logic */
+    let historyDebounceTimer;
+    el('historySearchInput').addEventListener('input', (e) => {
+      clearTimeout(historyDebounceTimer);
+      const value = e.target.value;
+      historyDebounceTimer = setTimeout(() => runHistorySearch(value), 150);
+    });
+
+    document.addEventListener('click', (e) => {
+      const wrap = document.querySelector('.searchable-select');
+      if (wrap && !wrap.contains(e.target)) el('historyResults').style.display = 'none';
+    });
+
+    async function runHistorySearch(rawQuery) {
+      const query = rawQuery.toLowerCase().trim();
+      const resultsContainer = el('historyResults');
+      if (!query) { resultsContainer.style.display = 'none'; resultsContainer.innerHTML = ''; return; }
+
+      const all = await dbOps.getAll();
+      const matches = all
+        .filter(item => (!item.userId || item.userId === currentUser.id))
+        .filter(item => item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query))
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 25);
+
+      resultsContainer.innerHTML = '';
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="history-item" style="color:var(--text-muted); cursor:default;">No matches</div>`;
+        resultsContainer.style.display = 'block';
+        return;
+      }
+
+      matches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `<span style="color:var(--text-muted); font-size:0.75rem; margin-right:6px;">${item.month}</span>${escapeHTML(item.title)}`;
+        div.onclick = () => {
+          el('taskTitle').value = item.title;
+          el('taskType').value = item.type;
+          el('taskDesc').value = item.desc || '';
+          el('historySearchInput').value = item.title;
+          resultsContainer.style.display = 'none';
+        };
+        resultsContainer.appendChild(div);
+      });
+      resultsContainer.style.display = 'block';
+    }
+
+    async function handleSave() {
+      const title = el('taskTitle').value.trim();
+      const type = el('taskType').value;
+      const desc = el('taskDesc').value.trim();
+
+      if (!title) return alert('Title is required');
+
+      const userDisplayName = savedSettings.username.trim() || currentUser.email || 'User';
+
+      const record = {
+        id: editingId || 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        userId: currentUser.id,
+        userName: currentUser.email,
+        username: userDisplayName,
+        month: currentSelectedMonth,
+        title,
+        type,
+        desc,
+        timestamp: Date.now()
+      };
+
+      await dbOps.save(record);
+      resetForm();
+      await render();
+      switchView('viewRecords');
+    }
+
+    function resetForm() {
+      editingId = null;
+      el('taskTitle').value = '';
+      el('taskDesc').value = '';
+      el('historySearchInput').value = '';
+      el('formHeaderTitle').innerText = 'New Entry';
+      el('saveTaskBtn').innerText = 'Save Entry';
+      el('cancelEditBtn').classList.add('hidden');
+    }
+
+    window.editEntry = async (id) => {
+      const all = await dbOps.getAll();
+      const target = all.find(e => e.id === id);
+      if (!target) return;
+
+      if (target.userId && target.userId !== currentUser.id) {
+        return alert("Admin rights allow viewing and reporting only. You cannot edit other users' tasks.");
+      }
+
+      editingId = target.id;
+      el('taskTitle').value = target.title;
+      el('taskType').value = target.type;
+      el('taskDesc').value = target.desc;
+      el('formHeaderTitle').innerText = 'Edit Entry';
+      el('saveTaskBtn').innerText = 'Update Entry';
+      el('cancelEditBtn').classList.remove('hidden');
+      switchView('viewEntry');
+    };
+
+    window.deleteEntry = async (id) => {
+      const all = await dbOps.getAll();
+      const target = all.find(e => e.id === id);
+      if (target && target.userId && target.userId !== currentUser.id) {
+        return alert("Admin rights allow viewing and reporting only. You cannot delete other users' tasks.");
+      }
+
+      if (confirm('Delete this record?')) {
+        await dbOps.delete(id);
+        render();
+      }
+    };
+
+    /* Admin Operations */
+    function loginAdmin() {
+      const pass = el('adminPassInput').value;
+      if (pass === adminPassword) {
+        isAdmin = true;
+        el('adminPassInput').value = '';
+        updateAdminUIState();
+        render();
+      } else {
+        alert('Incorrect Admin Password');
+      }
+    }
+
+    function logoutAdmin() {
+      isAdmin = false;
+      updateAdminUIState();
+      render();
+    }
+
+    function updateAdminPassword() {
+      const newPass = el('newAdminPassInput').value.trim();
+      if (!newPass) return alert('Password cannot be empty');
+      adminPassword = newPass;
+      localStorage.setItem(STORAGE_KEY_ADMIN_PASS, adminPassword);
+      el('newAdminPassInput').value = '';
+      alert('Admin password updated successfully.');
+    }
+
+    function updateAdminUIState() {
+      el('adminHeaderBadge').classList.toggle('hidden', !isAdmin);
+      el('adminLoginBox').classList.toggle('hidden', isAdmin);
+      el('adminPanelBox').classList.toggle('hidden', !isAdmin);
+
+      const scopeBadge = el('reportScopeBadge');
+      if (isAdmin) {
+        scopeBadge.innerText = 'Full System Report (All Users)';
+        scopeBadge.className = 'badge badge-admin';
+      } else {
+        scopeBadge.innerText = 'Personal Report';
+        scopeBadge.className = 'badge badge-task';
+      }
+    }
+
+    /* Reports & Mail Integration */
+    async function getReportEntries(targetMonth) {
+      const all = await dbOps.getAll();
+      const filtered = isAdmin ? all : all.filter(e => !e.userId || e.userId === currentUser.id);
+      return filtered
+        .filter(e => e.month === targetMonth)
+        .sort((a, b) => a.timestamp - b.timestamp);
+    }
+
+    async function renderReportPreview() {
+      const targetMonth = el('reportMonthPicker').value;
+      const monthEntries = await getReportEntries(targetMonth);
+      const container = el('reportPreviewContainer');
+      container.innerHTML = '';
+
+      if (monthEntries.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">No tasks logged for ${targetMonth}.</p>`;
+        return;
+      }
+
+      monthEntries.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = `report-card ${item.type.toLowerCase()}`;
+        const displayName = item.username || item.userName || savedSettings.username || 'User';
+
+        card.innerHTML = `
+          <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); margin-bottom:4px; display:flex; justify-content:space-between;">
+            <span>${idx + 1}. [${item.type.toUpperCase()}] - ${new Date(item.timestamp).toLocaleDateString()}</span>
+            <span style="color:var(--primary); font-weight:bold;">${escapeHTML(displayName)}</span>
+          </div>
+          <div style="font-weight:700; color:var(--text); font-size:0.95rem;">${escapeHTML(item.title)}</div>
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">${escapeHTML(item.desc || '')}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function openMailAppWithCopy() {
+      const targetMonth = el('reportMonthPicker').value;
+      const monthEntries = await getReportEntries(targetMonth);
+      if (monthEntries.length === 0) return alert('No data to export.');
+
+      let formattedText = `${isAdmin ? 'FULL SYSTEM' : 'PERSONAL'} PERFORMANCE REPORT (${targetMonth})\n===========================================\n\n`;
+      monthEntries.forEach((a, i) => {
+        const displayName = a.username || a.userName || savedSettings.username || 'User';
+        formattedText += `[${i + 1}] ${a.type.toUpperCase()}: ${a.title}\n`;
+        formattedText += `User: ${displayName}\n`;
+        formattedText += `Date: ${new Date(a.timestamp).toLocaleDateString()}\n`;
+        formattedText += `Details: ${a.desc || 'N/A'}\n`;
+        formattedText += `-------------------------------------------\n\n`;
+      });
+
+      try {
+        await navigator.clipboard.writeText(formattedText);
+      } catch (err) {
+        console.warn('Clipboard write deferred or blocked:', err);
+      }
+
+      const defaultTo = activeSettings.recipients ? encodeURIComponent(activeSettings.recipients) : '';
+      const subject = encodeURIComponent(`${isAdmin ? 'Full System' : 'Monthly'} Performance Report - ${targetMonth}`);
+      
+      window.location.href = `mailto:${defaultTo}?subject=${subject}`;
+    }
+
+    /* Live Interactive Preference Listeners */
+    el('usernameInput').addEventListener('input', (e) => {
+      activeSettings.username = e.target.value.trim();
+      checkSettingsDirty();
+    });
+
+    el('themeModeSelect').addEventListener('change', (e) => {
+      activeSettings.theme = e.target.value;
+      applyLiveUI(activeSettings);
+      checkSettingsDirty();
+    });
+
+    el('defaultRecipientsInput').addEventListener('input', (e) => {
+      activeSettings.recipients = e.target.value.trim();
+      checkSettingsDirty();
+    });
+
+    document.querySelectorAll('#palettePicker .swatch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetBtn = e.currentTarget;
+        activeSettings.palette = targetBtn.getAttribute('data-palette');
+        document.querySelectorAll('#palettePicker .swatch-btn').forEach(b => b.classList.remove('active'));
+        targetBtn.classList.add('active');
+        applyLiveUI(activeSettings);
+        checkSettingsDirty();
+      });
+    });
+
+    document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetBtn = e.currentTarget;
+        activeSettings.uiStyle = targetBtn.getAttribute('data-preset');
+        document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(b => b.classList.remove('active'));
+        targetBtn.classList.add('active');
+        applyLiveUI(activeSettings);
+        checkSettingsDirty();
+      });
+    });
+
+    /* Admin Event Listeners */
+    el('adminLoginBtn').addEventListener('click', loginAdmin);
+    el('adminLogoutBtn').addEventListener('click', logoutAdmin);
+    el('updateAdminPassBtn').addEventListener('click', updateAdminPassword);
+
+    /* Global Event Binding Setup */
+    el('exportReportBtn').addEventListener('click', openMailAppWithCopy);
+    el('saveSettingsBtn').addEventListener('click', saveSettings);
+    el('addTaskTableBtn').addEventListener('click', () => { resetForm(); switchView('viewEntry'); });
+    el('cancelEditBtn').addEventListener('click', resetForm);
+    el('syncTrigger').addEventListener('click', pullFromDrive);
+    el('googleSignInBtn').addEventListener('click', () => tokenClient && tokenClient.requestAccessToken({ prompt: '' }));
+    el('saveTaskBtn').addEventListener('click', handleSave);
+
+    el('monthPicker').value = currentSelectedMonth;
+    el('reportMonthPicker').value = currentSelectedMonth;
+
+    el('monthPicker').addEventListener('change', (e) => { currentSelectedMonth = e.target.value; render(); });
+    el('reportMonthPicker').addEventListener('change', renderReportPreview);
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      loadSettings();
+      await initDB();
+      render();
+      if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); }
+      else window.addEventListener('load', async () => { if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); } });
+    });
+
+    function escapeHTML(str) {
+      return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+  </script>
 </body>
 </html>
