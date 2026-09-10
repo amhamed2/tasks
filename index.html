@@ -129,6 +129,7 @@
     .nav-item svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
     .nav-item:hover { background: var(--primary-soft); color: var(--primary); }
     .nav-item.active { background: var(--primary-soft); color: var(--primary); }
+    .nav-item.logout-item:hover { background: var(--danger-soft); color: var(--danger); }
     body.sidebar-collapsed .nav-text { display: none; }
 
     /* Main Content Wrapper */
@@ -241,6 +242,9 @@
     .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 110; }
     .hidden { display: none !important; }
+    .user-admin-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px solid var(--card-border); border-radius:8px; margin-top:8px; background:var(--bg); }
+    .user-admin-meta { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .user-admin-email { font-size:0.75rem; color:var(--text-muted); overflow-wrap:anywhere; }
 
     /* Mobile Responsive Logic */
     @media (max-width: 768px) {
@@ -266,7 +270,7 @@
   <div id="authScreen" class="auth-overlay">
     <div style="text-align: center; max-width: 320px;">
       <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">TaskTracker Pro</h2>
-      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">Secure task management synchronized directly to your private Google Drive storage.</p>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">Secure task management. Each registered user sees only their own tasks; Administrators can see the complete team record.</p>
       <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #333; border: 1px solid var(--card-border); font-weight: 600;">
         <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
         Sign in with Google
@@ -321,10 +325,10 @@
         </button>
         <button class="nav-item" data-target="viewEntry">
           <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-          <span class="nav-text">Add / Edit Task</span>
+          <span class="nav-text">Add Task</span>
         </button>
         <button class="nav-item admin-only hidden" data-target="viewAssign">
-          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
           <span class="nav-text">Push / Assign Tasks</span>
         </button>
         <button class="nav-item" data-target="viewReports">
@@ -332,8 +336,12 @@
           <span class="nav-text">Analytics Reports</span>
         </button>
         <button class="nav-item" data-target="viewSettings">
-          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c-.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6 z"/></svg>
           <span class="nav-text">Settings</span>
+        </button>
+        <button class="nav-item logout-item" id="navLogoutBtn">
+          <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+          <span class="nav-text">Logout</span>
         </button>
       </nav>
     </aside>
@@ -422,7 +430,7 @@
             <div class="card-title">Push Task to Team Member</div>
 
             <label>Task Title</label>
-            <input type="text" id="assignTitle" placeholder="e.g. Prepare Quarter Audit Summary">
+            <input type="text" id="assignTitle" placeholder="e.g. Prepare Quarter Audit Summary" value="">
 
             <label>Assignee (Team Member)</label>
             <select id="assignUserSelect"></select>
@@ -466,11 +474,12 @@
               <span id="reportScopeBadge" class="badge badge-task">Personal Report</span>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px;">
               <div>
                 <label>Timeframe Mode</label>
                 <select id="reportTimeframeSelect">
                   <option value="month">Specific Month</option>
+                  <option value="custom">Custom Date Range</option>
                   <option value="last3">Last 3 Months</option>
                   <option value="all">All Time</option>
                 </select>
@@ -478,6 +487,14 @@
               <div id="monthPickerWrap">
                 <label>Select Month</label>
                 <input type="month" id="reportMonthPicker">
+              </div>
+              <div id="customDateStartWrap" class="hidden">
+                <label>Start Date</label>
+                <input type="date" id="reportStartDate">
+              </div>
+              <div id="customDateEndWrap" class="hidden">
+                <label>End Date</label>
+                <input type="date" id="reportEndDate">
               </div>
               <div id="adminUserFilterWrap" class="hidden">
                 <label>Filter By User</label>
@@ -513,6 +530,15 @@
             </div>
           </div>
 
+          <!-- Pushed Tasks Grid Section -->
+          <div class="card">
+            <div class="card-title">
+              <span>Pushed Tasks Overview</span>
+              <span class="badge badge-assigned">Action & Tracking</span>
+            </div>
+            <div id="pushedTasksReportGrid" class="records-grid"></div>
+          </div>
+
           <!-- Assigned Tasks Report Section -->
           <div class="card">
             <div class="card-title">Admin Pushed Tasks Log</div>
@@ -537,7 +563,7 @@
           <!-- Interactive Charts Canvas Section -->
           <div class="charts-grid">
             <div class="card">
-              <div class="card-title">Task Count (Selected Month vs Past 3 Months)</div>
+              <div class="card-title">Task Count (Selected Period vs Past)</div>
               <div class="chart-container"><canvas id="chartMonthlyCanvas"></canvas></div>
             </div>
             <div class="card">
@@ -576,6 +602,17 @@
               <button id="updateAdminPassBtn" class="btn btn-secondary" style="margin-top: 10px;">Update Password</button>
               <button id="adminLogoutBtn" class="btn btn-secondary" style="margin-top: 8px; color: var(--danger);">Logout Admin</button>
             </div>
+
+            <div id="adminUserManagement" class="hidden" style="margin-top:18px; padding-top:18px; border-top:1px solid var(--card-border);">
+              <div class="card-title" style="font-size:1rem; margin-bottom:10px;">User Management</div>
+              <p class="field-hint" style="margin-bottom:12px;">Add a Google account to the application. The account must sign in with the exact email address below. The shared database will be granted access automatically.</p>
+              <label>User Name</label>
+              <input type="text" id="newUserNameInput" placeholder="e.g. Ahmed Hamed">
+              <label>Google Email</label>
+              <input type="email" id="newUserEmailInput" placeholder="user@company.com">
+              <button id="addUserBtn" class="btn btn-success" style="margin-top:10px;">+ Add User</button>
+              <div id="adminUsersList" style="margin-top:14px;"></div>
+            </div>
           </div>
 
           <div class="card">
@@ -611,7 +648,7 @@
               <div class="preset-card swatch-btn" data-preset="compact" style="border-radius:4px; padding:6px;">
                 <div class="preset-preview-box" style="border-radius:2px;">Compact</div>Minimal
               </div>
-              <div class="preset-card swatch-btn" data-preset="neumorphic" style="border-radius:12px;">
+              <div class="preset-card swatch-btn" data-preset="neumorphic" style="border-radius:16px;">
                 <div class="preset-preview-box" style="border-radius:8px;">Soft</div>Neumorphic
               </div>
               <div class="preset-card swatch-btn" data-preset="glass" style="border-radius:14px;">
@@ -630,7 +667,7 @@
 
           <!-- Task tracker Pro Version Banner -->
           <div style="text-align: center; margin-top: 24px; padding: 14px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); border-top: 1px solid var(--card-border);">
-            Task tracker Pro (Beta 0.9.01)
+            Task tracker Pro (Beta 0.9.10)
           </div>
         </section>
 
@@ -640,8 +677,22 @@
 
   <script>
     const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
-    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
-    const DRIVE_FILE_NAME = 'tasktracker_db.json';
+    // Full Google Drive access is required because the application keeps one
+    // database file in the owner's Drive and shares that file with the users.
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive';
+
+    // These are the initial users used to bootstrap the shared database.
+    // After the database exists, Admin can add additional users from Settings.
+    const INITIAL_USERS = [
+      { email: 'amhamed@gmail.com', name: 'Ahmed Hamed' },
+      { email: 'madawbs@gmail.com', name: 'Madawbs' }
+    ];
+
+    const SHARED_DRIVE_FILE_ID = '';
+    const DRIVE_FILE_NAME = 'TaskTracker_GLOBAL_SHARED_DB_v2.json';
+    const LEGACY_DRIVE_FILE_NAME = 'tasktracker_shared_db.json';
+    let sharedUsers = [];
+
     const STORAGE_KEY_SESSION = 'tasktracker_google_session';
     const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
     const STORAGE_KEY_ADMIN_PASS = 'tasktracker_admin_pass';
@@ -664,15 +715,16 @@
     let chartAdminOvertimeInstance = null;
     let activeResponseTaskId = null;
 
-    /* Initialize DB */
+    /* Initialize DB with Reset / Migration Schema v4 */
     function initDB() {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 3);
+        const request = indexedDB.open(DB_NAME, 4);
         request.onupgradeneeded = (e) => {
           const database = e.target.result;
-          if (!database.objectStoreNames.contains('entries')) {
-            database.createObjectStore('entries', { keyPath: 'id' });
+          if (database.objectStoreNames.contains('entries')) {
+            database.deleteObjectStore('entries');
           }
+          database.createObjectStore('entries', { keyPath: 'id' });
         };
         request.onsuccess = (e) => { db = e.target.result; resolve(); };
         request.onerror = (e) => reject(e.target.error);
@@ -708,13 +760,90 @@
       }
     };
 
-    /* Work Hour Auto Detection (Sun-Thu 8:30 to 16:00 = Regular, Fri/Sat = Holiday, Else = Overtime) */
+    function normalizeEmail(email) {
+      return String(email || '').trim().toLowerCase();
+    }
+
+    function getSettingsStorageKey(email = currentUser.email) {
+      const key = normalizeEmail(email);
+      return key ? `${STORAGE_KEY_SETTINGS}:${key}` : STORAGE_KEY_SETTINGS;
+    }
+
+    function isUserMatch(item) {
+      if (!item) return false;
+      const identities = new Set([
+        normalizeEmail(currentUser.id),
+        normalizeEmail(currentUser.email),
+        normalizeEmail(savedSettings.username)
+      ].filter(Boolean));
+
+      const itemIdentities = [
+        normalizeEmail(item.userId),
+        normalizeEmail(item.userName),
+        normalizeEmail(item.username),
+        normalizeEmail(item.assignedToEmail)
+      ].filter(Boolean);
+
+      if (!itemIdentities.length) return true;
+      return itemIdentities.some(value => identities.has(value));
+    }
+
+    function getInitialUsers() {
+      return INITIAL_USERS.map(u => ({ ...u, email: normalizeEmail(u.email) }));
+    }
+
+    function mergeUsers(existingUsers = [], entries = []) {
+      const map = new Map();
+
+      const add = (user) => {
+        if (!user) return;
+        const email = normalizeEmail(user.email || user.userName || user.userId);
+        if (!email || !email.includes('@')) return;
+        const key = email;
+        const old = map.get(key);
+        map.set(key, {
+          email,
+          name: String(user.name || old?.name || email).trim() || email,
+          addedAt: user.addedAt || old?.addedAt || new Date().toISOString()
+        });
+      };
+
+      getInitialUsers().forEach(add);
+      (existingUsers || []).forEach(add);
+
+      (entries || []).forEach(e => {
+        const email = normalizeEmail(e.assignedToEmail || (((e.userName || '').includes('@')) ? e.userName : ''));
+        if (email) add({ email, name: e.username || email });
+        const authorEmail = normalizeEmail((e.userName || '').includes('@') ? e.userName : '');
+        if (authorEmail) add({ email: authorEmail, name: e.username || authorEmail });
+      });
+
+      const currentEmail = normalizeEmail(currentUser.email);
+      if (currentEmail) add({ email: currentEmail, name: savedSettings.username || currentEmail });
+
+      return Array.from(map.values()).sort((a,b) => a.name.localeCompare(b.name));
+    }
+
+    function getRegisteredUser(email) {
+      const key = normalizeEmail(email);
+      return sharedUsers.find(u => normalizeEmail(u.email) === key) || null;
+    }
+
+    function isRegisteredUser(email) {
+      return !!getRegisteredUser(email);
+    }
+
+    function getDistinctUsers(allEntries) {
+      return sharedUsers.map(u => ({ id: u.email, name: u.name || u.email }));
+    }
+
+    /* Work Hour Auto Detection */
     function calculateWorkType(datetimeStr) {
       if (!datetimeStr) return 'Regular';
       const dt = new Date(datetimeStr);
       if (isNaN(dt.getTime())) return 'Regular';
       
-      const day = dt.getDay(); // 0: Sun, 1: Mon, ..., 5: Fri, 6: Sat
+      const day = dt.getDay(); 
       const hours = dt.getHours();
       const minutes = dt.getMinutes();
       const totalMinutes = hours * 60 + minutes;
@@ -743,6 +872,8 @@
             const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
             const profile = await userInfoRes.json();
             currentUser = { id: profile.sub || profile.email, email: profile.email || profile.name || 'User' };
+            // Preferences are per Google account, not global to the browser.
+            loadSettings();
           } catch(err) {}
 
           localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ 
@@ -764,6 +895,7 @@
         if (session.access_token && Date.now() < (session.expiry - 300000)) {
           accessToken = session.access_token;
           if (session.user) currentUser = session.user;
+          loadSettings();
         }
       } catch (err) { localStorage.removeItem(STORAGE_KEY_SESSION); }
     }
@@ -780,67 +912,298 @@
       }
     }
 
+    function handleLogout() {
+      if (confirm("Are you sure you want to log out?")) {
+        accessToken = null;
+        currentUser = { id: 'usr_default', email: 'User', username: '' };
+        localStorage.removeItem(STORAGE_KEY_SESSION);
+        sharedUsers = [];
+        if (db) dbOps.bulkReplace([]);
+        if (isAdmin) logoutAdmin();
+        applyAuthState();
+      }
+    }
+
     function updateSyncStatus(state, text) {
       el('syncDot').className = 'dot ' + state;
       el('syncText').innerText = text;
     }
 
+    async function driveRequest(url, options = {}) {
+      const res = await fetch(url, {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
+
+      if (res.status === 401) {
+        accessToken = null;
+        localStorage.removeItem(STORAGE_KEY_SESSION);
+        await applyAuthState();
+        throw new Error('Google authorization expired. Please sign in again.');
+      }
+
+      return res;
+    }
+
+    function currentUserEmail() {
+      return (currentUser.email || '').trim().toLowerCase();
+    }
+
+    function isConfiguredSharedUser(email) {
+      const normalized = (email || '').trim().toLowerCase();
+      return !!normalized && SHARED_USER_EMAILS.some(e => e.trim().toLowerCase() === normalized);
+    }
+
     async function findDriveFileId() {
-      const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder', { headers: { Authorization: `Bearer ${accessToken}` } });
-      if (res.status === 401) { accessToken = null; applyAuthState(); throw new Error("Unauthorized"); }
+      if (!accessToken) return null;
+      if (SHARED_DRIVE_FILE_ID && SHARED_DRIVE_FILE_ID.trim()) return SHARED_DRIVE_FILE_ID.trim();
+
+      const q = encodeURIComponent(`name = '${DRIVE_FILE_NAME.replace(/'/g, "\\'")}' and trashed = false`);
+      const url = `https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,modifiedTime,owners(emailAddress),permissions(id,type,emailAddress,role))&orderBy=modifiedTime desc`;
+      const res = await driveRequest(url);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Unable to locate shared database (${res.status}): ${text}`);
+      }
       const data = await res.json();
-      return data.files?.find(f => f.name === DRIVE_FILE_NAME)?.id || null;
+      return data.files?.[0]?.id || null;
+    }
+
+    async function findLegacyDriveFileId() {
+      if (!accessToken) return null;
+      const q = encodeURIComponent(`name = '${LEGACY_DRIVE_FILE_NAME.replace(/'/g, "\\'")}' and trashed = false`);
+      for (const space of ['drive', 'appDataFolder']) {
+        try {
+          const url = `https://www.googleapis.com/drive/v3/files?q=${q}&spaces=${space}&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc`;
+          const res = await driveRequest(url);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data.files?.[0]?.id) return data.files[0].id;
+        } catch (err) { console.warn('Legacy database search failed for', space, err); }
+      }
+      return null;
+    }
+
+    async function getFilePermissions(fileId) {
+      const res = await driveRequest(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}/permissions?fields=permissions(id,type,emailAddress,role)`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.permissions || [];
+    }
+
+    async function shareUserWithDatabase(fileId, email) {
+      if (!fileId || !email || !accessToken) return false;
+      const target = normalizeEmail(email);
+      const permissions = await getFilePermissions(fileId);
+      const existing = permissions.find(p => p.type === 'user' && normalizeEmail(p.emailAddress) === target);
+      if (existing) return existing.role === 'writer' || existing.role === 'owner';
+
+      const res = await driveRequest(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}/permissions?sendNotificationEmail=false&fields=id,emailAddress,role,type`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'user', role: 'writer', emailAddress: target })
+        }
+      );
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Could not grant Drive access to ${target} (${res.status}): ${text}`);
+      }
+      return true;
+    }
+
+    async function shareAllRegisteredUsers(fileId) {
+      const owner = normalizeEmail(currentUser.email);
+      if (!fileId || !owner) return;
+      for (const user of sharedUsers) {
+        if (normalizeEmail(user.email) === owner) continue;
+        try { await shareUserWithDatabase(fileId, user.email); }
+        catch (err) { console.warn('Could not share database with', user.email, err); }
+      }
+    }
+
+    function mergeEntries(localEntries, remoteEntries) {
+      const map = new Map();
+      [...(remoteEntries || []), ...(localEntries || [])].forEach(item => {
+        if (!item || !item.id) return;
+        const existing = map.get(item.id);
+        if (!existing) { map.set(item.id, item); return; }
+        const existingTime = new Date(existing.updatedAt || existing.datetime || existing.timestamp || 0).getTime() || 0;
+        const itemTime = new Date(item.updatedAt || item.datetime || item.timestamp || 0).getTime() || 0;
+        map.set(item.id, itemTime >= existingTime ? item : existing);
+      });
+      return Array.from(map.values());
+    }
+
+    function sameEntries(a, b) {
+      if (a.length !== b.length) return false;
+      const map = new Map(a.map(x => [x.id, JSON.stringify(x)]));
+      return b.every(x => map.get(x.id) === JSON.stringify(x));
+    }
+
+    function sameUsers(a, b) {
+      return JSON.stringify(a.map(u => ({email: normalizeEmail(u.email), name: u.name})).sort((x,y)=>x.email.localeCompare(y.email))) ===
+             JSON.stringify(b.map(u => ({email: normalizeEmail(u.email), name: u.name})).sort((x,y)=>x.email.localeCompare(y.email)));
+    }
+
+    async function createSharedDatabase(initialEntries, initialUsers) {
+      const fullPayload = { version: 4, updatedAt: new Date().toISOString(), users: initialUsers || [], entries: initialEntries || [] };
+      const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
+      const metadata = { name: DRIVE_FILE_NAME, mimeType: 'application/json' };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', blob);
+
+      const res = await driveRequest('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', { method: 'POST', body: form });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Unable to create shared database (${res.status}): ${text}`);
+      }
+      const created = await res.json();
+      return created.id;
+    }
+
+    async function readSharedDatabase(fileId) {
+      const res = await driveRequest(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Unable to read shared database (${res.status}): ${text}`);
+      }
+      const payload = await res.json();
+      if (Array.isArray(payload)) return { entries: payload, users: [] };
+      return { entries: Array.isArray(payload.entries) ? payload.entries : [], users: Array.isArray(payload.users) ? payload.users : [] };
+    }
+
+    async function writeSharedDatabase(fileId, entries, users) {
+      const fullPayload = { version: 4, updatedAt: new Date().toISOString(), users: users || [], entries: entries || [] };
+      const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
+      const res = await driveRequest(`https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=media`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: blob });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Unable to save shared database (${res.status}): ${text}`);
+      }
     }
 
     async function pullFromDrive() {
       if (!accessToken) return;
       updateSyncStatus('syncing', 'Syncing...');
       try {
-        const fileId = await findDriveFileId();
-        if (fileId) {
-          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
-          const payload = await res.json();
-          if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-            if (payload.settings) {
-              savedSettings = { ...savedSettings, ...payload.settings };
-              activeSettings = { ...savedSettings };
-              localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
-              applyLiveUI(activeSettings);
-              syncSettingsFormValues();
-              checkSettingsDirty();
-            }
-            if (Array.isArray(payload.entries)) await dbOps.bulkReplace(payload.entries);
-          } else if (Array.isArray(payload)) {
-            await dbOps.bulkReplace(payload);
+        let fileId = await findDriveFileId();
+        let payload;
+
+        if (!fileId) {
+          // Only a bootstrap user may create the central database. Unknown Google accounts never create their own database.
+          if (!getInitialUsers().some(u => normalizeEmail(u.email) === normalizeEmail(currentUser.email))) {
+            throw new Error('This Google account is not registered in TaskTracker. Ask an administrator to add your email.');
           }
-          render();
+          const localEntries = (await dbOps.getAll()).filter(isUserMatch);
+          const legacyFileId = await findLegacyDriveFileId();
+          let legacyEntries = [];
+          if (legacyFileId) { try { legacyEntries = (await readSharedDatabase(legacyFileId)).entries; } catch(e) { console.warn(e); } }
+          sharedUsers = mergeUsers([], [...localEntries, ...legacyEntries]);
+          fileId = await createSharedDatabase(mergeEntries(localEntries, legacyEntries), sharedUsers);
+          await shareAllRegisteredUsers(fileId);
+          await dbOps.bulkReplace(mergeEntries(localEntries, legacyEntries));
+        } else {
+          payload = await readSharedDatabase(fileId);
+          const localEntries = (await dbOps.getAll()).filter(isUserMatch);
+          const oldUsers = payload.users || [];
+          const remoteEntries = payload.entries || [];
+          const mergedUsers = mergeUsers(oldUsers, remoteEntries);
+
+          if (!mergedUsers.some(u => normalizeEmail(u.email) === normalizeEmail(currentUser.email))) {
+            await dbOps.bulkReplace([]);
+            throw new Error(`Google account ${currentUser.email} is not registered in TaskTracker. Ask an administrator to add it.`);
+          }
+
+          sharedUsers = mergedUsers;
+          const mergedEntries = mergeEntries(localEntries, remoteEntries);
+          await dbOps.bulkReplace(mergedEntries);
+          if (!sameEntries(mergedEntries, remoteEntries) || !sameUsers(mergedUsers, oldUsers)) {
+            await writeSharedDatabase(fileId, mergedEntries, mergedUsers);
+          }
+          await shareAllRegisteredUsers(fileId);
         }
-        updateSyncStatus('online', 'Synced');
-      } catch (err) { updateSyncStatus('', 'Offline Mode'); }
+
+        await render();
+        if (isAdmin) { await populateAdminUserManagement(); await populateAssigneeDropdown(); await populateAdminReportFilters(); }
+        updateSyncStatus('online', 'Synced - Shared Database');
+      } catch (err) {
+        console.error('Drive sync failed:', err);
+        updateSyncStatus('', 'Sync Failed');
+        el('appContent').classList.add('hidden');
+        el('authScreen').classList.remove('hidden');
+        alert(err.message || 'Unable to load TaskTracker data.');
+      }
     }
 
     async function syncToDrive() {
       if (!accessToken) return;
       updateSyncStatus('syncing', 'Saving...');
       try {
-        const localEntries = await dbOps.getAll();
-        const fullPayload = { settings: savedSettings, entries: localEntries };
         const fileId = await findDriveFileId();
-        const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
+        if (!fileId) { await pullFromDrive(); return; }
+        const payload = await readSharedDatabase(fileId);
+        const localUserEntries = (await dbOps.getAll()).filter(isUserMatch);
+        const mergedEntries = mergeEntries(localUserEntries, payload.entries || []);
+        const mergedUsers = mergeUsers(payload.users || [], mergedEntries);
+        sharedUsers = mergedUsers;
+        await writeSharedDatabase(fileId, mergedEntries, mergedUsers);
+        await shareAllRegisteredUsers(fileId);
+        await dbOps.bulkReplace(mergedEntries);
+        updateSyncStatus('online', 'Saved - Shared Database');
+      } catch (err) {
+        console.error('Drive save failed:', err);
+        updateSyncStatus('', 'Save Failed');
+      }
+    }
 
-        if (fileId) {
-          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-            method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: blob
-          });
-        } else {
-          const metadata = { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
-          const form = new FormData();
-          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-          form.append('file', blob);
-          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form });
-        }
-        updateSyncStatus('online', 'Saved');
-      } catch (err) { updateSyncStatus('', 'Save Failed'); }
+    async function addApplicationUser() {
+      if (!isAdmin) return alert('Admin access is required.');
+      const name = el('newUserNameInput').value.trim();
+      const email = normalizeEmail(el('newUserEmailInput').value);
+      if (!name || !email) return alert('User name and Google email are required.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert('Enter a valid Google email address.');
+      if (isRegisteredUser(email)) return alert('This user is already registered.');
+
+      const fileId = await findDriveFileId();
+      if (!fileId) return alert('The shared database is not available yet. Sign in with the initial administrator account first.');
+
+      try {
+        await shareUserWithDatabase(fileId, email);
+        sharedUsers.push({ email, name, addedAt: new Date().toISOString() });
+        sharedUsers = mergeUsers(sharedUsers, []);
+        const payload = await readSharedDatabase(fileId);
+        const users = mergeUsers([...payload.users, { email, name, addedAt: new Date().toISOString() }], payload.entries);
+        sharedUsers = users;
+        await writeSharedDatabase(fileId, payload.entries, users);
+        el('newUserNameInput').value = '';
+        el('newUserEmailInput').value = '';
+        await populateAdminUserManagement();
+        await populateAssigneeDropdown();
+        await populateAdminReportFilters();
+        alert(`${name} (${email}) has been added to TaskTracker.`);
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'Unable to add user.');
+      }
+    }
+
+    async function populateAdminUserManagement() {
+      if (!isAdmin) return;
+      const box = el('adminUsersList');
+      if (!box) return;
+      box.innerHTML = '';
+      sharedUsers.forEach(user => {
+        const row = document.createElement('div');
+        row.className = 'user-admin-row';
+        row.innerHTML = `<div class="user-admin-meta"><strong>${escapeHTML(user.name || user.email)}</strong><span class="user-admin-email">${escapeHTML(user.email)}</span></div><span class="badge badge-task">Active</span>`;
+        box.appendChild(row);
+      });
     }
 
     /* UI State & Routing */
@@ -866,17 +1229,10 @@
     async function render() {
       const allEntries = await dbOps.getAll();
       
-      // Filter entries visible to user or admin
-      const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => 
-        !e.userId || 
-        e.userId === currentUser.id || 
-        e.userId === currentUser.email ||
-        (e.username && savedSettings.username && e.username.toLowerCase() === savedSettings.username.toLowerCase()) ||
-        (e.userName && currentUser.email && e.userName.toLowerCase() === currentUser.email.toLowerCase())
-      );
+      const visibleEntries = isAdmin ? allEntries : allEntries.filter(e => isUserMatch(e));
 
-      // Pushed / Assigned Tasks Section for User
-      const assignedPending = visibleEntries.filter(e => e.isAssigned && (e.userId === currentUser.id || e.userId === currentUser.email || isAdmin));
+      // Pushed / Assigned Tasks Section (Unresponded / Action Required)
+      const assignedPending = allEntries.filter(e => (e.isAssigned || e.isPushed) && (isUserMatch(e) || isAdmin) && (!e.status || e.status === 'Pending'));
       const assignedContainer = el('assignedSectionContainer');
       const assignedGrid = el('assignedCardsGrid');
       
@@ -888,9 +1244,9 @@
         assignedContainer.classList.add('hidden');
       }
 
-      // Filter Month Entries (All user tasks including pushed tasks for current month)
+      // Filter Month Entries
       const monthEntries = visibleEntries
-        .filter(e => e.month === currentSelectedMonth)
+        .filter(e => e.month === currentSelectedMonth && (!(e.isAssigned || e.isPushed) || (e.status && e.status !== 'Pending')))
         .sort((a, b) => new Date(b.datetime || b.timestamp) - new Date(a.datetime || a.timestamp));
 
       const cardsGrid = el('cardsGrid');
@@ -907,11 +1263,10 @@
       const card = document.createElement('div');
       const isPushed = item.isAssigned || item.isPushed;
 
-      // Highlight pushed task if still pending action
-      card.className = 'record-card' + (isPushed && (!item.status || item.status === 'Pending') ? ' pushed-task-highlight' : '');
+      card.className = 'record-card' + (isPushed ? ' pushed-task-highlight' : '');
 
       const workType = item.workType || calculateWorkType(item.datetime);
-      const isOwnTask = !item.userId || item.userId === currentUser.id || item.userId === currentUser.email;
+      const isMyTask = isUserMatch(item);
       const displayName = item.username || item.userName || 'User';
 
       let workBadgeClass = 'badge-regular';
@@ -922,7 +1277,6 @@
       if (item.type === 'Achievement') typeBadgeClass = 'badge-achievement';
       if (item.type === 'Assigned Task' || item.type === 'Pushed Task') typeBadgeClass = 'badge-assigned';
 
-      // Status Badge Logic
       let statusBadgeClass = 'badge-task';
       const currentStatus = item.status || 'Pending';
       if (currentStatus === 'Completed') statusBadgeClass = 'badge-achievement';
@@ -933,14 +1287,15 @@
       const formattedDt = item.datetime ? new Date(item.datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : new Date(item.timestamp).toLocaleDateString();
 
       let actionsHtml = '';
-      if (isPushed && (isOwnTask || isAdmin)) {
+      if (isPushed && (isMyTask || isAdmin)) {
         const buttonText = item.userResponse || (item.status && item.status !== 'Pending') ? '✏️ Edit Response' : '💬 Respond';
         actionsHtml = `
-          <div class="record-actions" style="align-items: center;">
+          <div class="record-actions" style="align-items: center; gap: 6px;">
             <button onclick="openResponseModal('${item.id}')" class="btn btn-warning btn-inline" style="margin:0;">${buttonText}</button>
-            ${isOwnTask ? `<button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>` : ''}
+            <button onclick="editEntry('${item.id}')" class="action-icon-btn edit" title="Edit Task"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+            <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
           </div>`;
-      } else if (isOwnTask) {
+      } else if (isMyTask || isAdmin) {
         actionsHtml = `
           <div class="record-actions">
             <button onclick="editEntry('${item.id}')" class="action-icon-btn edit" title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
@@ -981,7 +1336,6 @@
       return card;
     }
 
-    /* Live Work Type Detection in Entry Form */
     function updateWorkTypePreview() {
       const dtVal = el('taskDatetime').value;
       if (!dtVal) { el('workTypeBadgePreview').innerHTML = ''; return; }
@@ -994,7 +1348,7 @@
 
     el('taskDatetime').addEventListener('input', updateWorkTypePreview);
 
-    /* Save Task Execution */
+    /* Save Task Execution with Unique ID per User */
     async function handleSave() {
       const title = el('taskTitle').value.trim();
       const type = el('taskType').value;
@@ -1009,7 +1363,7 @@
       const detectedWorkType = calculateWorkType(datetime);
 
       const record = {
-        id: editingId || 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        id: editingId || ('task_' + (currentUser.id || 'usr') + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
         userId: currentUser.id,
         userName: currentUser.email,
         username: userDisplayName,
@@ -1020,7 +1374,8 @@
         desc,
         workType: detectedWorkType,
         status: 'Completed',
-        timestamp: new Date(datetime).getTime() || Date.now()
+        timestamp: new Date(datetime).getTime() || Date.now(),
+        updatedAt: new Date().toISOString()
       };
 
       await dbOps.save(record);
@@ -1052,14 +1407,14 @@
       const target = all.find(e => e.id === id);
       if (!target) return;
 
-      if (target.userId && target.userId !== currentUser.id) {
-        return alert("Admin rights allow viewing and reporting only. You cannot edit other users' tasks.");
+      if (!isAdmin && !isUserMatch(target)) {
+        return alert("You can only edit your own or assigned tasks.");
       }
 
       editingId = target.id;
       el('taskTitle').value = target.title;
       el('taskType').value = target.type;
-      el('taskDesc').value = target.desc;
+      el('taskDesc').value = target.desc || '';
       el('taskDatetime').value = target.datetime || getNowDatetimeLocal();
       el('formHeaderTitle').innerText = 'Edit Entry';
       el('saveTaskBtn').innerText = 'Update Entry';
@@ -1071,8 +1426,8 @@
     window.deleteEntry = async (id) => {
       const all = await dbOps.getAll();
       const target = all.find(e => e.id === id);
-      if (target && target.userId && target.userId !== currentUser.id) {
-        return alert("Admin rights allow viewing and reporting only.");
+      if (target && !isAdmin && !isUserMatch(target)) {
+        return alert("You can only delete your own or assigned tasks.");
       }
       if (confirm('Delete this record?')) {
         await dbOps.delete(id);
@@ -1084,25 +1439,20 @@
     async function populateAssigneeDropdown() {
       const all = await dbOps.getAll();
       const select = el('assignUserSelect');
+      const currentValue = select.value;
       select.innerHTML = '';
 
-      const usersMap = new Map();
-      const currentDisplayName = savedSettings.username || currentUser.email || 'Current User';
-      usersMap.set(currentUser.id, currentDisplayName);
-
-      // Distinct users from recorded tasks
-      all.forEach(e => {
-        const name = e.username || e.userName || e.userId;
-        const uid = e.userId || name;
-        if (name) usersMap.set(uid, name);
-      });
-
-      usersMap.forEach((name, uid) => {
+      const distinctUsers = getDistinctUsers(all);
+      distinctUsers.forEach(user => {
         const opt = document.createElement('option');
-        opt.value = uid;
-        opt.textContent = name;
+        opt.value = user.id;
+        opt.textContent = user.name;
         select.appendChild(opt);
       });
+
+      if (currentValue && Array.from(select.options).some(o => o.value === currentValue)) {
+        select.value = currentValue;
+      }
     }
 
     async function dispatchAssignTask() {
@@ -1115,13 +1465,14 @@
 
       if (!title || !datetime) return alert('Title and Deadline Date/Time are required');
 
-      const targetOptionText = el('assignUserSelect').options[el('assignUserSelect').selectedIndex].text;
+      const targetOptionText = el('assignUserSelect').options[el('assignUserSelect').selectedIndex]?.text || 'User';
 
       const assignedRecord = {
-        id: 'pushed_' + Date.now() + '_' + Math.random().toString(36).substr(2, 7),
+        id: 'pushed_' + targetUserId + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
         userId: targetUserId,
         userName: targetOptionText,
         username: targetOptionText,
+        assignedToEmail: targetUserId,
         assignedBy: savedSettings.username || currentUser.email || 'Admin',
         month: datetime.substring(0, 7),
         title,
@@ -1135,7 +1486,8 @@
         status: 'Pending',
         userResponse: '',
         workType: calculateWorkType(datetime),
-        timestamp: new Date(datetime).getTime()
+        timestamp: new Date(datetime).getTime(),
+        updatedAt: new Date().toISOString()
       };
 
       await dbOps.save(assignedRecord);
@@ -1186,14 +1538,16 @@
       }
     }
 
-    /* ANALYTICS & REPORTS SYSTEM */
+    /* ANALYTICS & REPORTS SYSTEM WITH CUSTOM RANGE */
     async function getFilteredReportData() {
       const all = await dbOps.getAll();
       const timeframeMode = el('reportTimeframeSelect').value;
       const selectedMonth = el('reportMonthPicker').value;
+      const startDateVal = el('reportStartDate').value;
+      const endDateVal = el('reportEndDate').value;
       const selectedUser = el('reportUserSelect').value;
 
-      let filtered = isAdmin ? all : all.filter(e => !e.userId || e.userId === currentUser.id);
+      let filtered = isAdmin ? all : all.filter(e => isUserMatch(e));
 
       if (isAdmin && selectedUser !== 'ALL') {
         filtered = filtered.filter(e => e.userId === selectedUser || e.username === selectedUser || e.userName === selectedUser);
@@ -1201,6 +1555,13 @@
 
       if (timeframeMode === 'month') {
         filtered = filtered.filter(e => e.month === selectedMonth);
+      } else if (timeframeMode === 'custom' && startDateVal && endDateVal) {
+        const start = new Date(startDateVal + 'T00:00:00');
+        const end = new Date(endDateVal + 'T23:59:59');
+        filtered = filtered.filter(e => {
+          const itemDt = new Date(e.datetime || e.timestamp);
+          return itemDt >= start && itemDt <= end;
+        });
       } else if (timeframeMode === 'last3') {
         const d = new Date(selectedMonth + '-01');
         const past = new Date(d);
@@ -1213,43 +1574,48 @@
       return filtered;
     }
 
-    /* Dynamically lookup distinct usernames from database task records */
-    async function populateAdminUsersFilter() {
+    async function populateAdminReportFilters() {
       const all = await dbOps.getAll();
-      const select = el('reportUserSelect');
-      const currentValue = select.value;
-      select.innerHTML = '<option value="ALL">All Users</option>';
       
-      const distinctUsers = new Map();
-
-      all.forEach(e => {
-        const uName = e.username || e.userName;
-        const uId = e.userId || uName;
-        if (uName) {
-          distinctUsers.set(uId, uName);
-        }
-      });
-
-      distinctUsers.forEach((name, uid) => {
+      // User filter
+      const userSelect = el('reportUserSelect');
+      const curUserVal = userSelect.value;
+      userSelect.innerHTML = '<option value="ALL">All Users</option>';
+      getDistinctUsers(all).forEach(user => {
         const opt = document.createElement('option');
-        opt.value = uid;
-        opt.textContent = name;
-        select.appendChild(opt);
+        opt.value = user.id;
+        opt.textContent = user.name;
+        userSelect.appendChild(opt);
       });
-
-      if (Array.from(select.options).some(o => o.value === currentValue)) {
-        select.value = currentValue;
+      if (curUserVal && Array.from(userSelect.options).some(o => o.value === curUserVal)) {
+        userSelect.value = curUserVal;
       }
     }
 
     async function renderReportsView() {
       if (isAdmin) {
-        await populateAdminUsersFilter();
+        await populateAdminReportFilters();
       }
       const filtered = await getFilteredReportData();
       renderSummaryTable(filtered);
+      renderPushedTasksReportGrid(filtered);
       renderAssignedTable(filtered);
       renderCharts(filtered);
+    }
+
+    function renderPushedTasksReportGrid(entries) {
+      const grid = el('pushedTasksReportGrid');
+      grid.innerHTML = '';
+      const pushedEntries = entries.filter(e => e.isAssigned || e.isPushed);
+
+      if (pushedEntries.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 20px;">No pushed tasks found for current criteria.</div>`;
+        return;
+      }
+
+      pushedEntries.forEach(item => {
+        grid.appendChild(createTaskCard(item, false));
+      });
     }
 
     function renderSummaryTable(entries) {
@@ -1259,13 +1625,16 @@
       const statsByUser = {};
 
       entries.forEach(e => {
-        const key = e.username || e.userName || 'User';
-        if (!statsByUser[key]) statsByUser[key] = { total: 0, regular: 0, overtime: 0, holiday: 0 };
-        statsByUser[key].total++;
+        const userKey = e.username || e.userName || 'User';
+
+        if (!statsByUser[userKey]) {
+          statsByUser[userKey] = { user: userKey, total: 0, regular: 0, overtime: 0, holiday: 0 };
+        }
+        statsByUser[userKey].total++;
         const wt = e.workType || calculateWorkType(e.datetime);
-        if (wt === 'Regular') statsByUser[key].regular++;
-        else if (wt === 'Overtime') statsByUser[key].overtime++;
-        else if (wt === 'Holiday') statsByUser[key].holiday++;
+        if (wt === 'Regular') statsByUser[userKey].regular++;
+        else if (wt === 'Overtime') statsByUser[userKey].overtime++;
+        else if (wt === 'Holiday') statsByUser[userKey].holiday++;
       });
 
       if (Object.keys(statsByUser).length === 0) {
@@ -1273,10 +1642,10 @@
         return;
       }
 
-      for (const [user, data] of Object.entries(statsByUser)) {
+      for (const data of Object.values(statsByUser)) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="font-weight:700;">${escapeHTML(user)}</td>
+          <td style="font-weight:700;">${escapeHTML(data.user)}</td>
           <td>${data.total}</td>
           <td><span class="badge badge-regular">${data.regular}</span></td>
           <td><span class="badge badge-overtime">${data.overtime}</span></td>
@@ -1289,7 +1658,7 @@
     function renderAssignedTable(entries) {
       const tbody = el('assignedTableBody');
       tbody.innerHTML = '';
-      const assigned = entries.filter(e => e.isAssigned);
+      const assigned = entries.filter(e => e.isAssigned || e.isPushed);
 
       if (assigned.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No pushed/assigned tasks logged.</td></tr>`;
@@ -1316,7 +1685,6 @@
       const selectedMonth = el('reportMonthPicker').value;
       const allEntries = await dbOps.getAll();
 
-      // 1. Chart: Monthly Task Count (Current Month vs Preceding 3 Months)
       const baseDt = new Date(selectedMonth + '-01');
       const monthsLabels = [];
       const monthCounts = [0, 0, 0, 0];
@@ -1325,7 +1693,7 @@
         const m = new Date(baseDt.getFullYear(), baseDt.getMonth() - i, 1);
         const mStr = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`;
         monthsLabels.push(m.toLocaleString('default', { month: 'short', year: '2-digit' }));
-        monthCounts[3 - i] = allEntries.filter(e => e.month === mStr && (!isAdmin || el('reportUserSelect').value === 'ALL' || e.userId === el('reportUserSelect').value || e.username === el('reportUserSelect').value)).length;
+        monthCounts[3 - i] = allEntries.filter(e => e.month === mStr && (!isAdmin || el('reportUserSelect').value === 'ALL' || e.userId === el('reportUserSelect').value)).length;
       }
 
       if (chartMonthlyInstance) chartMonthlyInstance.destroy();
@@ -1338,7 +1706,6 @@
         options: { responsive: true, maintainAspectRatio: false }
       });
 
-      // 2. Chart: Work Hours Classification
       let reg = 0, over = 0, hol = 0;
       filteredEntries.forEach(e => {
         const wt = e.workType || calculateWorkType(e.datetime);
@@ -1357,7 +1724,6 @@
         options: { responsive: true, maintainAspectRatio: false }
       });
 
-      // Admin Charts
       if (isAdmin) {
         el('adminChartsContainer').classList.remove('hidden');
 
@@ -1469,7 +1835,7 @@
 
       const all = await dbOps.getAll();
       const matches = all
-        .filter(item => (!item.userId || item.userId === currentUser.id))
+        .filter(item => isAdmin || isUserMatch(item))
         .filter(item => item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query))
         .slice(0, 15);
 
@@ -1498,7 +1864,7 @@
 
     /* Preferences Engine */
     function loadSettings() {
-      const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+      const raw = localStorage.getItem(getSettingsStorageKey());
       if (raw) { try { savedSettings = { ...savedSettings, ...JSON.parse(raw) }; } catch(e){} }
       activeSettings = { ...savedSettings };
       applyLiveUI(activeSettings);
@@ -1538,17 +1904,20 @@
 
     async function saveSettings() {
       savedSettings = { ...activeSettings };
-      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+      localStorage.setItem(getSettingsStorageKey(), JSON.stringify(savedSettings));
       checkSettingsDirty();
       await syncToDrive();
     }
 
     /* Admin Auth Toggle */
-    function loginAdmin() {
+    async function loginAdmin() {
       if (el('adminPassInput').value === adminPassword) {
         isAdmin = true;
         el('adminPassInput').value = '';
-        updateAdminUIState();
+        await updateAdminUIState();
+        await populateAssigneeDropdown();
+        await populateAdminReportFilters();
+        await populateAdminUserManagement();
         render();
       } else { alert('Incorrect Admin Password'); }
     }
@@ -1572,6 +1941,7 @@
       el('adminHeaderBadge').classList.toggle('hidden', !isAdmin);
       el('adminLoginBox').classList.toggle('hidden', isAdmin);
       el('adminPanelBox').classList.toggle('hidden', !isAdmin);
+      el('adminUserManagement').classList.toggle('hidden', !isAdmin);
       el('adminUserFilterWrap').classList.toggle('hidden', !isAdmin);
 
       document.querySelectorAll('.admin-only').forEach(e => e.classList.toggle('hidden', !isAdmin));
@@ -1580,7 +1950,7 @@
       if (isAdmin) {
         scopeBadge.innerText = 'Full System Report (All Users)';
         scopeBadge.className = 'badge badge-admin';
-        await populateAdminUsersFilter();
+        await populateAdminReportFilters();
       } else {
         scopeBadge.innerText = 'Personal Report';
         scopeBadge.className = 'badge badge-task';
@@ -1589,8 +1959,12 @@
 
     /* Global Navigation & Event Wiring */
     document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => {
-      btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
+      if (btn.id !== 'navLogoutBtn') {
+        btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
+      }
     });
+
+    el('navLogoutBtn').addEventListener('click', handleLogout);
 
     el('sidebarToggle').addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
     el('mobileMenuBtn').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
@@ -1606,10 +1980,15 @@
     el('closeResponseModalBtn').addEventListener('click', closeResponseModal);
 
     el('reportTimeframeSelect').addEventListener('change', (e) => {
-      el('monthPickerWrap').classList.toggle('hidden', e.target.value !== 'month');
+      const val = e.target.value;
+      el('monthPickerWrap').classList.toggle('hidden', val !== 'month' && val !== 'last3');
+      el('customDateStartWrap').classList.toggle('hidden', val !== 'custom');
+      el('customDateEndWrap').classList.toggle('hidden', val !== 'custom');
       renderReportsView();
     });
     el('reportMonthPicker').addEventListener('change', renderReportsView);
+    el('reportStartDate').addEventListener('change', renderReportsView);
+    el('reportEndDate').addEventListener('change', renderReportsView);
     el('reportUserSelect').addEventListener('change', renderReportsView);
 
     el('exportReportBtn').addEventListener('click', openMailAppWithCopy);
@@ -1619,6 +1998,7 @@
     el('adminLoginBtn').addEventListener('click', loginAdmin);
     el('adminLogoutBtn').addEventListener('click', logoutAdmin);
     el('updateAdminPassBtn').addEventListener('click', updateAdminPassword);
+    el('addUserBtn').addEventListener('click', addApplicationUser);
 
     el('usernameInput').addEventListener('input', (e) => { activeSettings.username = e.target.value.trim(); checkSettingsDirty(); });
     el('defaultRecipientsInput').addEventListener('input', (e) => { activeSettings.recipients = e.target.value.trim(); checkSettingsDirty(); });
