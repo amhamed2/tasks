@@ -228,6 +228,14 @@
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 110; }
     .hidden { display: none !important; }
 
+    /* Security Shake Animation */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake { animation: shake 0.4s ease-in-out; }
+
     /* Mobile Responsive Logic */
     @media (max-width: 768px) {
       aside.sidebar { transform: translateX(-100%); width: 240px !important; }
@@ -248,8 +256,25 @@
 </head>
 <body>
 
-  <!-- Auth Screen -->
-  <div id="authScreen" class="auth-overlay">
+  <!-- MASTER ACCESS LOCK OVERLAY -->
+  <div id="masterLockScreen" class="auth-overlay">
+    <div id="masterLockCard" class="card" style="width: 100%; max-width: 360px; text-align: center; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+      <div style="width: 48px; height: 48px; background: var(--primary-soft); color: var(--primary); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+      </div>
+      <h2 id="lockTitle" style="font-size: 1.3rem; font-weight: 800; color: var(--text); margin-bottom: 6px;">App Locked</h2>
+      <p id="lockSubtitle" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 18px;">Enter master password to access application.</p>
+      
+      <form id="masterLoginForm" onsubmit="handleMasterUnlock(event)">
+        <input type="password" id="masterPasswordInput" placeholder="Enter Master Password..." required style="text-align: center; font-size: 1rem; letter-spacing: 2px;">
+        <p id="lockErrorMsg" style="color: var(--danger); font-size: 0.78rem; font-weight: 600; margin-top: 8px;" class="hidden">Incorrect Password. Please try again.</p>
+        <button type="submit" class="btn" style="margin-top: 14px;">Unlock Dashboard</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Google Auth Screen (Passed after Master Unlock) -->
+  <div id="authScreen" class="auth-overlay hidden">
     <div style="text-align: center; max-width: 320px;">
       <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">TaskTracker Pro</h2>
       <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 24px;">Personal task, note & achievement tracking synchronized directly to your private Google Drive storage.</p>
@@ -262,7 +287,8 @@
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-  <div class="app-container">
+  <!-- ROOT APPLICATION CONTAINER (HIDDEN UNTIL MASTER UNLOCKED) -->
+  <div class="app-container hidden" id="rootAppContainer">
     <!-- Collapsible Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
@@ -305,9 +331,15 @@
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
           </button>
         </div>
-        <div class="sync-badge" id="syncTrigger">
-          <span id="syncDot" class="dot"></span>
-          <span id="syncText">Offline Mode</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="lockNowBtn" class="btn btn-secondary btn-inline" style="display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Lock App
+          </button>
+          <div class="sync-badge" id="syncTrigger">
+            <span id="syncDot" class="dot"></span>
+            <span id="syncText">Offline Mode</span>
+          </div>
         </div>
       </header>
 
@@ -440,6 +472,22 @@
         <!-- VIEW 4: Settings -->
         <section id="viewSettings" class="view">
 
+          <!-- Security & Master Password Lock -->
+          <div class="card" style="border-left: 4px solid var(--warning);">
+            <div class="card-title">Security & Master Password</div>
+            <p class="field-hint" style="margin-bottom: 12px;">Change or reset your app master unlock password (stored securely as a cryptographic SHA-256 hash).</p>
+            
+            <label>New Master Password</label>
+            <input type="password" id="newMasterPassword" placeholder="Enter new master password...">
+            
+            <label>Confirm Master Password</label>
+            <input type="password" id="confirmMasterPassword" placeholder="Confirm new master password...">
+            
+            <button id="updateMasterPasswordBtn" class="btn btn-secondary" style="margin-top: 12px;">
+              🔒 Update Master Password
+            </button>
+          </div>
+
           <!-- Database Backup & Excel Integration -->
           <div class="card" style="border-left: 4px solid var(--primary);">
             <div class="card-title">Database Export & Import (Excel)</div>
@@ -522,6 +570,7 @@
     const DRIVE_FILE_NAME = 'tasktracker_db.json';
     const STORAGE_KEY_SESSION = 'tasktracker_google_session';
     const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
+    const STORAGE_KEY_MASTER_HASH = 'tasktracker_master_hash';
     const DB_NAME = 'TaskTrackerDB';
     let db = null;
 
@@ -535,6 +584,90 @@
     /* Chart instances */
     let chartMonthlyInstance = null;
     let chartWorkHoursInstance = null;
+
+    /* ==========================================================================
+       SECURITY & MASTER PASSWORD ENGINE (SHA-256 Cryptographic Hash)
+       ========================================================================== */
+    async function hashPassword(plainText) {
+      const msgUint8 = new TextEncoder().encode(plainText);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function initMasterLockState() {
+      const existingHash = localStorage.getItem(STORAGE_KEY_MASTER_HASH);
+      if (!existingHash) {
+        // Setup initial master password prompt
+        el('lockTitle').innerText = 'Create Master Password';
+        el('lockSubtitle').innerText = 'Set a master password to secure your local dashboard.';
+        el('masterPasswordInput').placeholder = 'Set Master Password...';
+      } else {
+        el('lockTitle').innerText = 'App Locked';
+        el('lockSubtitle').innerText = 'Enter master password to access application.';
+        el('masterPasswordInput').placeholder = 'Enter Master Password...';
+      }
+    }
+
+    async function handleMasterUnlock(e) {
+      if (e) e.preventDefault();
+      const inputPass = el('masterPasswordInput').value.trim();
+      const errorMsg = el('lockErrorMsg');
+      const lockCard = el('masterLockCard');
+
+      if (!inputPass) return;
+
+      const inputHash = await hashPassword(inputPass);
+      const storedHash = localStorage.getItem(STORAGE_KEY_MASTER_HASH);
+
+      if (!storedHash) {
+        // Initial setup mode: Save new master password
+        localStorage.setItem(STORAGE_KEY_MASTER_HASH, inputHash);
+        el('masterLockScreen').classList.add('hidden');
+        el('rootAppContainer').classList.remove('hidden');
+        el('masterPasswordInput').value = '';
+        errorMsg.classList.add('hidden');
+        initAppAfterMasterUnlock();
+      } else if (inputHash === storedHash) {
+        // Password Match: Unlock
+        el('masterLockScreen').classList.add('hidden');
+        el('rootAppContainer').classList.remove('hidden');
+        el('masterPasswordInput').value = '';
+        errorMsg.classList.add('hidden');
+        initAppAfterMasterUnlock();
+      } else {
+        // Invalid Password Shake Feedback
+        errorMsg.innerText = "Incorrect Password. Access Denied.";
+        errorMsg.classList.remove('hidden');
+        lockCard.classList.remove('shake');
+        void lockCard.offsetWidth; // Trigger reflow
+        lockCard.classList.add('shake');
+        el('masterPasswordInput').value = '';
+        el('masterPasswordInput').focus();
+      }
+    }
+
+    function lockAppMaster() {
+      el('rootAppContainer').classList.add('hidden');
+      el('masterLockScreen').classList.remove('hidden');
+      initMasterLockState();
+      el('masterPasswordInput').value = '';
+      el('masterPasswordInput').focus();
+    }
+
+    async function updateMasterPasswordFromSettings() {
+      const p1 = el('newMasterPassword').value.trim();
+      const p2 = el('confirmMasterPassword').value.trim();
+
+      if (!p1) return alert("Password cannot be empty.");
+      if (p1 !== p2) return alert("Passwords do not match.");
+
+      const newHash = await hashPassword(p1);
+      localStorage.setItem(STORAGE_KEY_MASTER_HASH, newHash);
+      el('newMasterPassword').value = '';
+      el('confirmMasterPassword').value = '';
+      alert("Master password updated successfully!");
+    }
 
     /* Initialize DB with IndexedDB */
     function initDB() {
@@ -654,7 +787,7 @@
     }
 
     function handleLogout() {
-      if (confirm("Are you sure you want to log out?")) {
+      if (confirm("Are you sure you want to log out of Google Sync?")) {
         accessToken = null;
         currentUser = { id: 'usr_default', email: 'User', username: '' };
         localStorage.removeItem(STORAGE_KEY_SESSION);
@@ -747,7 +880,6 @@
     async function render() {
       const allEntries = await dbOps.getAll();
 
-      // Filter Month Entries
       const monthEntries = allEntries
         .filter(e => e.month === currentSelectedMonth)
         .sort((a, b) => new Date(b.datetime || b.timestamp) - new Date(a.datetime || a.timestamp));
@@ -1222,6 +1354,8 @@
     });
 
     el('navLogoutBtn').addEventListener('click', handleLogout);
+    el('lockNowBtn').addEventListener('click', lockAppMaster);
+    el('updateMasterPasswordBtn').addEventListener('click', updateMasterPasswordFromSettings);
 
     el('sidebarToggle').addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
     el('mobileMenuBtn').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
@@ -1282,15 +1416,20 @@
     el('reportMonthPicker').value = currentSelectedMonth;
     el('monthPicker').addEventListener('change', (e) => { currentSelectedMonth = e.target.value; render(); });
 
+    /* BOOT & UNLOCK INITIALIZATION */
     window.addEventListener('DOMContentLoaded', async () => {
       loadSettings();
+      initMasterLockState();
+    });
+
+    async function initAppAfterMasterUnlock() {
       await initDB();
       el('taskDatetime').value = getNowDatetimeLocal();
       updateWorkTypePreview();
       render();
       if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); }
       else window.addEventListener('load', async () => { if (window.google?.accounts?.oauth2) { initGoogleAuth(); await applyAuthState(); } });
-    });
+    }
 
     function escapeHTML(str) {
       return String(str || '').replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
