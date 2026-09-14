@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>TaskTracker Pro</title>
   <link rel="manifest" href="./manifest.json">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
@@ -78,16 +79,15 @@
     [data-theme="dark"][data-ui-style="bordered"] { --card-border: #4b5563; }
 
     /* ==========================================================================
-       RESPONSIVE RAIL SIDEBAR & BASE LAYOUT
+       BASE LAYOUT & SIDEBAR NAVIGATION
        ========================================================================== */
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; transition: background 0.2s, color 0.2s; overflow-x: hidden; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; transition: background 0.2s, color 0.2s; }
 
     .app-container { display: flex; width: 100%; min-height: 100vh; }
 
-    /* Compact Icon Rail Sidebar Default */
     aside.sidebar {
-      width: var(--sidebar-collapsed-width);
+      width: var(--sidebar-width);
       background: var(--sidebar-bg);
       border-right: 1px solid var(--card-border);
       display: flex;
@@ -95,15 +95,10 @@
       position: fixed;
       top: 0; bottom: 0; left: 0;
       z-index: 120;
-      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      overflow: hidden;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Expanded Sidebar State */
-    body.sidebar-expanded aside.sidebar {
-      width: var(--sidebar-width);
-      box-shadow: 4px 0 12px rgba(0,0,0,0.08);
-    }
+    body.sidebar-collapsed aside.sidebar { width: var(--sidebar-collapsed-width); }
 
     .sidebar-header {
       height: 64px;
@@ -112,41 +107,36 @@
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid var(--card-border);
-      flex-shrink: 0;
     }
 
     .brand-group { display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; }
-    .brand-title { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: -0.3px; display: none; }
-    body.sidebar-expanded .brand-title { display: inline-block; }
+    .brand-title { font-size: 1.1rem; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+    body.sidebar-collapsed .brand-title { display: none; }
 
     .sidebar-toggle-btn {
       background: none; border: none; cursor: pointer; color: var(--text-muted);
       padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
     }
     .sidebar-toggle-btn:hover { background: var(--primary-soft); color: var(--primary); }
 
-    .sidebar-nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+    .sidebar-nav { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
     .nav-item {
-      display: flex; align-items: center; gap: 14px; padding: 12px;
+      display: flex; align-items: center; gap: 12px; padding: 12px;
       color: var(--text-muted); border-radius: 8px; border: none; background: none;
       cursor: pointer; font-size: 0.88rem; font-weight: 600; text-decoration: none;
       width: 100%; text-align: left; transition: background 0.15s, color 0.15s; white-space: nowrap;
     }
-    .nav-item svg { width: 22px; height: 22px; fill: currentColor; flex-shrink: 0; }
+    .nav-item svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
     .nav-item:hover { background: var(--primary-soft); color: var(--primary); }
     .nav-item.active { background: var(--primary-soft); color: var(--primary); }
     .nav-item.logout-item:hover { background: var(--danger-soft); color: var(--danger); }
+    body.sidebar-collapsed .nav-text { display: none; }
 
-    .nav-text { display: none; white-space: nowrap; }
-    body.sidebar-expanded .nav-text { display: inline-block; }
-
-    /* Main Content Wrapper */
     .main-wrapper {
-      flex: 1; margin-left: var(--sidebar-collapsed-width); display: flex; flex-direction: column;
+      flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column;
       transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); min-width: 0;
     }
-    body.sidebar-expanded .main-wrapper { margin-left: var(--sidebar-width); }
+    body.sidebar-collapsed .main-wrapper { margin-left: var(--sidebar-collapsed-width); }
 
     header {
       background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -154,11 +144,13 @@
       display: flex; justify-content: space-between; align-items: center;
     }
 
-    .mobile-menu-btn { display: flex; background: none; border: none; color: var(--text); cursor: pointer; padding: 4px; border-radius: 6px; }
-    .mobile-menu-btn:hover { background: var(--primary-soft); color: var(--primary); }
+    .mobile-menu-btn { display: none; background: none; border: none; color: var(--text); cursor: pointer; }
 
-    .sync-badge { font-size: 0.75rem; background: var(--bg); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .sync-badge { font-size: 0.75rem; background: var(--bg); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
+    .dot.online { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .dot.syncing { background: var(--primary); animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
     main { padding: 24px; max-width: 1100px; margin: 0 auto; width: 100%; flex: 1; }
     .view { display: none; }
@@ -180,7 +172,6 @@
     .btn-success { background: var(--success); color: #fff; }
     .btn-inline { width: auto; margin-top: 0; padding: 6px 12px; font-size: 0.8rem; }
 
-    /* Badges */
     .badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; }
     .badge-task { background: var(--primary-soft); color: var(--primary); }
     .badge-achievement { background: var(--success-soft); color: var(--success); }
@@ -188,7 +179,6 @@
     .badge-overtime { background: var(--warning-soft); color: var(--warning); }
     .badge-holiday { background: var(--purple-soft); color: var(--purple); }
 
-    /* CARD GRID VIEW FOR RECORDS */
     .records-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 16px; }
     .record-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
 
@@ -199,28 +189,24 @@
     .record-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--card-border); padding-top: 10px; margin-top: 6px; }
     .record-actions { display: flex; gap: 6px; }
 
-    /* Tables */
     .table-container { width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 16px; box-shadow: var(--shadow); }
     table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
     th { background: var(--bg); padding: 12px 14px; font-weight: 600; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--card-border); }
     td { padding: 12px 14px; border-bottom: 1px solid var(--card-border); color: var(--text); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
 
-    /* Charts Layout Grid */
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; margin-top: 16px; }
     .chart-container { position: relative; width: 100%; min-height: 250px; }
 
     .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 4px 6px; border-radius: 4px; }
     .action-icon-btn.delete:hover { color: var(--danger); }
     .action-icon-btn.edit:hover { color: var(--primary); }
 
-    /* Searchable Select */
     .searchable-select { position: relative; }
     .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; }
     .history-item { padding: 10px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid var(--card-border); }
     .history-item:hover { background: var(--primary-soft); color: var(--primary); }
 
-    /* Swatches */
     .grid-swatch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
     .swatch-btn { padding: 10px 8px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--bg); cursor: pointer; font-size: 0.78rem; font-weight: 600; text-align: center; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
     .swatch-btn.active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
@@ -230,14 +216,19 @@
     .preset-preview-box { width: 100%; height: 28px; border: 1px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; }
 
     .auth-overlay { position: fixed; inset: 0; background: var(--bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .auth-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 360px; box-shadow: var(--shadow); }
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 110; }
     .hidden { display: none !important; }
 
-    /* Mobile Responsive Logic for Fixed Rail Navigation */
+    /* Mobile Responsive Logic */
     @media (max-width: 768px) {
-      .main-wrapper { margin-left: var(--sidebar-collapsed-width) !important; }
-      body.sidebar-expanded .sidebar-overlay { display: block; }
-      body.sidebar-expanded aside.sidebar { width: var(--sidebar-width) !important; z-index: 130; }
+      aside.sidebar { transform: translateX(-100%); width: 250px !important; }
+      body.sidebar-open aside.sidebar { transform: translateX(0); }
+      body.sidebar-open .sidebar-overlay { display: block; }
+      body.sidebar-open .brand-title, body.sidebar-open .nav-text { display: inline-block !important; }
+      .main-wrapper { margin-left: 0 !important; }
+      .mobile-menu-btn { display: flex; }
+      .charts-grid { grid-template-columns: 1fr; }
     }
 
     @media print {
@@ -250,60 +241,78 @@
 </head>
 <body>
 
-  <!-- Auth Screen with Hardcoded Fallback Credentials -->
+  <!-- Auth Screen -->
   <div id="authScreen" class="auth-overlay">
-    <div style="text-align: center; max-width: 360px; width: 100%; background: var(--surface); padding: 28px; border-radius: var(--radius); border: 1px solid var(--card-border); box-shadow: var(--shadow);">
-      <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 8px;">TaskTracker Pro</h2>
-      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 20px;">Sign in to access your personal task, note & achievement tracking database.</p>
-      
-      <form id="hardcodedLoginForm" onsubmit="event.preventDefault(); performLogin();">
-        <div style="text-align: left;">
-          <label style="margin-top:0;">Account Email</label>
-          <input type="email" id="loginEmail" value="amhamed75@gmail.com" required>
-          
-          <label>Password</label>
-          <input type="password" id="loginPassword" value="iloveegypt" required>
-        </div>
-        
-        <button type="submit" class="btn" style="margin-top: 20px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
-          Sign In
+    <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 6px;">TaskTracker Pro</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem;" id="authSubtitle">Synchronize task & achievement records safely across all devices via Google Drive.</p>
+      </div>
+
+      <!-- Step 1: Google OAuth Sign-in -->
+      <div id="authStepGoogle">
+        <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #333; border: 1px solid var(--card-border); font-weight: 600;">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+          Sign in with Google
         </button>
-      </form>
+      </div>
+
+      <!-- Step 2: First-Time Application Registration -->
+      <div id="authStepRegister" class="hidden">
+        <div class="field-hint" style="color:var(--primary); font-weight:600; text-align:center; margin-bottom:12px;">Google Verified! Set up application credentials to protect and sync your data across devices.</div>
+        <label>Choose Application Username</label>
+        <input type="text" id="regAppUsername" placeholder="e.g. AlexMorgan">
+        <label>Choose Application Password</label>
+        <input type="password" id="regAppPassword" placeholder="••••••••">
+        <label>Confirm Password</label>
+        <input type="password" id="regAppPasswordConfirm" placeholder="••••••••">
+        <button id="completeRegBtn" class="btn">Create Application Credentials</button>
+      </div>
+
+      <!-- Step 3: Application Security Login -->
+      <div id="authStepLogin" class="hidden">
+        <div class="field-hint" style="text-align:center; margin-bottom:10px;">Enter your application credentials to unlock session.</div>
+        <label>Application Username</label>
+        <input type="text" id="loginAppUsername" placeholder="Username">
+        <label>Application Password</label>
+        <input type="password" id="loginAppPassword" placeholder="••••••••">
+        <button id="completeLoginBtn" class="btn">Unlock Application</button>
+        <button id="switchGoogleAccountBtn" class="btn btn-secondary btn-inline" style="width:100%; margin-top:10px;">Switch Google Account</button>
+      </div>
     </div>
   </div>
 
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <div class="app-container">
-    <!-- Responsive Rail & Collapsible Sidebar -->
+    <!-- Collapsible Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="brand-group">
           <span class="brand-title">TaskTracker</span>
         </div>
-        <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+        <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Navigation">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
       </div>
       <nav class="sidebar-nav">
-        <button class="nav-item active" data-target="viewRecords" title="Records Grid">
+        <button class="nav-item active" data-target="viewRecords">
           <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
           <span class="nav-text">Records Grid</span>
         </button>
-        <button class="nav-item" data-target="viewEntry" title="Add Entry">
+        <button class="nav-item" data-target="viewEntry">
           <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
           <span class="nav-text">Add Entry</span>
         </button>
-        <button class="nav-item" data-target="viewReports" title="Analytics Reports">
+        <button class="nav-item" data-target="viewReports">
           <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
           <span class="nav-text">Analytics Reports</span>
         </button>
-        <button class="nav-item" data-target="viewSettings" title="Settings">
+        <button class="nav-item" data-target="viewSettings">
           <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c-.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6 z"/></svg>
           <span class="nav-text">Settings</span>
         </button>
-        <button class="nav-item logout-item" id="navLogoutBtn" title="Logout">
+        <button class="nav-item logout-item" id="navLogoutBtn">
           <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
           <span class="nav-text">Logout</span>
         </button>
@@ -314,13 +323,13 @@
     <div class="main-wrapper">
       <header>
         <div style="display: flex; align-items: center; gap: 12px;">
-          <button class="mobile-menu-btn" id="mobileMenuBtn" title="Toggle Navigation">
+          <button class="mobile-menu-btn" id="mobileMenuBtn">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
           </button>
         </div>
-        <div class="sync-badge">
-          <span class="dot"></span>
-          <span id="userAccountLabel">amhamed75@gmail.com</span>
+        <div class="sync-badge" id="syncTrigger">
+          <span id="syncDot" class="dot"></span>
+          <span id="syncText">Offline Mode</span>
         </div>
       </header>
 
@@ -380,7 +389,6 @@
 
         <!-- VIEW 3: Analytics Reports -->
         <section id="viewReports" class="view">
-          <!-- Report Header Controls -->
           <div class="card">
             <div class="card-title">
               <span>Personal Dashboard & Reports</span>
@@ -418,7 +426,6 @@
             </div>
           </div>
 
-          <!-- Structured Summary Data Table -->
           <div class="card">
             <div class="card-title">Work Hours Breakdown</div>
             <div class="table-container">
@@ -437,7 +444,6 @@
             </div>
           </div>
 
-          <!-- Interactive Charts Canvas Section -->
           <div class="charts-grid">
             <div class="card">
               <div class="card-title">Entry Count (Selected Period vs Past)</div>
@@ -453,7 +459,7 @@
         <!-- VIEW 4: Settings -->
         <section id="viewSettings" class="view">
 
-          <!-- Database Backup & Excel Integration -->
+          <!-- Database Export & Import (Excel) -->
           <div class="card" style="border-left: 4px solid var(--primary);">
             <div class="card-title">Database Export & Import (Excel)</div>
             <p class="field-hint" style="margin-bottom: 12px;">Export your complete system database to an Excel spreadsheet (.xlsx) for offline backup, or import/merge records from an existing Excel file.</p>
@@ -469,11 +475,25 @@
             </div>
           </div>
 
+          <!-- Application Security Settings -->
+          <div class="card" style="border-left: 4px solid var(--success);">
+            <div class="card-title">Application Credentials Management</div>
+            <label>Application Username</label>
+            <input type="text" id="settingAppUsername" placeholder="Username">
+
+            <label>Change Application Password</label>
+            <input type="password" id="settingCurrentPass" placeholder="Current Password">
+            <input type="password" id="settingNewPass" placeholder="New Password" style="margin-top:8px;">
+            <input type="password" id="settingConfirmPass" placeholder="Confirm New Password" style="margin-top:8px;">
+            
+            <button id="updateAppCredentialsBtn" class="btn btn-secondary" style="margin-top:12px;">Update Credentials</button>
+          </div>
+
           <div class="card">
             <div class="card-title">App & User Preferences</div>
 
-            <label>Preferred Username / Full Name</label>
-            <input type="text" id="usernameInput" placeholder="e.g. AM Hamed">
+            <label>Preferred Display Name / Full Name</label>
+            <input type="text" id="usernameInput" placeholder="e.g. Alex Morgan">
 
             <label>Default Email Recipients</label>
             <input type="text" id="defaultRecipientsInput" placeholder="me@company.com">
@@ -520,7 +540,7 @@
           </div>
 
           <div style="text-align: center; margin-top: 24px; padding: 14px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); border-top: 1px solid var(--card-border);">
-            TaskTracker Pro (Single-User Edition)
+            TaskTracker Pro (Cloud-Sync Edition)
           </div>
         </section>
 
@@ -529,14 +549,18 @@
   </div>
 
   <script>
-    const STORAGE_KEY_SESSION = 'tasktracker_logged_user';
+    const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+    const DRIVE_FILE_NAME = 'tasktracker_db.json';
+    const STORAGE_KEY_SESSION = 'tasktracker_google_session';
     const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
     const DB_NAME = 'TaskTrackerDB';
     let db = null;
 
-    let currentUser = { id: 'amhamed75@gmail.com', email: 'amhamed75@gmail.com', username: 'AM Hamed' };
-    let savedSettings = { username: 'AM Hamed', recipients: '', palette: 'sage', theme: 'light', uiStyle: 'default' };
+    let currentUser = { id: 'usr_default', email: 'User', username: '' };
+    let savedSettings = { username: '', recipients: '', palette: 'sage', theme: 'light', uiStyle: 'default', appUsername: '', appPassword: '' };
     let activeSettings = { ...savedSettings };
+    let isAppUnlocked = false;
 
     const el = id => document.getElementById(id);
 
@@ -564,6 +588,7 @@
         const tx = db.transaction('entries', 'readwrite');
         tx.objectStore('entries').put(entry);
         await tx.complete;
+        syncToDrive();
       },
       async getAll() {
         return new Promise((resolve) => {
@@ -583,6 +608,7 @@
         const tx = db.transaction('entries', 'readwrite');
         tx.objectStore('entries').delete(id);
         await tx.complete;
+        syncToDrive();
       }
     };
 
@@ -606,64 +632,189 @@
       return 'Overtime';
     }
 
-    /* Auth & Login Handling */
-    function performLogin() {
-      const email = el('loginEmail').value.trim();
-      const password = el('loginPassword').value;
+    /* Google Authentication & Security Logic */
+    let accessToken = null;
+    let tokenClient = null;
 
-      if (!email || !password) {
-        alert("Please enter both email and password.");
-        return;
-      }
+    function initGoogleAuth() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: async (response) => {
+          if (response.error) return alert("Login Failed: " + response.error);
+          accessToken = response.access_token;
+          try {
+            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
+            const profile = await userInfoRes.json();
+            currentUser = { id: profile.sub || profile.email, email: profile.email || profile.name || 'User' };
+          } catch(err) {}
 
-      currentUser = { id: email, email: email, username: savedSettings.username || email.split('@')[0] };
-      localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(currentUser));
-      applyAuthState();
+          localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ 
+            access_token: accessToken, 
+            user: currentUser,
+            expiry: Date.now() + ((response.expires_in || 3600) * 1000) 
+          }));
+          await pullFromDrive();
+          evaluateAuthStep();
+        },
+      });
+      restoreSession();
     }
 
     function restoreSession() {
       const raw = localStorage.getItem(STORAGE_KEY_SESSION);
-      if (raw) {
-        try {
-          currentUser = JSON.parse(raw);
-        } catch(e) {}
+      if (!raw) return;
+      try {
+        const session = JSON.parse(raw);
+        if (session.access_token && Date.now() < (session.expiry - 300000)) {
+          accessToken = session.access_token;
+          if (session.user) currentUser = session.user;
+        }
+      } catch (err) { localStorage.removeItem(STORAGE_KEY_SESSION); }
+    }
+
+    function evaluateAuthStep() {
+      if (!accessToken) {
+        el('authScreen').classList.remove('hidden');
+        el('appContent').classList.add('hidden');
+        el('authStepGoogle').classList.remove('hidden');
+        el('authStepRegister').classList.add('hidden');
+        el('authStepLogin').classList.add('hidden');
+        return;
+      }
+
+      if (isAppUnlocked) {
+        el('authScreen').classList.add('hidden');
+        el('appContent').classList.remove('hidden');
+        updateSyncStatus('online', 'Connected');
+        return;
+      }
+
+      el('authScreen').classList.remove('hidden');
+      el('appContent').classList.add('hidden');
+      el('authStepGoogle').classList.add('hidden');
+
+      if (!savedSettings.appUsername || !savedSettings.appPassword) {
+        el('authStepRegister').classList.remove('hidden');
+        el('authStepLogin').classList.add('hidden');
+      } else {
+        el('authStepRegister').classList.add('hidden');
+        el('authStepLogin').classList.remove('hidden');
+        el('loginAppUsername').value = savedSettings.appUsername;
       }
     }
 
-    function applyAuthState() {
-      const session = localStorage.getItem(STORAGE_KEY_SESSION);
-      if (session) {
-        el('authScreen').classList.add('hidden');
-        el('appContent').classList.remove('hidden');
-        el('userAccountLabel').innerText = currentUser.email;
+    function completeAppRegistration() {
+      const username = el('regAppUsername').value.trim();
+      const pass = el('regAppPassword').value;
+      const passConfirm = el('regAppPasswordConfirm').value;
+
+      if (!username) return alert('Please choose an Application Username');
+      if (!pass) return alert('Please enter an Application Password');
+      if (pass !== passConfirm) return alert('Passwords do not match');
+
+      savedSettings.appUsername = username;
+      savedSettings.appPassword = pass;
+      savedSettings.username = username;
+      activeSettings = { ...savedSettings };
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+
+      isAppUnlocked = true;
+      syncToDrive();
+      syncSettingsFormValues();
+      evaluateAuthStep();
+      render();
+    }
+
+    function completeAppLogin() {
+      const username = el('loginAppUsername').value.trim();
+      const pass = el('loginAppPassword').value;
+
+      if (username === savedSettings.appUsername && pass === savedSettings.appPassword) {
+        isAppUnlocked = true;
+        evaluateAuthStep();
         render();
       } else {
-        el('authScreen').classList.remove('hidden');
-        el('appContent').classList.add('hidden');
+        alert('Invalid Application Username or Password');
       }
     }
 
     function handleLogout() {
       if (confirm("Are you sure you want to log out?")) {
+        accessToken = null;
+        isAppUnlocked = false;
+        currentUser = { id: 'usr_default', email: 'User', username: '' };
         localStorage.removeItem(STORAGE_KEY_SESSION);
-        applyAuthState();
+        evaluateAuthStep();
       }
     }
 
-    /* UI State & Navigation */
+    function updateSyncStatus(state, text) {
+      el('syncDot').className = 'dot ' + state;
+      el('syncText').innerText = text;
+    }
+
+    async function findDriveFileId() {
+      const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder', { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (res.status === 401) { accessToken = null; evaluateAuthStep(); throw new Error("Unauthorized"); }
+      const data = await res.json();
+      return data.files?.find(f => f.name === DRIVE_FILE_NAME)?.id || null;
+    }
+
+    async function pullFromDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Syncing...');
+      try {
+        const fileId = await findDriveFileId();
+        if (fileId) {
+          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+          const payload = await res.json();
+          if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+            if (payload.settings) {
+              savedSettings = { ...savedSettings, ...payload.settings };
+              activeSettings = { ...savedSettings };
+              localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+              applyLiveUI(activeSettings);
+              syncSettingsFormValues();
+              checkSettingsDirty();
+            }
+            if (Array.isArray(payload.entries)) await dbOps.bulkReplace(payload.entries);
+          } else if (Array.isArray(payload)) {
+            await dbOps.bulkReplace(payload);
+          }
+        }
+        updateSyncStatus('online', 'Synced');
+      } catch (err) { updateSyncStatus('', 'Offline Mode'); }
+    }
+
+    async function syncToDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Saving...');
+      try {
+        const localEntries = await dbOps.getAll();
+        const fullPayload = { settings: savedSettings, entries: localEntries };
+        const fileId = await findDriveFileId();
+        const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
+
+        if (fileId) {
+          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+            method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: blob
+          });
+        } else {
+          const metadata = { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          form.append('file', blob);
+          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form });
+        }
+        updateSyncStatus('online', 'Saved');
+      } catch (err) { updateSyncStatus('', 'Save Failed'); }
+    }
+
+    /* UI State & Routing */
     const now = new Date();
     let currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     let editingId = null;
-
-    function toggleSidebar() {
-      document.body.classList.toggle('sidebar-expanded');
-    }
-
-    function closeSidebarOnMobile() {
-      if (window.innerWidth <= 768) {
-        document.body.classList.remove('sidebar-expanded');
-      }
-    }
 
     function switchView(viewId) {
       document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -671,18 +822,16 @@
 
       const activeNav = document.querySelector(`.nav-item[data-target="${viewId}"]`);
       if (activeNav) activeNav.classList.add('active');
-      
-      const targetView = el(viewId);
-      if (targetView) targetView.classList.add('active');
+      el(viewId).classList.add('active');
 
-      closeSidebarOnMobile();
+      document.body.classList.remove('sidebar-open');
 
       if (viewId === 'viewReports') renderReportsView();
     }
 
     /* Render Records Card Grid */
     async function render() {
-      if (!db) return;
+      if (!isAppUnlocked) return;
       const allEntries = await dbOps.getAll();
 
       const monthEntries = allEntries
@@ -768,7 +917,7 @@
         id: editingId || ('entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
         userId: currentUser.id,
         userName: currentUser.email,
-        username: savedSettings.username.trim() || currentUser.email || 'User',
+        username: savedSettings.appUsername || savedSettings.username || currentUser.email || 'User',
         month: monthStr,
         datetime: datetime,
         title,
@@ -875,7 +1024,7 @@
               id: String(row.ID || row.id || ('imported_' + Date.now() + '_' + idx)),
               userId: currentUser.id || 'usr_default',
               userName: currentUser.email || 'User',
-              username: savedSettings.username || currentUser.email || 'User',
+              username: savedSettings.appUsername || savedSettings.username || currentUser.email || 'User',
               type: row.Type || row.type || 'Task',
               title: String(row.Title || row.title || 'Untitled Record'),
               datetime: formattedDt,
@@ -895,6 +1044,7 @@
             await dbOps.bulkReplace(Array.from(existingMap.values()));
 
             await render();
+            await syncToDrive();
             alert(`Database import successful! Synchronized ${importedEntries.length} records.`);
           }
         } catch (err) {
@@ -1103,7 +1253,7 @@
       resultsContainer.style.display = 'block';
     }
 
-    /* Preferences Engine */
+    /* Preferences Engine & Credentials Updates */
     function loadSettings() {
       const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
       if (raw) { try { savedSettings = { ...savedSettings, ...JSON.parse(raw) }; } catch(e){} }
@@ -1114,9 +1264,10 @@
     }
 
     function syncSettingsFormValues() {
-      el('usernameInput').value = activeSettings.username;
-      el('defaultRecipientsInput').value = activeSettings.recipients;
-      el('themeModeSelect').value = activeSettings.theme;
+      el('usernameInput').value = activeSettings.username || '';
+      el('defaultRecipientsInput').value = activeSettings.recipients || '';
+      el('themeModeSelect').value = activeSettings.theme || 'light';
+      el('settingAppUsername').value = activeSettings.appUsername || '';
 
       document.querySelectorAll('#palettePicker .swatch-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-palette') === activeSettings.palette);
@@ -1124,6 +1275,33 @@
       document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-preset') === activeSettings.uiStyle);
       });
+    }
+
+    function updateAppCredentialsSettings() {
+      const newUsername = el('settingAppUsername').value.trim();
+      const currentPass = el('settingCurrentPass').value;
+      const newPass = el('settingNewPass').value;
+      const confirmPass = el('settingConfirmPass').value;
+
+      if (!newUsername) return alert('Username cannot be empty.');
+
+      if (newPass || currentPass) {
+        if (currentPass !== savedSettings.appPassword) return alert('Current Application Password is incorrect.');
+        if (newPass.length < 1) return alert('New password cannot be empty.');
+        if (newPass !== confirmPass) return alert('New passwords do not match.');
+        savedSettings.appPassword = newPass;
+      }
+
+      savedSettings.appUsername = newUsername;
+      activeSettings.appUsername = newUsername;
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+
+      el('settingCurrentPass').value = '';
+      el('settingNewPass').value = '';
+      el('settingConfirmPass').value = '';
+
+      syncToDrive();
+      alert('Application credentials updated successfully!');
     }
 
     function applyLiveUI(cfg) {
@@ -1143,11 +1321,11 @@
       el('saveSettingsBtn').disabled = !isDirty;
     }
 
-    function saveSettings() {
+    async function saveSettings() {
       savedSettings = { ...activeSettings };
       localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
       checkSettingsDirty();
-      alert("Preferences saved successfully!");
+      await syncToDrive();
     }
 
     /* Global Navigation & Event Wiring */
@@ -1159,9 +1337,29 @@
 
     el('navLogoutBtn').addEventListener('click', handleLogout);
 
-    el('sidebarToggle').addEventListener('click', toggleSidebar);
-    el('mobileMenuBtn').addEventListener('click', toggleSidebar);
-    el('sidebarOverlay').addEventListener('click', toggleSidebar);
+    /* Sidebar Mobile Fixes */
+    el('sidebarToggle').addEventListener('click', () => {
+      document.body.classList.toggle('sidebar-collapsed');
+    });
+
+    el('mobileMenuBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.body.classList.toggle('sidebar-open');
+    });
+
+    el('sidebarOverlay').addEventListener('click', () => {
+      document.body.classList.remove('sidebar-open');
+    });
+
+    /* App Auth Handlers */
+    el('completeRegBtn').addEventListener('click', completeAppRegistration);
+    el('completeLoginBtn').addEventListener('click', completeAppLogin);
+    el('switchGoogleAccountBtn').addEventListener('click', () => {
+      accessToken = null;
+      isAppUnlocked = false;
+      localStorage.removeItem(STORAGE_KEY_SESSION);
+      evaluateAuthStep();
+    });
 
     el('saveTaskBtn').addEventListener('click', handleSave);
     el('addTaskTableBtn').addEventListener('click', () => { resetForm(); switchView('viewEntry'); });
@@ -1170,6 +1368,7 @@
     el('exportDbExcelBtn').addEventListener('click', exportToExcel);
     el('importDbExcelBtn').addEventListener('click', () => el('excelFileInput').click());
     el('excelFileInput').addEventListener('change', importFromExcel);
+    el('updateAppCredentialsBtn').addEventListener('click', updateAppCredentialsSettings);
 
     el('reportTimeframeSelect').addEventListener('change', (e) => {
       const val = e.target.value;
@@ -1211,17 +1410,30 @@
       });
     });
 
+    el('syncTrigger').addEventListener('click', pullFromDrive);
+    el('googleSignInBtn').addEventListener('click', () => tokenClient && tokenClient.requestAccessToken({ prompt: '' }));
+
     el('monthPicker').value = currentSelectedMonth;
     el('reportMonthPicker').value = currentSelectedMonth;
     el('monthPicker').addEventListener('change', (e) => { currentSelectedMonth = e.target.value; render(); });
 
     window.addEventListener('DOMContentLoaded', async () => {
-      restoreSession();
       loadSettings();
       await initDB();
       el('taskDatetime').value = getNowDatetimeLocal();
       updateWorkTypePreview();
-      applyAuthState();
+      
+      if (window.google?.accounts?.oauth2) {
+        initGoogleAuth();
+        evaluateAuthStep();
+      } else {
+        window.addEventListener('load', async () => {
+          if (window.google?.accounts?.oauth2) {
+            initGoogleAuth();
+            evaluateAuthStep();
+          }
+        });
+      }
     });
 
     function escapeHTML(str) {
