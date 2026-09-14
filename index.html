@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light" data-ui-style="default" data-color-palette="ocean">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#1e293b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>TaskTracker Pro</title>
+  
+  <!-- Dynamic Favicon Generation via Inline SVG Data-URI -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='%231e40af'/><path d='M160 120 h192 a20 20 0 0 1 20 20 v280 a20 20 0 0 1 -20 20 h-192 a20 20 0 0 1 -20 -20 v-280 a20 20 0 0 1 20 -20 Z' fill='%23ffffff'/><rect x='200' y='90' width='112' height='50' rx='15' fill='%233b82f6'/><circle cx='256' cy='115' r='10' fill='%23ffffff'/><path d='M190 200 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><path d='M190 270 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><path d='M190 340 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><line x1='280' y1='212' x2='330' y2='212' stroke='%233b82f6' stroke-width='20' stroke-linecap='round'/><line x1='280' y1='282' x2='330' y2='282' stroke='%233b82f6' stroke-width='20' stroke-linecap='round'/><circle cx='350' cy='350' r='75' fill='%232563eb' stroke='%23ffffff' stroke-width='12'/><polyline points='350,310 350,350 380,365' fill='none' stroke='%23ffffff' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    /* ==========================================================================
+       THEME & COLOR PALETTE ENGINE
+       ========================================================================== */
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-soft: #dbeafe;
+      --accent: #10b981;
+      --success: #10b981;
+      --success-soft: #d1fae5;
+      --warning: #f59e0b;
+      --warning-soft: #fef3c7;
+      --purple: #8b5cf6;
+      --purple-soft: #f3e8ff;
+      --danger: #ef4444;
+      --danger-soft: #fee2e2;
+
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --card-border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --sidebar-bg: #0f172a;
+      --sidebar-text: #94a3b8;
+      --sidebar-active: #ffffff;
+      --header-bg: rgba(255, 255, 255, 0.85);
+      --radius: 14px;
+      --sidebar-width: 260px;
+      --sidebar-collapsed-width: 76px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    }
+
+    [data-color-palette="ocean"] { --primary: #2563eb; --primary-hover: #1d4ed8; --primary-soft: #dbeafe; }
+    [data-color-palette="sage"] { --primary: #475569; --primary-hover: #334155; --primary-soft: #f1f5f9; }
+    [data-color-palette="slate"] { --primary: #0f172a; --primary-hover: #1e293b; --primary-soft: #e2e8f0; }
+    [data-color-palette="sunset"] { --primary: #ea580c; --primary-hover: #c2410c; --primary-soft: #ffedd5; }
+    [data-color-palette="emerald"] { --primary: #059669; --primary-hover: #047857; --primary-soft: #d1fae5; }
+    [data-color-palette="berry"] { --primary: #9333ea; --primary-hover: #7e22ce; --primary-soft: #f3e8ff; }
+
+    [data-theme="dark"] {
+      --bg: #090d16;
+      --surface: #111827;
+      --card-border: #1f2937;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --sidebar-bg: #030712;
+      --sidebar-text: #9ca3af;
+      --sidebar-active: #ffffff;
+      --header-bg: rgba(17, 24, 39, 0.85);
+      --primary-soft: #1e293b;
+      --success-soft: #064e3b;
+      --warning-soft: #78350f;
+      --purple-soft: #581c87;
+      --danger-soft: #7f1d1d;
+      --shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    [data-ui-style="default"] { --radius: 14px; }
+    [data-ui-style="compact"] { --radius: 6px; --shadow: none; }
+    [data-ui-style="compact"] .card { padding: 14px; margin-bottom: 12px; }
+    [data-ui-style="neumorphic"] { --radius: 18px; --bg: #e0e5ec; --surface: #e0e5ec; --card-border: transparent; --shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff; }
+    [data-theme="dark"][data-ui-style="neumorphic"] { --bg: #111827; --surface: #111827; --shadow: 5px 5px 12px #080c14, -5px -5px 12px #1a243a; }
+    [data-ui-style="glass"] { --radius: 20px; --surface: rgba(255, 255, 255, 0.65); --card-border: rgba(255, 255, 255, 0.4); }
+    [data-theme="dark"][data-ui-style="glass"] { --surface: rgba(17, 24, 39, 0.65); --card-border: rgba(255, 255, 255, 0.08); }
+    [data-ui-style="glass"] .card { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    [data-ui-style="terminal"] { --radius: 0px; --card-border: var(--primary); --shadow: none; }
+    [data-ui-style="terminal"] .card { border-width: 2px; }
+    [data-ui-style="bordered"] { --radius: 8px; --shadow: none; --card-border: #cbd5e1; }
+    [data-theme="dark"][data-ui-style="bordered"] { --card-border: #374151; }
+
+    /* ==========================================================================
+       BASE LAYOUT & COMPONENTS
+       ========================================================================== */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; transition: background 0.2s, color 0.2s; }
+
+    .app-container { display: flex; width: 100%; min-height: 100vh; }
+
+    /* Modern Redesigned Sidebar */
+    aside.sidebar {
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; bottom: 0; left: 0;
+      z-index: 120;
+      transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    }
+
+    body.sidebar-collapsed aside.sidebar { width: var(--sidebar-collapsed-width); }
+
+    .sidebar-header {
+      height: 72px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand-group { display: flex; align-items: center; gap: 12px; overflow: hidden; white-space: nowrap; }
+    .brand-logo-svg { width: 38px; height: 38px; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+    .brand-title-wrap { display: flex; flex-direction: column; }
+    .brand-title { font-size: 1.15rem; font-weight: 800; color: #ffffff; letter-spacing: -0.4px; line-height: 1.1; }
+    .brand-subtitle { font-size: 0.65rem; font-weight: 800; color: #10b981; letter-spacing: 1.5px; text-transform: uppercase; }
+    body.sidebar-collapsed .brand-title-wrap { display: none; }
+
+    .sidebar-toggle-btn {
+      background: rgba(255, 255, 255, 0.05); border: none; cursor: pointer; color: var(--sidebar-text);
+      padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .sidebar-toggle-btn:hover { background: rgba(255, 255, 255, 0.1); color: #ffffff; }
+
+    .sidebar-nav { flex: 1; padding: 16px 10px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+    .nav-item {
+      display: flex; align-items: center; gap: 14px; padding: 12px 14px;
+      color: var(--sidebar-text); border-radius: 10px; border: none; background: none;
+      cursor: pointer; font-size: 0.9rem; font-weight: 600; text-decoration: none;
+      width: 100%; text-align: left; transition: all 0.2s; white-space: nowrap;
+    }
+    .nav-item svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
+    .nav-item:hover { background: rgba(255, 255, 255, 0.08); color: #ffffff; }
+    .nav-item.active { background: var(--primary); color: #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); }
+    .nav-item.logout-item { margin-top: auto; color: #f87171; }
+    .nav-item.logout-item:hover { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+    body.sidebar-collapsed .nav-text { display: none; }
+
+    .main-wrapper {
+      flex: 1; margin-left: var(--sidebar-width); display: flex; flex-direction: column;
+      transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); min-width: 0;
+    }
+    body.sidebar-collapsed .main-wrapper { margin-left: var(--sidebar-collapsed-width); }
+
+    header {
+      background: var(--header-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 90; padding: 14px 28px; border-bottom: 1px solid var(--card-border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .mobile-menu-btn { display: none; background: none; border: none; color: var(--text); cursor: pointer; }
+
+    .header-right-meta { display: flex; align-items: center; gap: 12px; }
+
+    .session-timer-badge {
+      font-size: 0.78rem; font-weight: 700; background: var(--warning-soft); color: var(--warning);
+      padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; gap: 6px;
+    }
+
+    .sync-badge { 
+      font-size: 0.78rem; font-weight: 600; background: var(--surface); padding: 5px 12px; 
+      border-radius: 20px; border: 1px solid var(--card-border); display: flex; align-items: center; 
+      gap: 8px; color: var(--text-muted); cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow);
+    }
+    .sync-badge:hover { border-color: var(--primary); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+    .dot.online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .dot.syncing { background: var(--primary); animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
+
+    main { padding: 28px; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; }
+    .view { display: none; }
+    .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--card-border); padding: 22px; margin-bottom: 22px; box-shadow: var(--shadow); transition: all 0.2s; }
+    .card-title { font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+    label { display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-top: 14px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    input, select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--card-border); color: var(--text); padding: 11px 14px; border-radius: 10px; font-size: 0.92rem; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+    .field-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
+
+    .btn { width: 100%; background: var(--primary); color: #ffffff; font-weight: 700; border: none; padding: 12px 18px; border-radius: 10px; font-size: 0.92rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: all 0.2s; margin-top: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .btn:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); transform: none; }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--card-border); }
+    .btn-secondary:hover:not(:disabled) { background: var(--surface); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover:not(:disabled) { background: #059669; }
+    .btn-inline { width: auto; margin-top: 0; padding: 7px 14px; font-size: 0.82rem; }
+
+    .badge { font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .badge-task { background: var(--primary-soft); color: var(--primary); }
+    .badge-achievement { background: var(--success-soft); color: var(--success); }
+    .badge-regular { background: var(--success-soft); color: var(--success); }
+    .badge-overtime { background: var(--warning-soft); color: var(--warning); }
+    .badge-holiday { background: var(--purple-soft); color: var(--purple); }
+
+    .records-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; margin-top: 18px; }
+    .record-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
+    .record-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+    .record-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+    .record-card-title { font-weight: 700; font-size: 1rem; color: var(--text); line-height: 1.35; }
+    .record-card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .record-card-body { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; flex: 1; white-space: pre-wrap; }
+    .record-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); border-top: 1px solid var(--card-border); padding-top: 12px; margin-top: 6px; }
+    .record-actions { display: flex; gap: 6px; }
+
+    .table-container { width: 100%; overflow-x: auto; background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); margin-bottom: 16px; box-shadow: var(--shadow); }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th { background: var(--bg); padding: 14px 16px; font-weight: 700; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--card-border); }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--card-border); color: var(--text); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 18px; margin-top: 18px; }
+    .chart-container { position: relative; width: 100%; min-height: 260px; }
+
+    .action-icon-btn { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 5px 8px; border-radius: 6px; transition: all 0.2s; }
+    .action-icon-btn:hover { background: var(--bg); }
+    .action-icon-btn.delete:hover { color: var(--danger); background: var(--danger-soft); }
+    .action-icon-btn.edit:hover { color: var(--primary); background: var(--primary-soft); }
+
+    .searchable-select { position: relative; }
+    .history-results { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--card-border); border-radius: 10px; max-height: 220px; overflow-y: auto; z-index: 50; box-shadow: var(--shadow-lg); display: none; }
+    .history-item { padding: 12px 14px; font-size: 0.88rem; cursor: pointer; border-bottom: 1px solid var(--card-border); transition: background 0.15s; }
+    .history-item:hover { background: var(--primary-soft); color: var(--primary); }
+
+    .grid-swatch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+    .swatch-btn { padding: 10px 8px; border-radius: 10px; border: 1px solid var(--card-border); background: var(--bg); cursor: pointer; font-size: 0.8rem; font-weight: 700; text-align: center; color: var(--text); display: flex; flex-direction: column; align-items: center; gap: 6px; transition: all 0.2s; }
+    .swatch-btn.active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+    .palette-dot { width: 20px; height: 20px; border-radius: 50%; display: inline-block; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
+    .preset-card { border: 1px solid var(--card-border); padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center; background: var(--bg); }
+    .preset-card.active { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+    .preset-preview-box { width: 100%; height: 28px; border: 1px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; }
+
+    /* Modernized Auth Overlay */
+    .auth-overlay { position: fixed; inset: 0; background: var(--sidebar-bg); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .auth-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: 20px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 110; }
+    .hidden { display: none !important; }
+
+    /* Mobile Responsive Logic */
+    @media (max-width: 768px) {
+      aside.sidebar { transform: translateX(-100%); width: 260px !important; }
+      body.sidebar-open aside.sidebar { transform: translateX(0); }
+      body.sidebar-open .sidebar-overlay { display: block; }
+      body.sidebar-open .brand-title-wrap, body.sidebar-open .nav-text { display: flex !important; }
+      .main-wrapper { margin-left: 0 !important; }
+      .mobile-menu-btn { display: flex; }
+      .charts-grid { grid-template-columns: 1fr; }
+      main { padding: 16px; }
+    }
+
+    @media print {
+      aside.sidebar, header, .btn, .no-print { display: none !important; }
+      .main-wrapper { margin-left: 0 !important; }
+      body { background: #fff; color: #000; }
+      .card { border: 1px solid #ccc; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Auth Screen -->
+  <div id="authScreen" class="auth-overlay">
+    <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <svg class="brand-logo-svg" style="width: 64px; height: 64px; margin-bottom: 12px;" viewBox="0 0 512 512">
+          <rect width="512" height="512" rx="120" fill="#1e40af"/>
+          <path d="M160 120 h192 a20 20 0 0 1 20 20 v280 a20 20 0 0 1 -20 20 h-192 a20 20 0 0 1 -20 -20 v-280 a20 20 0 0 1 20 -20 Z" fill="#ffffff"/>
+          <rect x="200" y="90" width="112" height="50" rx="15" fill="#3b82f6"/>
+          <circle cx="256" cy="115" r="10" fill="#ffffff"/>
+          <path d="M190 200 l25 25 l50 -50" fill="none" stroke="#10b981" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M190 270 l25 25 l50 -50" fill="none" stroke="#10b981" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M190 340 l25 25 l50 -50" fill="none" stroke="#10b981" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="280" y1="212" x2="330" y2="212" stroke="#3b82f6" stroke-width="20" stroke-linecap="round"/>
+          <line x1="280" y1="282" x2="330" y2="282" stroke="#3b82f6" stroke-width="20" stroke-linecap="round"/>
+          <circle cx="350" cy="350" r="75" fill="#2563eb" stroke="#ffffff" stroke-width="12"/>
+          <polyline points="350,310 350,350 380,365" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text); margin-bottom: 6px;">TaskTracker <span style="color:var(--primary);">PRO</span></h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem;" id="authSubtitle">Synchronize task & achievement records safely across all devices via Google Drive.</p>
+      </div>
+
+      <!-- Step 1: Google OAuth Sign-in -->
+      <div id="authStepGoogle">
+        <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #333; border: 1px solid var(--card-border); font-weight: 600;">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+          Sign in with Google
+        </button>
+      </div>
+
+      <!-- Step 2: First-Time Application Registration -->
+      <div id="authStepRegister" class="hidden">
+        <div class="field-hint" style="color:var(--primary); font-weight:600; text-align:center; margin-bottom:12px;">Google Verified! Set up application credentials to protect and sync your data across devices.</div>
+        <label>Choose Application Username</label>
+        <input type="text" id="regAppUsername" placeholder="e.g. AlexMorgan">
+        <label>Choose Application Password</label>
+        <input type="password" id="regAppPassword" placeholder="••••••••">
+        <label>Confirm Password</label>
+        <input type="password" id="regAppPasswordConfirm" placeholder="••••••••">
+        <button id="completeRegBtn" class="btn">Create Application Credentials</button>
+      </div>
+
+      <!-- Step 3: Application Security Login -->
+      <div id="authStepLogin" class="hidden">
+        <div class="field-hint" style="text-align:center; margin-bottom:10px;">Enter your application credentials to unlock session.</div>
+        <label>Application Username</label>
+        <input type="text" id="loginAppUsername" placeholder="Username">
+        <label>Application Password</label>
+        <input type="password" id="loginAppPassword" placeholder="••••••••">
+        <button id="completeLoginBtn" class="btn">Unlock Application</button>
+        <button id="switchGoogleAccountBtn" class="btn btn-secondary btn-inline" style="width:100%; margin-top:10px;">Switch Google Account</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <div class="app-container">
+    <!-- Collapsible Sidebar with Logo -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-group">
+          <svg class="brand-logo-svg" viewBox="0 0 512 512">
+            <rect width="512" height="512" rx="120" fill="#1e40af"/>
+            <path d="M160 120 h192 a20 20 0 0 1 20 20 v280 a20 20 0 0 1 -20 20 h-192 a20 20 0 0 1 -20 -20 v-280 a20 20 0 0 1 20 -20 Z" fill="#ffffff"/>
+            <rect x="200" y="90" width="112" height="50" rx="15" fill="#3b82f6"/>
+            <circle cx="256" cy="115" r="10" fill="#ffffff"/>
+            <path d="M190 200 l25 25 l50 -50" fill="none" stroke="#10b981" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M190 270 l25 25 l50 -50" fill="none" stroke="#10b981" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M190 340 l25 25 l50 -50" fill="none" stroke="#10b981" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="280" y1="212" x2="330" y2="212" stroke="#3b82f6" stroke-width="20" stroke-linecap="round"/>
+            <line x1="280" y1="282" x2="330" y2="282" stroke="#3b82f6" stroke-width="20" stroke-linecap="round"/>
+            <circle cx="350" cy="350" r="75" fill="#2563eb" stroke="#ffffff" stroke-width="12"/>
+            <polyline points="350,310 350,350 380,365" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="brand-title-wrap">
+            <span class="brand-title">TaskTracker</span>
+            <span class="brand-subtitle">PRO EDITION</span>
+          </div>
+        </div>
+        <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Navigation">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-target="viewRecords">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+          <span class="nav-text">Records Grid</span>
+        </button>
+        <button class="nav-item" data-target="viewEntry">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          <span class="nav-text">Add Entry</span>
+        </button>
+        <button class="nav-item" data-target="viewReports">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4.5L5 7V5l7 4.5L19 5v2z"/></svg>
+          <span class="nav-text">Analytics Reports</span>
+        </button>
+        <button class="nav-item" data-target="viewSettings">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c-.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6-3.6 3.6 z"/></svg>
+          <span class="nav-text">Settings</span>
+        </button>
+        <button class="nav-item logout-item" id="navLogoutBtn">
+          <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+          <span class="nav-text">Logout</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-wrapper">
+      <header>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="header-right-meta">
+          <div class="session-timer-badge" id="sessionTimerBadge" title="Sliding session auto-locks after 5 minutes of inactivity">
+            <span>⏱️ Session:</span>
+            <span id="sessionTimerText">05:00</span>
+          </div>
+          <div class="sync-badge" id="syncTrigger">
+            <span id="syncDot" class="dot"></span>
+            <span id="syncText">Offline Mode</span>
+          </div>
+        </div>
+      </header>
+
+      <main id="appContent" class="hidden">
+
+        <!-- VIEW 1: Cards View Records -->
+        <section id="viewRecords" class="view active">
+          <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <span style="font-size:0.85rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing: 0.5px;">Filter Month</span>
+              <input type="month" id="monthPicker" style="width: auto; margin: 0; padding: 6px 12px; font-size: 0.88rem;">
+            </div>
+          </div>
+
+          <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Task & Achievement Records</h3>
+          <div id="cardsGrid" class="records-grid"></div>
+
+          <button id="addTaskTableBtn" class="btn" style="margin-top: 24px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add New Entry
+          </button>
+        </section>
+
+        <!-- VIEW 2: Entry Form -->
+        <section id="viewEntry" class="view">
+          <div class="card">
+            <div class="card-title">
+              <span id="formHeaderTitle">New Entry</span>
+              <button id="cancelEditBtn" class="btn btn-secondary hidden btn-inline">Cancel</button>
+            </div>
+
+            <label>Search & Clone Previous Entry</label>
+            <div class="searchable-select">
+              <input type="text" id="historySearchInput" placeholder="Type to filter past entries..." autocomplete="off">
+              <div id="historyResults" class="history-results"></div>
+            </div>
+
+            <label>Type</label>
+            <select id="taskType">
+              <option value="Task">Task</option>
+              <option value="Achievement">Achievement</option>
+            </select>
+
+            <label>Title</label>
+            <input type="text" id="taskTitle" placeholder="e.g. Database Index Optimization">
+
+            <label>Date & Time (Overtime / Holiday Auto-Detection)</label>
+            <input type="datetime-local" id="taskDatetime">
+            <div id="workTypeBadgePreview" style="margin-top: 6px;"></div>
+
+            <label>Details & Outcomes</label>
+            <textarea id="taskDesc" rows="4" placeholder="Log execution metrics, scope, or achievements..."></textarea>
+
+            <button id="saveTaskBtn" class="btn">Save Entry</button>
+          </div>
+        </section>
+
+        <!-- VIEW 3: Analytics Reports -->
+        <section id="viewReports" class="view">
+          <div class="card">
+            <div class="card-title">
+              <span>Personal Dashboard & Reports</span>
+              <span class="badge badge-task">Personal Report</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label>Timeframe Mode</label>
+                <select id="reportTimeframeSelect">
+                  <option value="month">Specific Month</option>
+                  <option value="custom">Custom Date Range</option>
+                  <option value="last3">Last 3 Months</option>
+                  <option value="all">All Time</option>
+                </select>
+              </div>
+              <div id="monthPickerWrap">
+                <label>Select Month</label>
+                <input type="month" id="reportMonthPicker">
+              </div>
+              <div id="customDateStartWrap" class="hidden">
+                <label>Start Date</label>
+                <input type="date" id="reportStartDate">
+              </div>
+              <div id="customDateEndWrap" class="hidden">
+                <label>End Date</label>
+                <input type="date" id="reportEndDate">
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button id="exportReportBtn" class="btn btn-success btn-inline">✉️ Copy & Open Mail</button>
+              <button id="exportCsvBtn" class="btn btn-secondary btn-inline">📥 Download CSV</button>
+              <button id="printPdfBtn" class="btn btn-secondary btn-inline">🖨️ Print / Save PDF</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Work Hours Breakdown</div>
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Total Entries</th>
+                    <th>Regular Hours</th>
+                    <th>Overtime / After-Work</th>
+                    <th>Holiday Tasks</th>
+                  </tr>
+                </thead>
+                <tbody id="summaryTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="card">
+              <div class="card-title">Entry Count (Selected Period vs Past)</div>
+              <div class="chart-container"><canvas id="chartMonthlyCanvas"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Work Hours Classification</div>
+              <div class="chart-container"><canvas id="chartWorkHoursCanvas"></canvas></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- VIEW 4: Settings -->
+        <section id="viewSettings" class="view">
+
+          <!-- Database Export & Import (Excel) -->
+          <div class="card" style="border-left: 4px solid var(--primary);">
+            <div class="card-title">Database Export & Import (Excel)</div>
+            <p class="field-hint" style="margin-bottom: 12px;">Export your complete system database to an Excel spreadsheet (.xlsx) for offline backup, or import/merge records from an existing Excel file.</p>
+            
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;">
+              <button id="exportDbExcelBtn" class="btn btn-success" style="flex: 1; min-width: 200px; margin-top: 0;">
+                📊 Export Database to Excel (.xlsx)
+              </button>
+              <button id="importDbExcelBtn" class="btn btn-secondary" style="flex: 1; min-width: 200px; margin-top: 0;">
+                📥 Import Database from Excel
+              </button>
+              <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
+            </div>
+          </div>
+
+          <!-- Application Security Settings -->
+          <div class="card" style="border-left: 4px solid var(--success);">
+            <div class="card-title">Application Credentials Management</div>
+            <label>Application Username</label>
+            <input type="text" id="settingAppUsername" placeholder="Username">
+
+            <label>Change Application Password</label>
+            <input type="password" id="settingCurrentPass" placeholder="Current Password">
+            <input type="password" id="settingNewPass" placeholder="New Password" style="margin-top:8px;">
+            <input type="password" id="settingConfirmPass" placeholder="Confirm New Password" style="margin-top:8px;">
+            
+            <button id="updateAppCredentialsBtn" class="btn btn-secondary" style="margin-top:12px;">Update Credentials</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">App & User Preferences</div>
+
+            <label>Preferred Display Name / Full Name</label>
+            <input type="text" id="usernameInput" placeholder="e.g. Alex Morgan">
+
+            <label>Default Email Recipients</label>
+            <input type="text" id="defaultRecipientsInput" placeholder="me@company.com">
+
+            <label>Color Palette Selection</label>
+            <div class="grid-swatch" id="palettePicker">
+              <button class="swatch-btn" data-palette="ocean"><span class="palette-dot" style="background:#2563eb;"></span>Ocean</button>
+              <button class="swatch-btn" data-palette="sage"><span class="palette-dot" style="background:#475569;"></span>Sage</button>
+              <button class="swatch-btn" data-palette="slate"><span class="palette-dot" style="background:#0f172a;"></span>Slate</button>
+              <button class="swatch-btn" data-palette="sunset"><span class="palette-dot" style="background:#ea580c;"></span>Sunset</button>
+              <button class="swatch-btn" data-palette="emerald"><span class="palette-dot" style="background:#059669;"></span>Emerald</button>
+              <button class="swatch-btn" data-palette="berry"><span class="palette-dot" style="background:#9333ea;"></span>Berry</button>
+            </div>
+
+            <label>Theme Mode (Live Switch)</label>
+            <select id="themeModeSelect">
+              <option value="light">☀️ Light Mode</option>
+              <option value="dark">🌙 Dark Mode</option>
+            </select>
+
+            <label>UI Design Preset Preview</label>
+            <div class="grid-swatch" id="uiStylePicker">
+              <div class="preset-card swatch-btn" data-preset="default" style="border-radius:12px;">
+                <div class="preset-preview-box" style="border-radius:8px;">Default</div>Cards
+              </div>
+              <div class="preset-card swatch-btn" data-preset="compact" style="border-radius:4px; padding:6px;">
+                <div class="preset-preview-box" style="border-radius:2px;">Compact</div>Minimal
+              </div>
+              <div class="preset-card swatch-btn" data-preset="neumorphic" style="border-radius:16px;">
+                <div class="preset-preview-box" style="border-radius:8px;">Soft</div>Neumorphic
+              </div>
+              <div class="preset-card swatch-btn" data-preset="glass" style="border-radius:14px;">
+                <div class="preset-preview-box" style="border-radius:10px;">Glass</div>Rounded
+              </div>
+              <div class="preset-card swatch-btn" data-preset="terminal" style="border-radius:0px; border-width:2px;">
+                <div class="preset-preview-box" style="border-radius:0px;">Terminal</div>Terminal
+              </div>
+              <div class="preset-card swatch-btn" data-preset="bordered" style="border-radius:6px; border:1px solid #9ca3af;">
+                <div class="preset-preview-box" style="border-radius:4px;">Bordered</div>Bordered
+              </div>
+            </div>
+
+            <button id="saveSettingsBtn" class="btn" disabled>Save Preferences</button>
+          </div>
+
+          <div style="text-align: center; margin-top: 24px; padding: 14px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); border-top: 1px solid var(--card-border);">
+            TaskTracker Pro (Cloud-Sync Edition)
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const GOOGLE_CLIENT_ID = '931395948609-ecqqoecut423ij265caqoim6undfr2if.apps.googleusercontent.com';
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+    const DRIVE_FILE_NAME = 'tasktracker_db.json';
+    const STORAGE_KEY_SESSION = 'tasktracker_google_session';
+    const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
+    const STORAGE_KEY_UNLOCK_EXPIRY = 'tasktracker_unlock_expiry';
+    const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 Minutes Sliding Expiration
+    
+    const DB_NAME = 'TaskTrackerDB';
+    let db = null;
+
+    let currentUser = { id: 'usr_default', email: 'User', username: '' };
+    let savedSettings = { username: '', recipients: '', palette: 'ocean', theme: 'light', uiStyle: 'default', appUsername: '', appPassword: '' };
+    let activeSettings = { ...savedSettings };
+    let sessionTimerInterval = null;
+
+    const el = id => document.getElementById(id);
+
+    let chartMonthlyInstance = null;
+    let chartWorkHoursInstance = null;
+
+    /* Initialize DB with IndexedDB */
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 4);
+        request.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (database.objectStoreNames.contains('entries')) {
+            database.deleteObjectStore('entries');
+          }
+          database.createObjectStore('entries', { keyPath: 'id' });
+        };
+        request.onsuccess = (e) => { db = e.target.result; resolve(); };
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    const dbOps = {
+      async save(entry) {
+        const tx = db.transaction('entries', 'readwrite');
+        tx.objectStore('entries').put(entry);
+        await tx.complete;
+        syncToDrive();
+      },
+      async getAll() {
+        return new Promise((resolve) => {
+          const tx = db.transaction('entries', 'readonly');
+          const request = tx.objectStore('entries').getAll();
+          request.onsuccess = () => resolve(request.result || []);
+        });
+      },
+      async bulkReplace(entries) {
+        const tx = db.transaction('entries', 'readwrite');
+        const store = tx.objectStore('entries');
+        store.clear();
+        entries.forEach(item => store.put(item));
+        return tx.complete;
+      },
+      async delete(id) {
+        const tx = db.transaction('entries', 'readwrite');
+        tx.objectStore('entries').delete(id);
+        await tx.complete;
+        syncToDrive();
+      }
+    };
+
+    /* Work Hour Auto Detection */
+    function calculateWorkType(datetimeStr) {
+      if (!datetimeStr) return 'Regular';
+      const dt = new Date(datetimeStr);
+      if (isNaN(dt.getTime())) return 'Regular';
+      
+      const day = dt.getDay(); 
+      const hours = dt.getHours();
+      const minutes = dt.getMinutes();
+      const totalMinutes = hours * 60 + minutes;
+
+      if (day === 5 || day === 6) {
+        return 'Holiday';
+      }
+      if (totalMinutes >= 510 && totalMinutes <= 960) {
+        return 'Regular';
+      }
+      return 'Overtime';
+    }
+
+    /* 5-Minute Sliding Session Management Engine */
+    function isSessionUnlocked() {
+      const expiry = localStorage.getItem(STORAGE_KEY_UNLOCK_EXPIRY);
+      if (!expiry) return false;
+      return Date.now() < parseInt(expiry, 10);
+    }
+
+    function refreshUnlockSession() {
+      if (isSessionUnlocked()) {
+        const newExpiry = Date.now() + SESSION_TIMEOUT_MS;
+        localStorage.setItem(STORAGE_KEY_UNLOCK_EXPIRY, newExpiry.toString());
+      }
+    }
+
+    function setAppUnlockedState() {
+      const expiry = Date.now() + SESSION_TIMEOUT_MS;
+      localStorage.setItem(STORAGE_KEY_UNLOCK_EXPIRY, expiry.toString());
+      startSessionTimer();
+    }
+
+    function lockAppSession() {
+      localStorage.removeItem(STORAGE_KEY_UNLOCK_EXPIRY);
+      if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+      evaluateAuthStep();
+    }
+
+    function startSessionTimer() {
+      if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+      
+      const updateTimerDisplay = () => {
+        const expiry = parseInt(localStorage.getItem(STORAGE_KEY_UNLOCK_EXPIRY) || '0', 10);
+        const remaining = expiry - Date.now();
+
+        if (remaining <= 0) {
+          clearInterval(sessionTimerInterval);
+          lockAppSession();
+          return;
+        }
+
+        const totalSec = Math.floor(remaining / 1000);
+        const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const secs = String(totalSec % 60).padStart(2, '0');
+        el('sessionTimerText').innerText = `${mins}:${secs}`;
+      };
+
+      updateTimerDisplay();
+      sessionTimerInterval = setInterval(updateTimerDisplay, 1000);
+    }
+
+    // Extend session automatically on active interaction
+    ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => {
+      window.addEventListener(evt, () => {
+        if (isSessionUnlocked()) refreshUnlockSession();
+      }, { passive: true });
+    });
+
+    /* Google Authentication Logic */
+    let accessToken = null;
+    let tokenClient = null;
+
+    function initGoogleAuth() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: GOOGLE_SCOPES,
+        callback: async (response) => {
+          if (response.error) return alert("Login Failed: " + response.error);
+          accessToken = response.access_token;
+          try {
+            const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
+            const profile = await userInfoRes.json();
+            currentUser = { id: profile.sub || profile.email, email: profile.email || profile.name || 'User' };
+          } catch(err) {}
+
+          localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify({ 
+            access_token: accessToken, 
+            user: currentUser,
+            expiry: Date.now() + ((response.expires_in || 3600) * 1000) 
+          }));
+          await pullFromDrive();
+          evaluateAuthStep();
+        },
+      });
+      restoreSession();
+    }
+
+    function restoreSession() {
+      const raw = localStorage.getItem(STORAGE_KEY_SESSION);
+      if (!raw) return;
+      try {
+        const session = JSON.parse(raw);
+        if (session.access_token && Date.now() < (session.expiry - 300000)) {
+          accessToken = session.access_token;
+          if (session.user) currentUser = session.user;
+        }
+      } catch (err) { localStorage.removeItem(STORAGE_KEY_SESSION); }
+    }
+
+    function evaluateAuthStep() {
+      if (!accessToken) {
+        el('authScreen').classList.remove('hidden');
+        el('appContent').classList.add('hidden');
+        el('authStepGoogle').classList.remove('hidden');
+        el('authStepRegister').classList.add('hidden');
+        el('authStepLogin').classList.add('hidden');
+        return;
+      }
+
+      if (isSessionUnlocked()) {
+        el('authScreen').classList.add('hidden');
+        el('appContent').classList.remove('hidden');
+        updateSyncStatus('online', 'Connected');
+        startSessionTimer();
+        render();
+        return;
+      }
+
+      el('authScreen').classList.remove('hidden');
+      el('appContent').classList.add('hidden');
+      el('authStepGoogle').classList.add('hidden');
+
+      if (!savedSettings.appUsername || !savedSettings.appPassword) {
+        el('authStepRegister').classList.remove('hidden');
+        el('authStepLogin').classList.add('hidden');
+      } else {
+        el('authStepRegister').classList.add('hidden');
+        el('authStepLogin').classList.remove('hidden');
+        el('loginAppUsername').value = savedSettings.appUsername;
+      }
+    }
+
+    function completeAppRegistration() {
+      const username = el('regAppUsername').value.trim();
+      const pass = el('regAppPassword').value;
+      const passConfirm = el('regAppPasswordConfirm').value;
+
+      if (!username) return alert('Please choose an Application Username');
+      if (!pass) return alert('Please enter an Application Password');
+      if (pass !== passConfirm) return alert('Passwords do not match');
+
+      savedSettings.appUsername = username;
+      savedSettings.appPassword = pass;
+      savedSettings.username = username;
+      activeSettings = { ...savedSettings };
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+
+      setAppUnlockedState();
+      syncToDrive();
+      syncSettingsFormValues();
+      evaluateAuthStep();
+    }
+
+    function completeAppLogin() {
+      const username = el('loginAppUsername').value.trim();
+      const pass = el('loginAppPassword').value;
+
+      if (username === savedSettings.appUsername && pass === savedSettings.appPassword) {
+        setAppUnlockedState();
+        evaluateAuthStep();
+      } else {
+        alert('Invalid Application Username or Password');
+      }
+    }
+
+    function handleLogout() {
+      if (confirm("Are you sure you want to log out?")) {
+        accessToken = null;
+        localStorage.removeItem(STORAGE_KEY_SESSION);
+        localStorage.removeItem(STORAGE_KEY_UNLOCK_EXPIRY);
+        if (sessionTimerInterval) clearInterval(sessionTimerInterval);
+        evaluateAuthStep();
+      }
+    }
+
+    function updateSyncStatus(state, text) {
+      el('syncDot').className = 'dot ' + state;
+      el('syncText').innerText = text;
+    }
+
+    async function findDriveFileId() {
+      const res = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder', { headers: { Authorization: `Bearer ${accessToken}` } });
+      if (res.status === 401) { accessToken = null; evaluateAuthStep(); throw new Error("Unauthorized"); }
+      const data = await res.json();
+      return data.files?.find(f => f.name === DRIVE_FILE_NAME)?.id || null;
+    }
+
+    async function pullFromDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Syncing...');
+      try {
+        const fileId = await findDriveFileId();
+        if (fileId) {
+          const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
+          const payload = await res.json();
+          if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+            if (payload.settings) {
+              savedSettings = { ...savedSettings, ...payload.settings };
+              activeSettings = { ...savedSettings };
+              localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+              applyLiveUI(activeSettings);
+              syncSettingsFormValues();
+              checkSettingsDirty();
+            }
+            if (Array.isArray(payload.entries)) await dbOps.bulkReplace(payload.entries);
+          } else if (Array.isArray(payload)) {
+            await dbOps.bulkReplace(payload);
+          }
+        }
+        updateSyncStatus('online', 'Synced');
+      } catch (err) { updateSyncStatus('', 'Offline Mode'); }
+    }
+
+    async function syncToDrive() {
+      if (!accessToken) return;
+      updateSyncStatus('syncing', 'Saving...');
+      try {
+        const localEntries = await dbOps.getAll();
+        const fullPayload = { settings: savedSettings, entries: localEntries };
+        const fileId = await findDriveFileId();
+        const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
+
+        if (fileId) {
+          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+            method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: blob
+          });
+        } else {
+          const metadata = { name: DRIVE_FILE_NAME, parents: ['appDataFolder'] };
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          form.append('file', blob);
+          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form });
+        }
+        updateSyncStatus('online', 'Saved');
+      } catch (err) { updateSyncStatus('', 'Save Failed'); }
+    }
+
+    /* UI State & Routing */
+    const now = new Date();
+    let currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    let editingId = null;
+
+    function switchView(viewId) {
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+      const activeNav = document.querySelector(`.nav-item[data-target="${viewId}"]`);
+      if (activeNav) activeNav.classList.add('active');
+      el(viewId).classList.add('active');
+
+      document.body.classList.remove('sidebar-open');
+
+      if (viewId === 'viewReports') renderReportsView();
+    }
+
+    /* Render Records Card Grid */
+    async function render() {
+      if (!isSessionUnlocked()) return;
+      const allEntries = await dbOps.getAll();
+
+      const monthEntries = allEntries
+        .filter(e => e.month === currentSelectedMonth)
+        .sort((a, b) => new Date(b.datetime || b.timestamp) - new Date(a.datetime || a.timestamp));
+
+      const cardsGrid = el('cardsGrid');
+      cardsGrid.innerHTML = '';
+
+      if (monthEntries.length === 0) {
+        cardsGrid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 40px 20px;" class="card">No task or achievement records found for ${currentSelectedMonth}.</div>`;
+      } else {
+        monthEntries.forEach(item => cardsGrid.appendChild(createTaskCard(item)));
+      }
+    }
+
+    function createTaskCard(item) {
+      const card = document.createElement('div');
+      card.className = 'record-card';
+
+      const workType = item.workType || calculateWorkType(item.datetime);
+
+      let workBadgeClass = 'badge-regular';
+      if (workType === 'Overtime') workBadgeClass = 'badge-overtime';
+      if (workType === 'Holiday') workBadgeClass = 'badge-holiday';
+
+      let typeBadgeClass = 'badge-task';
+      if (item.type === 'Achievement') typeBadgeClass = 'badge-achievement';
+
+      const formattedDt = item.datetime ? new Date(item.datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : new Date(item.timestamp).toLocaleDateString();
+
+      const actionsHtml = `
+        <div class="record-actions">
+          <button onclick="editEntry('${item.id}')" class="action-icon-btn edit" title="Edit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+          <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+        </div>`;
+
+      card.innerHTML = `
+        <div>
+          <div class="record-card-header">
+            <span class="record-card-title">${escapeHTML(item.title)}</span>
+            <span class="badge ${typeBadgeClass}">${item.type}</span>
+          </div>
+          <div class="record-card-meta">
+            <span class="badge ${workBadgeClass}">${workType}</span>
+          </div>
+          <div class="record-card-body">${escapeHTML(item.desc || 'No additional details logged.')}</div>
+        </div>
+        <div class="record-card-footer">
+          <span>🕒 ${formattedDt}</span>
+          ${actionsHtml}
+        </div>
+      `;
+      return card;
+    }
+
+    function updateWorkTypePreview() {
+      const dtVal = el('taskDatetime').value;
+      if (!dtVal) { el('workTypeBadgePreview').innerHTML = ''; return; }
+      const detected = calculateWorkType(dtVal);
+      let badgeClass = 'badge-regular';
+      if (detected === 'Overtime') badgeClass = 'badge-overtime';
+      if (detected === 'Holiday') badgeClass = 'badge-holiday';
+      el('workTypeBadgePreview').innerHTML = `<span class="badge ${badgeClass}">Auto-Detected: ${detected} Hours</span>`;
+    }
+
+    el('taskDatetime').addEventListener('input', updateWorkTypePreview);
+
+    /* Save Task Execution */
+    async function handleSave() {
+      const title = el('taskTitle').value.trim();
+      const type = el('taskType').value;
+      const desc = el('taskDesc').value.trim();
+      const datetime = el('taskDatetime').value;
+
+      if (!title) return alert('Title is required');
+      if (!datetime) return alert('Date & Time is required');
+
+      const monthStr = datetime.substring(0, 7);
+      const detectedWorkType = calculateWorkType(datetime);
+
+      const record = {
+        id: editingId || ('entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+        userId: currentUser.id,
+        userName: currentUser.email,
+        username: savedSettings.appUsername || savedSettings.username || currentUser.email || 'User',
+        month: monthStr,
+        datetime: datetime,
+        title,
+        type,
+        desc,
+        workType: detectedWorkType,
+        status: 'Completed',
+        timestamp: new Date(datetime).getTime() || Date.now()
+      };
+
+      await dbOps.save(record);
+      resetForm();
+      await render();
+      switchView('viewRecords');
+    }
+
+    function resetForm() {
+      editingId = null;
+      el('taskTitle').value = '';
+      el('taskDesc').value = '';
+      el('historySearchInput').value = '';
+      el('taskDatetime').value = getNowDatetimeLocal();
+      el('formHeaderTitle').innerText = 'New Entry';
+      el('saveTaskBtn').innerText = 'Save Entry';
+      el('cancelEditBtn').classList.add('hidden');
+      updateWorkTypePreview();
+    }
+
+    function getNowDatetimeLocal() {
+      const d = new Date();
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 16);
+    }
+
+    window.editEntry = async (id) => {
+      const all = await dbOps.getAll();
+      const target = all.find(e => e.id === id);
+      if (!target) return;
+
+      editingId = target.id;
+      el('taskTitle').value = target.title;
+      el('taskType').value = target.type;
+      el('taskDesc').value = target.desc || '';
+      el('taskDatetime').value = target.datetime || getNowDatetimeLocal();
+      el('formHeaderTitle').innerText = 'Edit Entry';
+      el('saveTaskBtn').innerText = 'Update Entry';
+      el('cancelEditBtn').classList.remove('hidden');
+      updateWorkTypePreview();
+      switchView('viewEntry');
+    };
+
+    window.deleteEntry = async (id) => {
+      if (confirm('Delete this record?')) {
+        await dbOps.delete(id);
+        render();
+      }
+    };
+
+    /* EXCEL IMPORT & EXPORT ENGINE */
+    async function exportToExcel() {
+      const entries = await dbOps.getAll();
+      if (!entries || entries.length === 0) return alert('No data available in system database to export.');
+
+      const exportRows = entries.map(e => ({
+        "ID": e.id,
+        "Type": e.type || 'Task',
+        "Title": e.title || '',
+        "Date Time": e.datetime || '',
+        "Month": e.month || '',
+        "Work Type": e.workType || 'Regular',
+        "Details": e.desc || ''
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportRows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "TaskTracker_Data");
+
+      const dateTag = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(workbook, `TaskTracker_Database_Backup_${dateTag}.xlsx`);
+    }
+
+    async function importFromExcel(evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+          if (!Array.isArray(jsonData) || jsonData.length === 0) {
+            return alert('No valid data rows found in the selected Excel sheet.');
+          }
+
+          const importedEntries = jsonData.map((row, idx) => {
+            const rawDt = row['Date Time'] || row.DateTime || row.datetime || getNowDatetimeLocal();
+            const formattedDt = typeof rawDt === 'string' && rawDt.length >= 16 ? rawDt.slice(0, 16) : getNowDatetimeLocal();
+            
+            return {
+              id: String(row.ID || row.id || ('imported_' + Date.now() + '_' + idx)),
+              userId: currentUser.id || 'usr_default',
+              userName: currentUser.email || 'User',
+              username: savedSettings.appUsername || savedSettings.username || currentUser.email || 'User',
+              type: row.Type || row.type || 'Task',
+              title: String(row.Title || row.title || 'Untitled Record'),
+              datetime: formattedDt,
+              month: row.Month || row.month || formattedDt.substring(0, 7),
+              workType: row['Work Type'] || row.workType || calculateWorkType(formattedDt),
+              desc: String(row.Details || row.desc || row.Description || ''),
+              status: 'Completed',
+              timestamp: new Date(formattedDt).getTime() || Date.now()
+            };
+          });
+
+          if (confirm(`Found ${importedEntries.length} entries in Excel file. Merge with local system database?`)) {
+            const existing = await dbOps.getAll();
+            const existingMap = new Map(existing.map(item => [item.id, item]));
+
+            importedEntries.forEach(item => existingMap.set(item.id, item));
+            await dbOps.bulkReplace(Array.from(existingMap.values()));
+
+            await render();
+            await syncToDrive();
+            alert(`Database import successful! Synchronized ${importedEntries.length} records.`);
+          }
+        } catch (err) {
+          alert('Failed to parse Excel file: ' + err.message);
+        } finally {
+          evt.target.value = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    /* ANALYTICS & REPORTS SYSTEM */
+    async function getFilteredReportData() {
+      const all = await dbOps.getAll();
+      const timeframeMode = el('reportTimeframeSelect').value;
+      const selectedMonth = el('reportMonthPicker').value;
+      const startDateVal = el('reportStartDate').value;
+      const endDateVal = el('reportEndDate').value;
+
+      let filtered = all;
+
+      if (timeframeMode === 'month') {
+        filtered = filtered.filter(e => e.month === selectedMonth);
+      } else if (timeframeMode === 'custom' && startDateVal && endDateVal) {
+        const start = new Date(startDateVal + 'T00:00:00');
+        const end = new Date(endDateVal + 'T23:59:59');
+        filtered = filtered.filter(e => {
+          const itemDt = new Date(e.datetime || e.timestamp);
+          return itemDt >= start && itemDt <= end;
+        });
+      } else if (timeframeMode === 'last3') {
+        const d = new Date(selectedMonth + '-01');
+        const past = new Date(d);
+        past.setMonth(past.getMonth() - 2);
+        filtered = filtered.filter(e => {
+          const itemDt = new Date(e.datetime || e.timestamp);
+          return itemDt >= past && itemDt <= new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        });
+      }
+      return filtered;
+    }
+
+    async function renderReportsView() {
+      const filtered = await getFilteredReportData();
+      renderSummaryTable(filtered);
+      renderCharts(filtered);
+    }
+
+    function renderSummaryTable(entries) {
+      const tbody = el('summaryTableBody');
+      tbody.innerHTML = '';
+
+      let total = 0, reg = 0, over = 0, hol = 0;
+
+      entries.forEach(e => {
+        total++;
+        const wt = e.workType || calculateWorkType(e.datetime);
+        if (wt === 'Regular') reg++;
+        else if (wt === 'Overtime') over++;
+        else if (wt === 'Holiday') hol++;
+      });
+
+      if (total === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No records found for current filters.</td></tr>`;
+        return;
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight:700;">Personal Activity</td>
+        <td>${total}</td>
+        <td><span class="badge badge-regular">${reg}</span></td>
+        <td><span class="badge badge-overtime">${over}</span></td>
+        <td><span class="badge badge-holiday">${hol}</span></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    async function renderCharts(filteredEntries) {
+      const selectedMonth = el('reportMonthPicker').value;
+      const allEntries = await dbOps.getAll();
+
+      const baseDt = new Date(selectedMonth + '-01');
+      const monthsLabels = [];
+      const monthCounts = [0, 0, 0, 0];
+
+      for (let i = 3; i >= 0; i--) {
+        const m = new Date(baseDt.getFullYear(), baseDt.getMonth() - i, 1);
+        const mStr = `${m.getFullYear()}-${String(m.getMonth() + 1).padStart(2, '0')}`;
+        monthsLabels.push(m.toLocaleString('default', { month: 'short', year: '2-digit' }));
+        monthCounts[3 - i] = allEntries.filter(e => e.month === mStr).length;
+      }
+
+      if (chartMonthlyInstance) chartMonthlyInstance.destroy();
+      chartMonthlyInstance = new Chart(el('chartMonthlyCanvas'), {
+        type: 'bar',
+        data: {
+          labels: monthsLabels,
+          datasets: [{ label: 'Total Entries', data: monthCounts, backgroundColor: '#2563eb', borderRadius: 8 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      let reg = 0, over = 0, hol = 0;
+      filteredEntries.forEach(e => {
+        const wt = e.workType || calculateWorkType(e.datetime);
+        if (wt === 'Regular') reg++;
+        else if (wt === 'Overtime') over++;
+        else if (wt === 'Holiday') hol++;
+      });
+
+      if (chartWorkHoursInstance) chartWorkHoursInstance.destroy();
+      chartWorkHoursInstance = new Chart(el('chartWorkHoursCanvas'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Regular Work Hours', 'After-Hours Overtime', 'Holidays'],
+          datasets: [{ data: [reg, over, hol], backgroundColor: ['#10b981', '#f59e0b', '#8b5cf6'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    /* Export Functions */
+    async function openMailAppWithCopy() {
+      const filtered = await getFilteredReportData();
+      if (filtered.length === 0) return alert('No data to export.');
+
+      let formattedText = `PERSONAL PERFORMANCE REPORT\n===========================================\n\n`;
+      filtered.forEach((a, i) => {
+        formattedText += `[${i + 1}] ${a.type.toUpperCase()}: ${a.title}\n`;
+        formattedText += `Date/Time: ${a.datetime ? new Date(a.datetime).toLocaleString() : 'N/A'}\n`;
+        formattedText += `Category: ${a.workType || 'Regular'}\n`;
+        formattedText += `Details: ${a.desc || 'N/A'}\n`;
+        formattedText += `-------------------------------------------\n\n`;
+      });
+
+      try { await navigator.clipboard.writeText(formattedText); } catch (err) {}
+
+      const defaultTo = activeSettings.recipients ? encodeURIComponent(activeSettings.recipients) : '';
+      const subject = encodeURIComponent(`Performance & Activity Report`);
+      window.location.href = `mailto:${defaultTo}?subject=${subject}`;
+    }
+
+    async function downloadReportCSV() {
+      const filtered = await getFilteredReportData();
+      if (filtered.length === 0) return alert('No data available to export.');
+
+      let csv = 'ID,Type,Title,Work Type,Date Time,Details\n';
+      filtered.forEach(e => {
+        const row = [
+          `"${e.id}"`,
+          `"${e.type}"`,
+          `"${(e.title || '').replace(/"/g, '""')}"`,
+          `"${e.workType || 'Regular'}"`,
+          `"${e.datetime || new Date(e.timestamp).toISOString()}"`,
+          `"${(e.desc || '').replace(/"/g, '""')}"`
+        ];
+        csv += row.join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `TaskTracker_Report_${currentSelectedMonth}.csv`;
+      a.click();
+    }
+
+    /* History Clone Logic */
+    let historyDebounceTimer;
+    el('historySearchInput').addEventListener('input', (e) => {
+      clearTimeout(historyDebounceTimer);
+      const value = e.target.value;
+      historyDebounceTimer = setTimeout(() => runHistorySearch(value), 150);
+    });
+
+    async function runHistorySearch(rawQuery) {
+      const query = rawQuery.toLowerCase().trim();
+      const resultsContainer = el('historyResults');
+      if (!query) { resultsContainer.style.display = 'none'; resultsContainer.innerHTML = ''; return; }
+
+      const all = await dbOps.getAll();
+      const matches = all
+        .filter(item => item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query))
+        .slice(0, 15);
+
+      resultsContainer.innerHTML = '';
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = `<div class="history-item" style="color:var(--text-muted); cursor:default;">No matches</div>`;
+        resultsContainer.style.display = 'block';
+        return;
+      }
+
+      matches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        div.innerHTML = `<span style="color:var(--text-muted); font-size:0.75rem; margin-right:6px;">${item.month}</span>${escapeHTML(item.title)}`;
+        div.onclick = () => {
+          el('taskTitle').value = item.title;
+          el('taskType').value = item.type;
+          el('taskDesc').value = item.desc || '';
+          el('historySearchInput').value = item.title;
+          resultsContainer.style.display = 'none';
+        };
+        resultsContainer.appendChild(div);
+      });
+      resultsContainer.style.display = 'block';
+    }
+
+    /* Preferences Engine & Credentials Updates */
+    function loadSettings() {
+      const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
+      if (raw) { try { savedSettings = { ...savedSettings, ...JSON.parse(raw) }; } catch(e){} }
+      activeSettings = { ...savedSettings };
+      applyLiveUI(activeSettings);
+      syncSettingsFormValues();
+      checkSettingsDirty();
+    }
+
+    function syncSettingsFormValues() {
+      el('usernameInput').value = activeSettings.username || '';
+      el('defaultRecipientsInput').value = activeSettings.recipients || '';
+      el('themeModeSelect').value = activeSettings.theme || 'light';
+      el('settingAppUsername').value = activeSettings.appUsername || '';
+
+      document.querySelectorAll('#palettePicker .swatch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-palette') === activeSettings.palette);
+      });
+      document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-preset') === activeSettings.uiStyle);
+      });
+    }
+
+    function updateAppCredentialsSettings() {
+      const newUsername = el('settingAppUsername').value.trim();
+      const currentPass = el('settingCurrentPass').value;
+      const newPass = el('settingNewPass').value;
+      const confirmPass = el('settingConfirmPass').value;
+
+      if (!newUsername) return alert('Username cannot be empty.');
+
+      if (newPass || currentPass) {
+        if (currentPass !== savedSettings.appPassword) return alert('Current Application Password is incorrect.');
+        if (newPass.length < 1) return alert('New password cannot be empty.');
+        if (newPass !== confirmPass) return alert('New passwords do not match.');
+        savedSettings.appPassword = newPass;
+      }
+
+      savedSettings.appUsername = newUsername;
+      activeSettings.appUsername = newUsername;
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+
+      el('settingCurrentPass').value = '';
+      el('settingNewPass').value = '';
+      el('settingConfirmPass').value = '';
+
+      syncToDrive();
+      alert('Application credentials updated successfully!');
+    }
+
+    function applyLiveUI(cfg) {
+      document.documentElement.setAttribute('data-theme', cfg.theme);
+      document.documentElement.setAttribute('data-color-palette', cfg.palette);
+      document.documentElement.setAttribute('data-ui-style', cfg.uiStyle);
+    }
+
+    function checkSettingsDirty() {
+      const isDirty = (
+        activeSettings.username !== savedSettings.username ||
+        activeSettings.recipients !== savedSettings.recipients ||
+        activeSettings.palette !== savedSettings.palette ||
+        activeSettings.theme !== savedSettings.theme ||
+        activeSettings.uiStyle !== savedSettings.uiStyle
+      );
+      el('saveSettingsBtn').disabled = !isDirty;
+    }
+
+    async function saveSettings() {
+      savedSettings = { ...activeSettings };
+      localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
+      checkSettingsDirty();
+      await syncToDrive();
+    }
+
+    /* Global Navigation & Event Wiring */
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => {
+      if (btn.id !== 'navLogoutBtn') {
+        btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
+      }
+    });
+
+    el('navLogoutBtn').addEventListener('click', handleLogout);
+
+    /* Sidebar Mobile Fixes */
+    el('sidebarToggle').addEventListener('click', () => {
+      document.body.classList.toggle('sidebar-collapsed');
+    });
+
+    el('mobileMenuBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.body.classList.toggle('sidebar-open');
+    });
+
+    el('sidebarOverlay').addEventListener('click', () => {
+      document.body.classList.remove('sidebar-open');
+    });
+
+    /* App Auth Handlers */
+    el('completeRegBtn').addEventListener('click', completeAppRegistration);
+    el('completeLoginBtn').addEventListener('click', completeAppLogin);
+    el('switchGoogleAccountBtn').addEventListener('click', () => {
+      accessToken = null;
+      localStorage.removeItem(STORAGE_KEY_SESSION);
+      localStorage.removeItem(STORAGE_KEY_UNLOCK_EXPIRY);
+      evaluateAuthStep();
+    });
+
+    el('saveTaskBtn').addEventListener('click', handleSave);
+    el('addTaskTableBtn').addEventListener('click', () => { resetForm(); switchView('viewEntry'); });
+    el('cancelEditBtn').addEventListener('click', resetForm);
+
+    el('exportDbExcelBtn').addEventListener('click', exportToExcel);
+    el('importDbExcelBtn').addEventListener('click', () => el('excelFileInput').click());
+    el('excelFileInput').addEventListener('change', importFromExcel);
+    el('updateAppCredentialsBtn').addEventListener('click', updateAppCredentialsSettings);
+
+    el('reportTimeframeSelect').addEventListener('change', (e) => {
+      const val = e.target.value;
+      el('monthPickerWrap').classList.toggle('hidden', val !== 'month' && val !== 'last3');
+      el('customDateStartWrap').classList.toggle('hidden', val !== 'custom');
+      el('customDateEndWrap').classList.toggle('hidden', val !== 'custom');
+      renderReportsView();
+    });
+    el('reportMonthPicker').addEventListener('change', renderReportsView);
+    el('reportStartDate').addEventListener('change', renderReportsView);
+    el('reportEndDate').addEventListener('change', renderReportsView);
+
+    el('exportReportBtn').addEventListener('click', openMailAppWithCopy);
+    el('exportCsvBtn').addEventListener('click', downloadReportCSV);
+    el('printPdfBtn').addEventListener('click', () => window.print());
+
+    el('usernameInput').addEventListener('input', (e) => { activeSettings.username = e.target.value.trim(); checkSettingsDirty(); });
+    el('defaultRecipientsInput').addEventListener('input', (e) => { activeSettings.recipients = e.target.value.trim(); checkSettingsDirty(); });
+    el('themeModeSelect').addEventListener('change', (e) => { activeSettings.theme = e.target.value; applyLiveUI(activeSettings); checkSettingsDirty(); });
+    el('saveSettingsBtn').addEventListener('click', saveSettings);
+
+    document.querySelectorAll('#palettePicker .swatch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        activeSettings.palette = e.currentTarget.getAttribute('data-palette');
+        document.querySelectorAll('#palettePicker .swatch-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        applyLiveUI(activeSettings);
+        checkSettingsDirty();
+      });
+    });
+
+    document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        activeSettings.uiStyle = e.currentTarget.getAttribute('data-preset');
+        document.querySelectorAll('#uiStylePicker .swatch-btn').forEach(b => b.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        applyLiveUI(activeSettings);
+        checkSettingsDirty();
+      });
+    });
+
+    el('syncTrigger').addEventListener('click', pullFromDrive);
+    el('googleSignInBtn').addEventListener('click', () => tokenClient && tokenClient.requestAccessToken({ prompt: '' }));
+
+    el('monthPicker').value = currentSelectedMonth;
+    el('reportMonthPicker').value = currentSelectedMonth;
+    el('monthPicker').addEventListener('change', (e) => { currentSelectedMonth = e.target.value; render(); });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      loadSettings();
+      await initDB();
+      el('taskDatetime').value = getNowDatetimeLocal();
+      updateWorkTypePreview();
+      
+      if (window.google?.accounts?.oauth2) {
+        initGoogleAuth();
+        evaluateAuthStep();
+      } else {
+        window.addEventListener('load', async () => {
+          if (window.google?.accounts?.oauth2) {
+            initGoogleAuth();
+            evaluateAuthStep();
+          }
+        });
+      }
+    });
+
+    function escapeHTML(str) {
+      return String(str || '').replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+  </script>
+</body>
+</html>
