@@ -6,11 +6,53 @@
   <meta name="theme-color" content="#1e293b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TaskTracker">
   <title>TaskTracker Pro</title>
-  
+  <!-- Favicon Vector SVG -->
+  <link id="appSvgIcon" rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='%231e40af'/><path d='M160 120 h192 a20 20 0 0 1 20 20 v280 a20 20 0 0 1 -20 20 h-192 a20 20 0 0 1 -20 -20 v-280 a20 20 0 0 1 20 -20 Z' fill='%23ffffff'/><rect x='200' y='90' width='112' height='50' rx='15' fill='%233b82f6'/><circle cx='256' cy='115' r='10' fill='%23ffffff'/><path d='M190 200 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><path d='M190 270 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><path d='M190 340 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><line x1='280' y1='212' x2='330' y2='212' stroke='%233b82f6' stroke-width='20' stroke-linecap='round'/><line x1='280' y1='282' x2='330' y2='282' stroke='%233b82f6' stroke-width='20' stroke-linecap='round'/><circle cx='350' cy='350' r='75' fill='%232563eb' stroke='%23ffffff' stroke-width='12'/><polyline points='350,310 350,350 380,365' fill='none' stroke='%23ffffff' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
   <!-- Dynamic Favicon Generation via Inline SVG Data-URI -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='%231e40af'/><path d='M160 120 h192 a20 20 0 0 1 20 20 v280 a20 20 0 0 1 -20 20 h-192 a20 20 0 0 1 -20 -20 v-280 a20 20 0 0 1 20 -20 Z' fill='%23ffffff'/><rect x='200' y='90' width='112' height='50' rx='15' fill='%233b82f6'/><circle cx='256' cy='115' r='10' fill='%23ffffff'/><path d='M190 200 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><path d='M190 270 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><path d='M190 340 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><line x1='280' y1='212' x2='330' y2='212' stroke='%233b82f6' stroke-width='20' stroke-linecap='round'/><line x1='280' y1='282' x2='330' y2='282' stroke='%233b82f6' stroke-width='20' stroke-linecap='round'/><circle cx='350' cy='350' r='75' fill='%232563eb' stroke='%23ffffff' stroke-width='12'/><polyline points='350,310 350,350 380,365' fill='none' stroke='%23ffffff' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-
+  <link rel="manifest" href="data:application/manifest+json,{
+  &quot;name&quot;: &quot;TaskTracker Pro&quot;,
+  &quot;short_name&quot;: &quot;TaskTracker&quot;,
+  &quot;start_url&quot;: &quot;.&quot;,
+  &quot;display&quot;: &quot;standalone&quot;,
+  &quot;background_color&quot;: &quot;%230f172a&quot;,
+  &quot;theme_color&quot;: &quot;%231e293b&quot;,
+  &quot;icons&quot;: [
+    {
+      &quot;src&quot;: &quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='%231e40af'/><path d='M160 120 h192 a20 20 0 0 1 20 20 v280 a20 20 0 0 1 -20 20 h-192 a20 20 0 0 1 -20 -20 v-280 a20 20 0 0 1 20 -20 Z' fill='%23ffffff'/><rect x='200' y='90' width='112' height='50' rx='15' fill='%233b82f6'/><circle cx='256' cy='115' r='10' fill='%23ffffff'/><path d='M190 200 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><path d='M190 270 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><path d='M190 340 l25 25 l50 -50' fill='none' stroke='%2310b981' stroke-width='24' stroke-linecap='round' stroke-linejoin='round'/><line x1='280' y1='212' x2='330' y2='212' stroke='%233b82f6' stroke-width='20' stroke-linecap='round'/><line x1='280' y1='282' x2='330' y2='282' stroke='%233b82f6' stroke-width='20' stroke-linecap='round'/><circle cx='350' cy='350' r='75' fill='%232563eb' stroke='%23ffffff' stroke-width='12'/><polyline points='350,310 350,350 380,365' fill='none' stroke='%23ffffff' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/></svg>&quot;,
+      &quot;sizes&quot;: &quot;512x512&quot;,
+      &quot;type&quot;: &quot;image/svg+xml&quot;,
+      &quot;purpose&quot;: &quot;any maskable&quot;
+    }
+  ]
+}">
+  <script>
+  (function generateAppleTouchIcon() {
+    const svgUrl = document.getElementById('appSvgIcon').href;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 180;
+      canvas.height = 180;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, 180, 180);
+      
+      const appleIconLink = document.createElement('link');
+      appleIconLink.rel = 'apple-touch-icon';
+      appleIconLink.sizes = '180x180';
+      appleIconLink.href = canvas.toDataURL('image/png');
+      document.head.appendChild(appleIconLink);
+    };
+    img.src = svgUrl;
+  })();
+</script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
