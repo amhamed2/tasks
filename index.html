@@ -15,6 +15,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
   <style>
     /* ==========================================================================
@@ -582,7 +583,7 @@
           </div>
 
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button id="exportReportBtn" class="btn btn-success btn-inline">✉️ Send Report by Mail</button>
+            <button id="exportReportBtn" class="btn btn-success btn-inline">📎 Generate Word Report &amp; Email</button>
             <button id="exportCsvBtn" class="btn btn-secondary btn-inline">📥 Download CSV</button>
             <button id="printPdfBtn" class="btn btn-secondary btn-inline">🖨️ Print / Save PDF</button>
           </div>
@@ -1824,55 +1825,190 @@
       });
     }
 
-    async function openMailAppWithCopy() {
-      const data = await getFilteredReportData();
-      let bodyText = `TASKTRACKER PERFORMANCE REPORT\n`;
-      bodyText += `Generated: ${new Date().toLocaleString()}\n`;
-      bodyText += `===========================================\n\n`;
+    /* ==========================================================================
+       WORD (.docx) REPORT GENERATOR — built client-side with JSZip, no server.
+       Produces genuine OOXML so it opens cleanly in Word / Google Docs / LibreOffice.
+       ========================================================================== */
+    function escapeXml(str) {
+      return String(str ?? '').replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&apos;', '"': '&quot;' }[c]));
+    }
 
-      if (data.tasks.length > 0) {
-        bodyText += `TASKS & ACHIEVEMENTS (${data.tasks.length}):\n`;
-        bodyText += `-------------------------------------------\n`;
-        data.tasks.forEach((a, i) => { bodyText += `[${i+1}] ${a.title} (${a.type}) - ${a.datetime}\n    ${a.desc || 'No details'}\n`; });
-        bodyText += `\n`;
+    function docxPara(text, opts = {}) {
+      const {
+        bold = false, italic = false, size = 21, color = '33332F',
+        spacingBefore = 0, spacingAfter = 160, alignment = null, indent = 0
+      } = opts;
+      const runProps = `${bold ? '<w:b/>' : ''}${italic ? '<w:i/>' : ''}<w:color w:val="${color}"/><w:sz w:val="${size}"/><w:szCs w:val="${size}"/>`;
+      const pPrBits = [
+        `<w:spacing w:before="${spacingBefore}" w:after="${spacingAfter}"/>`,
+        alignment ? `<w:jc w:val="${alignment}"/>` : '',
+        indent ? `<w:ind w:left="${indent}"/>` : ''
+      ].join('');
+      const lines = String(text ?? '').split('\n');
+      const runs = lines.map(line => `<w:r><w:rPr>${runProps}</w:rPr><w:t xml:space="preserve">${escapeXml(line)}</w:t></w:r>`).join('<w:r><w:br/></w:r>');
+      return `<w:p><w:pPr>${pPrBits}</w:pPr>${runs}</w:p>`;
+    }
+
+    function docxHeading(text, level, accentColor) {
+      const sizes = { 1: 30, 2: 23 };
+      return docxPara(text, { bold: true, size: sizes[level] || 23, color: accentColor, spacingBefore: 340, spacingAfter: 160 });
+    }
+
+    function docxTable(headers, rows, colWidths, accentColor) {
+      const totalWidth = colWidths.reduce((a, b) => a + b, 0);
+      const grid = colWidths.map(w => `<w:gridCol w:w="${w}"/>`).join('');
+      const border = `<w:top w:val="single" w:sz="4" w:space="0" w:color="DDD9CD"/><w:left w:val="single" w:sz="4" w:space="0" w:color="DDD9CD"/><w:bottom w:val="single" w:sz="4" w:space="0" w:color="DDD9CD"/><w:right w:val="single" w:sz="4" w:space="0" w:color="DDD9CD"/><w:insideH w:val="single" w:sz="4" w:space="0" w:color="DDD9CD"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="DDD9CD"/>`;
+
+      const headerCells = headers.map((h, i) => `
+        <w:tc>
+          <w:tcPr><w:tcW w:w="${colWidths[i]}" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="${accentColor}"/><w:vAlign w:val="center"/></w:tcPr>
+          <w:p><w:pPr><w:spacing w:before="60" w:after="60"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="FFFFFF"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">${escapeXml(h)}</w:t></w:r></w:p>
+        </w:tc>`).join('');
+
+      const bodyRows = rows.map((row, ri) => {
+        const shade = ri % 2 === 1 ? '<w:shd w:val="clear" w:color="auto" w:fill="F6F5F2"/>' : '';
+        const cells = row.map((cellText, ci) => `
+          <w:tc>
+            <w:tcPr><w:tcW w:w="${colWidths[ci]}" w:type="dxa"/>${shade}</w:tcPr>
+            <w:p><w:pPr><w:spacing w:before="40" w:after="40"/></w:pPr><w:r><w:rPr><w:color w:val="33332F"/><w:sz w:val="18"/></w:rPr><w:t xml:space="preserve">${escapeXml(cellText)}</w:t></w:r></w:p>
+          </w:tc>`).join('');
+        return `<w:tr>${cells}</w:tr>`;
+      }).join('');
+
+      return `
+        <w:tbl>
+          <w:tblPr><w:tblW w:w="${totalWidth}" w:type="dxa"/><w:tblBorders>${border}</w:tblBorders><w:tblLayout w:type="fixed"/></w:tblPr>
+          <w:tblGrid>${grid}</w:tblGrid>
+          <w:tr><w:trPr><w:tblHeader/></w:trPr>${headerCells}</w:tr>
+          ${bodyRows}
+        </w:tbl>
+        <w:p><w:pPr><w:spacing w:before="0" w:after="200"/></w:pPr></w:p>`;
+    }
+
+    async function buildReportDocxBlob(data, meta) {
+      const rawAccent = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+      const accentColor = (rawAccent ? rawAccent.replace('#', '') : '2563EB').toUpperCase() || '2563EB';
+
+      let body = '';
+      body += docxPara('TaskTracker Performance & Activity Report', { bold: true, size: 40, color: accentColor, spacingAfter: 60 });
+      body += docxPara(`${meta.periodLabel}  ·  Generated ${new Date().toLocaleString()}`, { italic: true, size: 18, color: '82807A', spacingAfter: 320 });
+
+      if (data.tasks.length) {
+        body += docxHeading(`Tasks & Achievements  (${data.tasks.length})`, 1, accentColor);
+        const rows = data.tasks.map((t, i) => [
+          String(i + 1),
+          t.type || 'Task',
+          t.title || 'Untitled',
+          t.datetime ? new Date(t.datetime).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '-',
+          t.desc || '-'
+        ]);
+        body += docxTable(['#', 'Type', 'Title', 'Date', 'Details'], rows, [450, 1150, 2150, 1800, 3800], accentColor);
       }
 
-      if (data.calendar.length > 0) {
-        bodyText += `CALENDAR EVENTS (${data.calendar.length}):\n`;
-        bodyText += `-------------------------------------------\n`;
-        data.calendar.forEach((c, i) => { bodyText += `[${i+1}] ${c.title} - Date: ${c.date}\n    ${c.desc || 'No notes'}\n`; });
-        bodyText += `\n`;
+      if (data.calendar.length) {
+        body += docxHeading(`Calendar Events  (${data.calendar.length})`, 1, accentColor);
+        const rows = data.calendar.map((c, i) => [String(i + 1), c.title || 'Untitled', c.date || '-', c.desc || '-']);
+        body += docxTable(['#', 'Title', 'Date', 'Notes'], rows, [450, 2600, 1800, 4500], accentColor);
       }
 
-      if (data.todos.length > 0) {
-        bodyText += `TO-DO LISTS (${data.todos.length}):\n`;
-        bodyText += `-------------------------------------------\n`;
-        data.todos.forEach((list, i) => {
-          bodyText += `[${i+1}] List: ${list.title} (${list.category || 'General'}) - Target: ${list.dueDate || 'None'}\n`;
-          (list.items || []).forEach((item, j) => {
-            bodyText += `     ${j+1}. [${item.completed ? 'X' : ' '}] ${item.text}\n`;
+      if (data.todos.length) {
+        body += docxHeading(`To-Do Lists  (${data.todos.length})`, 1, accentColor);
+        data.todos.forEach(list => {
+          const listLabel = `${list.title || 'Untitled List'}  —  ${list.category || 'General'}${list.dueDate ? '  ·  Target: ' + list.dueDate : ''}`;
+          body += docxPara(listLabel, { bold: true, size: 21, color: '33332F', spacingBefore: 180, spacingAfter: 80 });
+          (list.items || []).forEach(item => {
+            const mark = item.completed ? '\u2611' : '\u2610';
+            body += docxPara(`${mark}  ${item.text || ''}`, { size: 20, color: item.completed ? '82807A' : '33332F', indent: 260, spacingAfter: 40 });
           });
         });
-        bodyText += `\n`;
+        body += docxPara('', { spacingAfter: 100 });
       }
 
-      if (data.notes.length > 0) {
-        bodyText += `NOTES (${data.notes.length}):\n`;
-        bodyText += `-------------------------------------------\n`;
-        data.notes.forEach((n, i) => { bodyText += `[${i+1}] ${n.title} (${n.tag || 'General'})\n    ${n.content}\n`; });
-        bodyText += `\n`;
+      if (data.notes.length) {
+        body += docxHeading(`Notes  (${data.notes.length})`, 1, accentColor);
+        data.notes.forEach(n => {
+          body += docxPara(`${n.title || 'Untitled Note'}${n.tag ? '  ·  ' + n.tag : ''}`, { bold: true, size: 21, spacingBefore: 160, spacingAfter: 60 });
+          body += docxPara(n.content || '', { size: 20, spacingAfter: 200 });
+        });
       }
 
-      try { await navigator.clipboard.writeText(bodyText); } catch (err) {}
+      const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body>
+${body}
+<w:sectPr>
+  <w:pgSz w:w="12240" w:h="15840"/>
+  <w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080" w:header="720" w:footer="720" w:gutter="0"/>
+</w:sectPr>
+</w:body>
+</w:document>`;
 
-      const recipient = activeSettings.recipients ? encodeURIComponent(activeSettings.recipients) : '';
-      const subject = encodeURIComponent(`TaskTracker Performance & Activity Report`);
-      
-      let safeMailtoBody = bodyText;
-      if (safeMailtoBody.length > 1500) safeMailtoBody = safeMailtoBody.slice(0, 1500) + "\n\n...[Full detailed report copied to Clipboard! Press Ctrl+V to paste]";
+      const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`;
 
-      window.location.href = `mailto:${recipient}?subject=${subject}&body=${encodeURIComponent(safeMailtoBody)}`;
-      alert("Report body generated and opened in email client!\n(Full detailed report also copied to clipboard)");
+      const relsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+      const zip = new JSZip();
+      zip.file('[Content_Types].xml', contentTypesXml);
+      zip.file('_rels/.rels', relsXml);
+      zip.file('word/document.xml', documentXml);
+
+      return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    }
+
+    // Browsers cannot attach a file to an email programmatically (no web API allows it) —
+    // so this downloads a nicely formatted Word report and opens the mail app with a short,
+    // clean body asking the user to attach the file that was just downloaded.
+    async function openMailAppWithCopy() {
+      const data = await getFilteredReportData();
+      const totalItems = data.tasks.length + data.calendar.length + data.todos.length + data.notes.length;
+      if (totalItems === 0) { alert('No data found for the selected report scope.'); return; }
+
+      const timeframeMode = el('reportTimeframeSelect').value;
+      const periodLabelMap = {
+        month: `Month: ${el('reportMonthPicker').value}`,
+        custom: `${el('reportStartDate').value || '?'} → ${el('reportEndDate').value || '?'}`,
+        last3: 'Last 3 Months',
+        all: 'All Time'
+      };
+      const meta = { periodLabel: periodLabelMap[timeframeMode] || 'All Time' };
+      const fileName = `TaskTracker_Report_${new Date().toISOString().slice(0, 10)}.docx`;
+
+      try {
+        const blob = await buildReportDocxBlob(data, meta);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        const recipient = activeSettings.recipients ? encodeURIComponent(activeSettings.recipients) : '';
+        const subject = encodeURIComponent('TaskTracker Performance & Activity Report');
+        const shortBody =
+`Hi,
+
+Please find this period's TaskTracker report attached as a Word document (${fileName}), just downloaded to this device.
+
+Summary: ${data.tasks.length} tasks/achievements, ${data.calendar.length} calendar events, ${data.todos.length} to-do lists, ${data.notes.length} notes.
+
+Thanks!`;
+
+        window.location.href = `mailto:${recipient}?subject=${subject}&body=${encodeURIComponent(shortBody)}`;
+
+        setTimeout(() => {
+          alert(`"${fileName}" has been downloaded, and your mail app should now be open.\n\nBrowsers can't attach files to an email automatically — please attach the downloaded file from your Downloads before sending.`);
+        }, 400);
+      } catch (err) {
+        alert('Could not generate the Word report: ' + err.message);
+      }
     }
 
     async function downloadReportCSV() {
