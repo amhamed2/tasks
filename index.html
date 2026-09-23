@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#1e293b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="TaskTracker">
+  <meta name="apple-mobile-web-app-title" content="Personal Assistant">
   <title>Personal Assistant Pro</title>
   
   <!-- App Icon (Personal Assistant Pro artwork) -->
@@ -299,7 +299,7 @@
           <circle cx="350" cy="350" r="75" fill="#2563eb" stroke="#ffffff" stroke-width="12"/>
           <polyline points="350,310 350,350 380,365" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 6px;">TaskTracker <span style="color:var(--primary);">PRO</span></h2>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text); margin-bottom: 6px;">Personal Assistant <span style="color:var(--primary);">PRO</span></h2>
         <p style="color: var(--text-muted); font-size: 0.85rem;" id="authSubtitle">Synchronize task, calendar, to-do & note records safely.</p>
       </div>
 
@@ -368,7 +368,7 @@
           <circle cx="350" cy="350" r="75" fill="#2563eb" stroke="#ffffff" stroke-width="12"/>
           <polyline points="350,310 350,350 380,365" fill="none" stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span class="brand-title">TaskTracker <span>PRO</span></span>
+        <span class="brand-title">Personal Assistant <span>PRO</span></span>
       </div>
 
       <nav class="top-nav-tabs">
@@ -1663,7 +1663,7 @@
       const noteRows = (await dbOps.getNotes()).map(n => ({ "ID": n.id, "Title": n.title, "Tag": n.tag, "Content": n.content }));
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(noteRows), "Notes");
 
-      XLSX.writeFile(workbook, `TaskTracker_Complete_Backup_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      XLSX.writeFile(workbook, `Personal_Assistant_Complete_Backup_${new Date().toISOString().slice(0, 10)}.xlsx`);
     }
 
     async function importFromExcel(evt) {
@@ -1891,7 +1891,7 @@
       const accentColor = (rawAccent ? rawAccent.replace('#', '') : '2563EB').toUpperCase() || '2563EB';
 
       let body = '';
-      body += docxPara('TaskTracker Performance & Activity Report', { bold: true, size: 40, color: accentColor, spacingAfter: 60 });
+      body += docxPara('Personal Assistant Pro Performance & Activity Report', { bold: true, size: 40, color: accentColor, spacingAfter: 60 });
       body += docxPara(`${meta.periodLabel}  ·  Generated ${new Date().toLocaleString()}`, { italic: true, size: 18, color: '82807A', spacingAfter: 320 });
 
       if (data.tasks.length) {
@@ -1996,7 +1996,7 @@ ${body}
           try {
             await navigator.share({
               files: [file],
-              title: 'TaskTracker Performance & Activity Report',
+              title: 'Personal Assistant PRO Performance & Activity Report',
               text: summaryLine
             });
             return; // shared (or attached) successfully — nothing else to do
@@ -2016,11 +2016,11 @@ ${body}
         a.remove();
 
         const recipient = activeSettings.recipients ? encodeURIComponent(activeSettings.recipients) : '';
-        const subject = encodeURIComponent('TaskTracker Performance & Activity Report');
+        const subject = encodeURIComponent('Personal Assistant Performance & Activity Report');
         const shortBody =
 `Hi,
 
-Please find this period's TaskTracker report attached as a Word document (${fileName}), just downloaded to this device.
+Please find this period's Personal Assistant report attached as a Word document (${fileName}), just downloaded to this device.
 
 ${summaryLine}
 
@@ -2051,7 +2051,7 @@ Thanks!`;
       const blob = new Blob([csv], { type: 'text/csv' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `TaskTracker_MultiModule_Report.csv`;
+      a.download = `Personal Assistant_MultiModule_Report.csv`;
       a.click();
     }
 
