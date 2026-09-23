@@ -44,7 +44,6 @@
       --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
       --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
 
-      /* Dynamic Notebook Bookmark Default Colors */
       --bm-tasks: #2563eb;
       --bm-calendar: #10b981;
       --bm-todo: #f59e0b;
@@ -75,22 +74,6 @@
       --shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    [data-ui-style="default"] { --radius: 14px; }
-    [data-ui-style="compact"] { --radius: 6px; --shadow: none; }
-    [data-ui-style="compact"] .card { padding: 14px; margin-bottom: 12px; }
-    [data-ui-style="neumorphic"] { --radius: 18px; --bg: #e0e5ec; --surface: #e0e5ec; --card-border: transparent; --shadow: 6px 6px 12px #b8b9be, -6px -6px 12px #ffffff; }
-    [data-theme="dark"][data-ui-style="neumorphic"] { --bg: #111827; --surface: #111827; --shadow: 5px 5px 12px #080c14, -5px -5px 12px #1a243a; }
-    [data-ui-style="glass"] { --radius: 20px; --surface: rgba(255, 255, 255, 0.65); --card-border: rgba(255, 255, 255, 0.4); }
-    [data-theme="dark"][data-ui-style="glass"] { --surface: rgba(17, 24, 39, 0.65); --card-border: rgba(255, 255, 255, 0.08); }
-    [data-ui-style="glass"] .card { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-    [data-ui-style="terminal"] { --radius: 0px; --card-border: var(--primary); --shadow: none; }
-    [data-ui-style="terminal"] .card { border-width: 2px; }
-    [data-ui-style="bordered"] { --radius: 8px; --shadow: none; --card-border: #cbd5e1; }
-    [data-theme="dark"][data-ui-style="bordered"] { --card-border: #374151; }
-
-    /* ==========================================================================
-       BASE LAYOUT & COMPONENTS
-       ========================================================================== */
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; transition: background 0.2s, color 0.2s; }
 
@@ -106,7 +89,6 @@
     .brand-title { font-size: 1.1rem; font-weight: 800; color: var(--text); letter-spacing: -0.4px; }
     .brand-title span { color: var(--primary); }
 
-    /* Top Navigation Tabs */
     .top-nav-tabs { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 4px 0; max-width: 100%; }
     .top-nav-btn {
       background: none; border: 1px solid transparent; padding: 8px 16px; border-radius: 20px;
@@ -186,26 +168,11 @@
       text-shadow: 0 1px 2px rgba(0,0,0,0.4);
     }
 
-    .bookmark-tab:hover {
-      width: 46px;
-      box-shadow: 5px 4px 12px rgba(0,0,0,0.25);
-    }
-
-    .bookmark-tab.active {
-      width: 50px;
-      box-shadow: 6px 4px 14px rgba(0,0,0,0.35);
-      border-right: 4px solid #ffffff;
-    }
+    .bookmark-tab:hover { width: 46px; box-shadow: 5px 4px 12px rgba(0,0,0,0.25); }
+    .bookmark-tab.active { width: 50px; box-shadow: 6px 4px 14px rgba(0,0,0,0.35); border-right: 4px solid #ffffff; }
 
     /* Main Container & Page Layout */
-    .main-wrapper {
-      flex: 1;
-      padding-left: 54px; /* Space for Notebook Bookmarks */
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
+    .main-wrapper { flex: 1; padding-left: 54px; display: flex; flex-direction: column; min-width: 0; }
     main { padding: 24px; max-width: 1240px; margin: 0 auto; width: 100%; flex: 1; }
     .view { display: none; }
     .view.active { display: block; animation: fadeIn 0.2s ease-in-out; }
@@ -274,16 +241,18 @@
     .calendar-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
     .calendar-day-header { text-align: center; font-weight: 700; font-size: 0.75rem; color: var(--text-muted); padding: 8px 0; text-transform: uppercase; }
-    .calendar-cell { background: var(--surface); border: 1px solid var(--card-border); border-radius: 10px; min-height: 90px; padding: 6px; display: flex; flex-direction: column; cursor: pointer; transition: all 0.2s; }
+    .calendar-cell { background: var(--surface); border: 1px solid var(--card-border); border-radius: 10px; min-height: 95px; padding: 6px; display: flex; flex-direction: column; cursor: pointer; transition: all 0.2s; }
     .calendar-cell:hover { border-color: var(--primary); }
     .calendar-cell.other-month { opacity: 0.35; background: var(--bg); }
     .calendar-cell.today { border: 2px solid var(--primary); background: var(--primary-soft); }
     .cell-number { font-size: 0.8rem; font-weight: 800; color: var(--text); margin-bottom: 4px; }
-    .cell-event-pill { font-size: 0.68rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; color: #fff; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cell-event-pill { font-size: 0.68rem; font-weight: 700; padding: 3px 6px; border-radius: 4px; color: #fff; margin-bottom: 3px; display: flex; justify-content: space-between; align-items: center; gap: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    /* To-Do List Styles */
-    .todo-list-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; background: var(--surface); border: 1px solid var(--card-border); border-radius: 10px; margin-bottom: 8px; transition: all 0.2s; }
-    .todo-list-item.completed span.todo-text { text-decoration: line-through; opacity: 0.5; }
+    /* Categorized To-Do Lists Structure Styles */
+    .todo-list-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow); }
+    .todo-list-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--card-border); }
+    .todo-item-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg); border: 1px solid var(--card-border); border-radius: 8px; margin-bottom: 6px; }
+    .todo-item-row.completed span { text-decoration: line-through; opacity: 0.55; }
 
     /* Notes Grid */
     .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 14px; }
@@ -294,10 +263,12 @@
     .auth-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: 20px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
     .hidden { display: none !important; }
 
+    /* FIXED REQUIREMENT 4: Mobile Top Header Overlapping Bookmarks Fix */
     @media (max-width: 768px) {
-      .notebook-bookmarks-container { top: 120px; }
-      .bookmark-tab { width: 30px; height: 75px; font-size: 0.62rem; }
-      .main-wrapper { padding-left: 36px; }
+      .notebook-bookmarks-container { top: 175px; gap: 4px; }
+      .bookmark-tab { width: 28px; height: 68px; font-size: 0.58rem; border-radius: 0 8px 8px 0; }
+      .bookmark-tab:hover, .bookmark-tab.active { width: 38px; }
+      .main-wrapper { padding-left: 32px; }
       header.app-header { padding: 10px 14px; }
       main { padding: 14px; }
       .charts-grid { grid-template-columns: 1fr; }
@@ -330,7 +301,6 @@
         <p style="color: var(--text-muted); font-size: 0.85rem;" id="authSubtitle">Synchronize task, calendar, to-do & note records safely.</p>
       </div>
 
-      <!-- Step 1: Single Google OAuth Sign-in Trigger -->
       <div id="authStepGoogle">
         <button id="googleSignInBtn" class="btn" style="background: #ffffff; color: #333; border: 1px solid var(--card-border); font-weight: 600;">
           <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
@@ -338,7 +308,6 @@
         </button>
       </div>
 
-      <!-- Step 2: First-Time Application Credentials Registration -->
       <div id="authStepRegister" class="hidden">
         <div class="field-hint" style="color:var(--primary); font-weight:600; text-align:center; margin-bottom:12px;">Google Authenticated! Set up application credentials.</div>
         <label>Choose Application Username</label>
@@ -350,7 +319,6 @@
         <button id="completeRegBtn" class="btn">Create Application Credentials</button>
       </div>
 
-      <!-- Step 3: Application Password Unlock -->
       <div id="authStepLogin" class="hidden">
         <div class="field-hint" style="text-align:center; margin-bottom:10px;">Enter application password to unlock session.</div>
         <label>Application Username</label>
@@ -387,7 +355,6 @@
 
   <!-- Main Application Wrapper -->
   <div class="main-wrapper">
-    <!-- Top Sticky Header -->
     <header class="app-header">
       <div class="header-brand-group">
         <svg class="brand-logo-svg" viewBox="0 0 512 512">
@@ -402,7 +369,6 @@
         <span class="brand-title">TaskTracker <span>PRO</span></span>
       </div>
 
-      <!-- Top Navigation Bar Tabs -->
       <nav class="top-nav-tabs">
         <button class="top-nav-btn active" data-target="viewRecords">Tasks</button>
         <button class="top-nav-btn" data-target="viewCalendar">Calendar</button>
@@ -426,7 +392,7 @@
 
     <main id="appContent" class="hidden">
 
-      <!-- VIEW 1: Tasks Records Grid & Entry Form -->
+      <!-- VIEW 1: Tasks Records -->
       <section id="viewRecords" class="view active">
         <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -475,7 +441,7 @@
         <div id="cardsGrid" class="records-grid"></div>
       </section>
 
-      <!-- VIEW 2: User Calendar -->
+      <!-- VIEW 2: User Calendar (FIXED REQUIREMENT 1: EDIT & DELETE CALENDAR EVENTS) -->
       <section id="viewCalendar" class="view">
         <div class="card">
           <div class="calendar-controls">
@@ -487,9 +453,11 @@
           <div class="calendar-grid" id="calendarGrid"></div>
         </div>
 
-        <!-- Add Calendar Event Card -->
-        <div class="card">
-          <div class="card-title">Add Calendar Event</div>
+        <div class="card" id="calFormCard">
+          <div class="card-title">
+            <span id="calFormTitle">Add Calendar Event</span>
+            <button id="cancelCalEditBtn" class="btn btn-secondary hidden btn-inline">Cancel Edit</button>
+          </div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
             <div>
               <label>Event Title</label>
@@ -506,37 +474,62 @@
           </div>
           <label>Description / Notes</label>
           <input type="text" id="calEventDesc" placeholder="Event details...">
-          <button id="saveCalEventBtn" class="btn btn-success" style="margin-top: 12px;">Add Event to Calendar</button>
+          <div style="display:flex; gap:10px; margin-top: 12px;">
+            <button id="saveCalEventBtn" class="btn btn-success" style="margin-top:0;">Save Event</button>
+            <button id="deleteCalEventBtn" class="btn btn-secondary hidden" style="margin-top:0; background:var(--danger-soft); color:var(--danger); border-color:transparent;">Delete Event</button>
+          </div>
         </div>
       </section>
 
-      <!-- VIEW 3: User To-Do Lists -->
+      <!-- VIEW 3: Categorized To-Do Lists (FIXED REQUIREMENT 3: ADD/EDIT/DELETE LISTS & ITEMS + CATEGORIZATION) -->
       <section id="viewTodo" class="view">
         <div class="card">
           <div class="card-title">
-            <span>User To-Do Lists</span>
-            <span class="badge badge-task" id="todoStatsBadge">0 / 0 Completed</span>
+            <span id="todoFormHeader">Create To-Do List</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span class="badge badge-task" id="todoStatsBadge">0 Lists</span>
+              <button id="cancelTodoEditBtn" class="btn btn-secondary hidden btn-inline">Cancel Edit</button>
+            </div>
           </div>
 
-          <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
-            <input type="text" id="todoInput" placeholder="What needs to be done?" style="flex: 2; min-width: 200px;">
-            <select id="todoPriority" style="flex: 1; min-width: 120px;">
-              <option value="Low">Low Priority</option>
-              <option value="Medium" selected>Medium Priority</option>
-              <option value="High">High Priority</option>
-            </select>
-            <input type="date" id="todoDueDate" style="flex: 1; min-width: 140px;">
-            <button id="addTodoBtn" class="btn btn-inline" style="flex: 0 0 auto; height: 42px; margin-top: 0;">+ Add</button>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+            <div>
+              <label>List Title / Name</label>
+              <input type="text" id="todoListTitle" placeholder="e.g. Vacation Preparation, Shopping List">
+            </div>
+            <div>
+              <label>Category / Subject</label>
+              <input type="text" id="todoCategory" placeholder="e.g. Personal, Travel, Work">
+            </div>
+            <div>
+              <label>Target Date</label>
+              <input type="date" id="todoDueDate">
+            </div>
           </div>
-
-          <div id="todoItemsList"></div>
+          <button id="saveTodoListBtn" class="btn" style="margin-top: 12px;">Create List</button>
         </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; flex-wrap:wrap; gap:10px;">
+          <h3 style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">To-Do Lists Directory</h3>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:0.75rem; font-weight:700; color:var(--text-muted);">Group By:</span>
+            <select id="todoGroupSelect" style="width:auto; padding:5px 10px; font-size:0.8rem;">
+              <option value="subject">Subject / Category</option>
+              <option value="date">Date</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="todoListsContainer"></div>
       </section>
 
-      <!-- VIEW 4: User Notes -->
+      <!-- VIEW 4: User Notes (FIXED REQUIREMENT 2: EDIT NOTES) -->
       <section id="viewNotes" class="view">
-        <div class="card">
-          <div class="card-title">Notebook & Quick Notes</div>
+        <div class="card" id="noteFormCard">
+          <div class="card-title">
+            <span id="noteFormHeader">Notebook & Quick Notes</span>
+            <button id="cancelNoteEditBtn" class="btn btn-secondary hidden btn-inline">Cancel Edit</button>
+          </div>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
             <input type="text" id="noteTitle" placeholder="Note Title...">
             <input type="text" id="noteTag" placeholder="Tag / Category (e.g. Work, Ideas)">
@@ -548,7 +541,7 @@
         <div id="notesGrid" class="notes-grid"></div>
       </section>
 
-      <!-- VIEW 5: Analytics & Unified Multi-Module Reports -->
+      <!-- VIEW 5: Multi-Module Reports (FIXED EMAIL REPORTING ENGINE) -->
       <section id="viewReports" class="view">
         <div class="card">
           <div class="card-title">
@@ -589,7 +582,7 @@
           </div>
 
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button id="exportReportBtn" class="btn btn-success btn-inline">✉️ Copy & Open Mail</button>
+            <button id="exportReportBtn" class="btn btn-success btn-inline">✉️ Send Report by Mail</button>
             <button id="exportCsvBtn" class="btn btn-secondary btn-inline">📥 Download CSV</button>
             <button id="printPdfBtn" class="btn btn-secondary btn-inline">🖨️ Print / Save PDF</button>
           </div>
@@ -627,11 +620,9 @@
 
       <!-- VIEW 6: Settings -->
       <section id="viewSettings" class="view">
-
-        <!-- Notebook Bookmark Colors Customization -->
         <div class="card" style="border-left: 4px solid var(--primary);">
           <div class="card-title">Notebook Reference Bookmarks Colors</div>
-          <p class="field-hint" style="margin-bottom: 14px;">Customize the colors for each left-side vertical notebook tab bookmark.</p>
+          <p class="field-hint" style="margin-bottom: 14px;">Customize colors for left-side vertical notebook tab bookmarks.</p>
 
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;">
             <div>
@@ -661,23 +652,17 @@
           </div>
         </div>
 
-        <!-- Database Export & Import (Excel) -->
         <div class="card" style="border-left: 4px solid var(--success);">
           <div class="card-title">Database Export & Import (Excel)</div>
-          <p class="field-hint" style="margin-bottom: 12px;">Export complete system database (Tasks, Calendar, To-Dos, Notes) to Excel (.xlsx) for offline backup or import/merge records.</p>
+          <p class="field-hint" style="margin-bottom: 12px;">Export complete system database (Tasks, Calendar, To-Dos, Notes) to Excel (.xlsx) for backup.</p>
           
           <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;">
-            <button id="exportDbExcelBtn" class="btn btn-success" style="flex: 1; min-width: 200px; margin-top: 0;">
-              📊 Export Full Database to Excel (.xlsx)
-            </button>
-            <button id="importDbExcelBtn" class="btn btn-secondary" style="flex: 1; min-width: 200px; margin-top: 0;">
-              📥 Import Database from Excel
-            </button>
+            <button id="exportDbExcelBtn" class="btn btn-success" style="flex: 1; min-width: 200px; margin-top: 0;">📊 Export Database to Excel</button>
+            <button id="importDbExcelBtn" class="btn btn-secondary" style="flex: 1; min-width: 200px; margin-top: 0;">📥 Import Database from Excel</button>
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden">
           </div>
         </div>
 
-        <!-- Application Security Settings -->
         <div class="card" style="border-left: 4px solid var(--purple);">
           <div class="card-title">Application Credentials Management</div>
           <label>Application Username</label>
@@ -730,7 +715,7 @@
     const STORAGE_KEY_SESSION = 'tasktracker_google_session';
     const STORAGE_KEY_SETTINGS = 'tasktracker_user_settings';
     const STORAGE_KEY_UNLOCK_EXPIRY = 'tasktracker_unlock_expiry';
-    const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 Minutes Sliding Session
+    const SESSION_TIMEOUT_MS = 5 * 60 * 1000;
     
     const DB_NAME = 'TaskTrackerDB';
     let db = null;
@@ -749,11 +734,14 @@
     let chartMonthlyInstance = null;
     let chartWorkHoursInstance = null;
     let currentCalDate = new Date();
+    let editingCalEventId = null;
+    let editingNoteId = null;
+    let editingTodoListId = null;
 
-    /* Initialize DB with Upgraded IndexedDB Version 5 (Data Safety Guard) */
+    /* Upgraded IndexedDB Engine (Version 6 for Categorized To-Do Lists) */
     function initDB() {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 5);
+        const request = indexedDB.open(DB_NAME, 6);
         request.onupgradeneeded = (e) => {
           const database = e.target.result;
           if (!database.objectStoreNames.contains('entries')) database.createObjectStore('entries', { keyPath: 'id' });
@@ -767,7 +755,6 @@
     }
 
     const dbOps = {
-      // Tasks / Entries
       async save(entry) {
         const tx = db.transaction('entries', 'readwrite');
         tx.objectStore('entries').put(entry);
@@ -795,7 +782,7 @@
         syncToDrive();
       },
 
-      // Calendar Events
+      /* Calendar Operations */
       async saveCalEvent(item) {
         const tx = db.transaction('calendar_events', 'readwrite');
         tx.objectStore('calendar_events').put(item);
@@ -816,10 +803,10 @@
         syncToDrive();
       },
 
-      // To-Dos
-      async saveTodo(item) {
+      /* Categorized To-Do Lists Operations */
+      async saveTodo(listObj) {
         const tx = db.transaction('todos', 'readwrite');
-        tx.objectStore('todos').put(item);
+        tx.objectStore('todos').put(listObj);
         await tx.complete;
         syncToDrive();
       },
@@ -837,7 +824,7 @@
         syncToDrive();
       },
 
-      // Notes
+      /* Notes Operations */
       async saveNote(item) {
         const tx = db.transaction('notes', 'readwrite');
         tx.objectStore('notes').put(item);
@@ -859,23 +846,17 @@
       }
     };
 
-    /* Work Hour Auto Detection */
     function calculateWorkType(datetimeStr) {
       if (!datetimeStr) return 'Regular';
       const dt = new Date(datetimeStr);
       if (isNaN(dt.getTime())) return 'Regular';
-      
       const day = dt.getDay(); 
-      const hours = dt.getHours();
-      const minutes = dt.getMinutes();
-      const totalMinutes = hours * 60 + minutes;
-
+      const totalMinutes = dt.getHours() * 60 + dt.getMinutes();
       if (day === 5 || day === 6) return 'Holiday';
       if (totalMinutes >= 510 && totalMinutes <= 960) return 'Regular';
       return 'Overtime';
     }
 
-    /* 5-Minute Sliding Session Engine */
     function isSessionUnlocked() {
       const expiry = localStorage.getItem(STORAGE_KEY_UNLOCK_EXPIRY);
       if (!expiry) return false;
@@ -884,14 +865,12 @@
 
     function refreshUnlockSession() {
       if (isSessionUnlocked()) {
-        const newExpiry = Date.now() + SESSION_TIMEOUT_MS;
-        localStorage.setItem(STORAGE_KEY_UNLOCK_EXPIRY, newExpiry.toString());
+        localStorage.setItem(STORAGE_KEY_UNLOCK_EXPIRY, (Date.now() + SESSION_TIMEOUT_MS).toString());
       }
     }
 
     function setAppUnlockedState() {
-      const expiry = Date.now() + SESSION_TIMEOUT_MS;
-      localStorage.setItem(STORAGE_KEY_UNLOCK_EXPIRY, expiry.toString());
+      localStorage.setItem(STORAGE_KEY_UNLOCK_EXPIRY, (Date.now() + SESSION_TIMEOUT_MS).toString());
       startSessionTimer();
     }
 
@@ -903,23 +882,13 @@
 
     function startSessionTimer() {
       if (sessionTimerInterval) clearInterval(sessionTimerInterval);
-      
       const updateTimerDisplay = () => {
         const expiry = parseInt(localStorage.getItem(STORAGE_KEY_UNLOCK_EXPIRY) || '0', 10);
         const remaining = expiry - Date.now();
-
-        if (remaining <= 0) {
-          clearInterval(sessionTimerInterval);
-          lockAppSession();
-          return;
-        }
-
+        if (remaining <= 0) { clearInterval(sessionTimerInterval); lockAppSession(); return; }
         const totalSec = Math.floor(remaining / 1000);
-        const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
-        const secs = String(totalSec % 60).padStart(2, '0');
-        el('sessionTimerText').innerText = `${mins}:${secs}`;
+        el('sessionTimerText').innerText = `${String(Math.floor(totalSec / 60)).padStart(2, '0')}:${String(totalSec % 60).padStart(2, '0')}`;
       };
-
       updateTimerDisplay();
       sessionTimerInterval = setInterval(updateTimerDisplay, 1000);
     }
@@ -928,7 +897,6 @@
       window.addEventListener(evt, () => { if (isSessionUnlocked()) refreshUnlockSession(); }, { passive: true });
     });
 
-    /* Streamlined Fixed Google Authentication Logic */
     let accessToken = null;
     let tokenClient = null;
 
@@ -938,10 +906,7 @@
         client_id: GOOGLE_CLIENT_ID,
         scope: GOOGLE_SCOPES,
         callback: async (response) => {
-          if (response.error) {
-            alert("Google Sign-In Error: " + response.error);
-            return;
-          }
+          if (response.error) { alert("Google Sign-In Error: " + response.error); return; }
           accessToken = response.access_token;
           try {
             const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
@@ -962,14 +927,8 @@
     }
 
     function triggerGoogleLogin() {
-      if (!tokenClient) {
-        initGoogleAuth();
-      }
-      if (tokenClient) {
-        tokenClient.requestAccessToken({ prompt: 'select_account' });
-      } else {
-        alert("Google Identity Services library is loading. Please try again in a moment.");
-      }
+      if (!tokenClient) initGoogleAuth();
+      if (tokenClient) tokenClient.requestAccessToken({ prompt: 'select_account' });
     }
 
     function restoreSession() {
@@ -1021,10 +980,8 @@
       const username = el('regAppUsername').value.trim();
       const pass = el('regAppPassword').value;
       const passConfirm = el('regAppPasswordConfirm').value;
-
-      if (!username) return alert('Please choose an Application Username');
-      if (!pass) return alert('Please enter an Application Password');
-      if (pass !== passConfirm) return alert('Passwords do not match');
+      if (!username) return alert('Choose Application Username');
+      if (!pass || pass !== passConfirm) return alert('Passwords mismatch or empty');
 
       savedSettings.appUsername = username;
       savedSettings.appPassword = pass;
@@ -1039,19 +996,14 @@
     }
 
     function completeAppLogin() {
-      const username = el('loginAppUsername').value.trim();
-      const pass = el('loginAppPassword').value;
-
-      if (username === savedSettings.appUsername && pass === savedSettings.appPassword) {
+      if (el('loginAppUsername').value.trim() === savedSettings.appUsername && el('loginAppPassword').value === savedSettings.appPassword) {
         setAppUnlockedState();
         evaluateAuthStep();
-      } else {
-        alert('Invalid Application Username or Password');
-      }
+      } else { alert('Invalid Username or Password'); }
     }
 
     function handleLogout() {
-      if (confirm("Are you sure you want to log out?")) {
+      if (confirm("Log out of current session?")) {
         accessToken = null;
         localStorage.removeItem(STORAGE_KEY_SESSION);
         localStorage.removeItem(STORAGE_KEY_UNLOCK_EXPIRY);
@@ -1080,7 +1032,7 @@
         if (fileId) {
           const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } });
           const payload = await res.json();
-          if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+          if (payload && typeof payload === 'object') {
             if (payload.settings) {
               savedSettings = { ...savedSettings, ...payload.settings };
               activeSettings = { ...savedSettings };
@@ -1107,8 +1059,6 @@
               store.clear();
               payload.notes.forEach(item => store.put(item));
             }
-          } else if (Array.isArray(payload)) {
-            await dbOps.bulkReplace(payload);
           }
         }
         updateSyncStatus('online', 'Synced');
@@ -1119,17 +1069,12 @@
       if (!accessToken) return;
       updateSyncStatus('syncing', 'Saving...');
       try {
-        const localEntries = await dbOps.getAll();
-        const localCal = await dbOps.getCalEvents();
-        const localTodos = await dbOps.getTodos();
-        const localNotes = await dbOps.getNotes();
-
         const fullPayload = { 
           settings: savedSettings, 
-          entries: localEntries,
-          calendar: localCal,
-          todos: localTodos,
-          notes: localNotes
+          entries: await dbOps.getAll(),
+          calendar: await dbOps.getCalEvents(),
+          todos: await dbOps.getTodos(),
+          notes: await dbOps.getNotes()
         };
         const fileId = await findDriveFileId();
         const blob = new Blob([JSON.stringify(fullPayload, null, 2)], { type: 'application/json' });
@@ -1149,7 +1094,6 @@
       } catch (err) { updateSyncStatus('', 'Save Failed'); }
     }
 
-    /* Synchronized Navigation Routing */
     const now = new Date();
     let currentSelectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     let editingId = null;
@@ -1180,12 +1124,9 @@
       renderNotesView();
     }
 
-    /* Tasks Cards Grid */
     async function renderTasksGrid() {
       if (!isSessionUnlocked()) return;
-      const allEntries = await dbOps.getAll();
-
-      const monthEntries = allEntries
+      const monthEntries = (await dbOps.getAll())
         .filter(e => e.month === currentSelectedMonth)
         .sort((a, b) => new Date(b.datetime || b.timestamp) - new Date(a.datetime || a.timestamp));
 
@@ -1193,7 +1134,7 @@
       cardsGrid.innerHTML = '';
 
       if (monthEntries.length === 0) {
-        cardsGrid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 40px 20px;" class="card">No task or achievement records found for ${currentSelectedMonth}.</div>`;
+        cardsGrid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 40px 20px;" class="card">No tasks logged for ${currentSelectedMonth}.</div>`;
       } else {
         monthEntries.forEach(item => cardsGrid.appendChild(createTaskCard(item)));
       }
@@ -1202,17 +1143,10 @@
     function createTaskCard(item) {
       const card = document.createElement('div');
       card.className = 'record-card';
-
       const workType = item.workType || calculateWorkType(item.datetime);
 
-      let workBadgeClass = 'badge-regular';
-      if (workType === 'Overtime') workBadgeClass = 'badge-overtime';
-      if (workType === 'Holiday') workBadgeClass = 'badge-holiday';
-
-      let typeBadgeClass = 'badge-task';
-      if (item.type === 'Achievement') typeBadgeClass = 'badge-achievement';
-
-      const formattedDt = item.datetime ? new Date(item.datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : new Date(item.timestamp).toLocaleDateString();
+      let workBadgeClass = workType === 'Overtime' ? 'badge-overtime' : workType === 'Holiday' ? 'badge-holiday' : 'badge-regular';
+      let typeBadgeClass = item.type === 'Achievement' ? 'badge-achievement' : 'badge-task';
 
       card.innerHTML = `
         <div>
@@ -1220,16 +1154,14 @@
             <span class="record-card-title">${escapeHTML(item.title)}</span>
             <span class="badge ${typeBadgeClass}">${item.type}</span>
           </div>
-          <div class="record-card-meta">
-            <span class="badge ${workBadgeClass}">${workType}</span>
-          </div>
-          <div class="record-card-body">${escapeHTML(item.desc || 'No additional details logged.')}</div>
+          <div class="record-card-meta"><span class="badge ${workBadgeClass}">${workType}</span></div>
+          <div class="record-card-body">${escapeHTML(item.desc || 'No details.')}</div>
         </div>
         <div class="record-card-footer">
-          <span>🕒 ${formattedDt}</span>
+          <span>🕒 ${item.datetime ? new Date(item.datetime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : ''}</span>
           <div class="record-actions">
-            <button onclick="editEntry('${item.id}')" class="action-icon-btn edit" title="Edit">✏️</button>
-            <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete" title="Delete">🗑️</button>
+            <button onclick="editEntry('${item.id}')" class="action-icon-btn edit">✏️</button>
+            <button onclick="deleteEntry('${item.id}')" class="action-icon-btn delete">🗑️</button>
           </div>
         </div>
       `;
@@ -1240,9 +1172,7 @@
       const dtVal = el('taskDatetime').value;
       if (!dtVal) { el('workTypeBadgePreview').innerHTML = ''; return; }
       const detected = calculateWorkType(dtVal);
-      let badgeClass = 'badge-regular';
-      if (detected === 'Overtime') badgeClass = 'badge-overtime';
-      if (detected === 'Holiday') badgeClass = 'badge-holiday';
+      let badgeClass = detected === 'Overtime' ? 'badge-overtime' : detected === 'Holiday' ? 'badge-holiday' : 'badge-regular';
       el('workTypeBadgePreview').innerHTML = `<span class="badge ${badgeClass}">Auto-Detected: ${detected} Hours</span>`;
     }
 
@@ -1250,27 +1180,20 @@
 
     async function handleSaveTask() {
       const title = el('taskTitle').value.trim();
-      const type = el('taskType').value;
-      const desc = el('taskDesc').value.trim();
       const datetime = el('taskDatetime').value;
-
-      if (!title) return alert('Title is required');
-      if (!datetime) return alert('Date & Time is required');
-
-      const monthStr = datetime.substring(0, 7);
-      const detectedWorkType = calculateWorkType(datetime);
+      if (!title || !datetime) return alert('Title and Date/Time are required');
 
       const record = {
         id: editingId || ('entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
         userId: currentUser.id,
         userName: currentUser.email,
         username: savedSettings.appUsername || savedSettings.username || currentUser.email || 'User',
-        month: monthStr,
+        month: datetime.substring(0, 7),
         datetime: datetime,
         title,
-        type,
-        desc,
-        workType: detectedWorkType,
+        type: el('taskType').value,
+        desc: el('taskDesc').value.trim(),
+        workType: calculateWorkType(datetime),
         status: 'Completed',
         timestamp: new Date(datetime).getTime() || Date.now()
       };
@@ -1299,10 +1222,8 @@
     }
 
     window.editEntry = async (id) => {
-      const all = await dbOps.getAll();
-      const target = all.find(e => e.id === id);
+      const target = (await dbOps.getAll()).find(e => e.id === id);
       if (!target) return;
-
       editingId = target.id;
       el('taskTitle').value = target.title;
       el('taskType').value = target.type;
@@ -1316,26 +1237,21 @@
     };
 
     window.deleteEntry = async (id) => {
-      if (confirm('Delete this record?')) {
-        await dbOps.delete(id);
-        renderTasksGrid();
-      }
+      if (confirm('Delete this record?')) { await dbOps.delete(id); renderTasksGrid(); }
     };
 
     /* ==========================================================================
-       FEATURE: USER CALENDAR ENGINE
+       FIXED REQUIREMENT 1: USER CALENDAR ENGINE WITH EDIT AND DELETE
        ========================================================================== */
     async function renderCalendarView() {
       const year = currentCalDate.getFullYear();
       const month = currentCalDate.getMonth();
-
       el('calMonthTitle').innerText = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
 
       const grid = el('calendarGrid');
       grid.innerHTML = '';
 
-      const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      daysOfWeek.forEach(d => {
+      ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(d => {
         const h = document.createElement('div');
         h.className = 'calendar-day-header';
         h.innerText = d;
@@ -1349,7 +1265,6 @@
       const events = await dbOps.getCalEvents();
       const tasks = await dbOps.getAll();
 
-      // Render previous month overflow cells
       for (let x = firstDayIndex; x > 0; x--) {
         const cell = document.createElement('div');
         cell.className = 'calendar-cell other-month';
@@ -1357,7 +1272,6 @@
         grid.appendChild(cell);
       }
 
-      // Render current month days
       const todayStr = new Date().toISOString().slice(0, 10);
 
       for (let i = 1; i <= totalDays; i++) {
@@ -1367,24 +1281,23 @@
         cell.className = 'calendar-cell' + (dateStr === todayStr ? ' today' : '');
         cell.innerHTML = `<span class="cell-number">${i}</span>`;
 
-        cell.onclick = () => {
+        cell.onclick = (e) => {
+          if (e.target.closest('.cell-event-pill')) return;
+          resetCalForm();
           el('calEventDate').value = dateStr;
           el('calEventTitle').focus();
         };
 
-        // Filter events for date
-        const dateEvents = events.filter(e => e.date === dateStr);
-        dateEvents.forEach(ev => {
+        events.filter(e => e.date === dateStr).forEach(ev => {
           const pill = document.createElement('div');
           pill.className = 'cell-event-pill';
           pill.style.background = ev.color || '#10b981';
-          pill.innerText = ev.title;
+          pill.innerHTML = `<span>${escapeHTML(ev.title)}</span><span style="font-size:0.65rem;">✏️</span>`;
+          pill.onclick = (e) => { e.stopPropagation(); editCalEvent(ev); };
           cell.appendChild(pill);
         });
 
-        // Add task indicators
-        const dateTasks = tasks.filter(t => t.datetime && t.datetime.slice(0, 10) === dateStr);
-        dateTasks.forEach(tk => {
+        tasks.filter(t => t.datetime && t.datetime.slice(0, 10) === dateStr).forEach(tk => {
           const pill = document.createElement('div');
           pill.className = 'cell-event-pill';
           pill.style.background = '#2563eb';
@@ -1396,98 +1309,252 @@
       }
     }
 
+    function editCalEvent(ev) {
+      editingCalEventId = ev.id;
+      el('calEventTitle').value = ev.title;
+      el('calEventDate').value = ev.date;
+      el('calEventColor').value = ev.color || '#10b981';
+      el('calEventDesc').value = ev.desc || '';
+      el('calFormTitle').innerText = 'Edit Calendar Event';
+      el('saveCalEventBtn').innerText = 'Update Event';
+      el('cancelCalEditBtn').classList.remove('hidden');
+      el('deleteCalEventBtn').classList.remove('hidden');
+      el('calFormCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetCalForm() {
+      editingCalEventId = null;
+      el('calEventTitle').value = '';
+      el('calEventDate').value = '';
+      el('calEventDesc').value = '';
+      el('calFormTitle').innerText = 'Add Calendar Event';
+      el('saveCalEventBtn').innerText = 'Add Event to Calendar';
+      el('cancelCalEditBtn').classList.add('hidden');
+      el('deleteCalEventBtn').classList.add('hidden');
+    }
+
     el('calPrevMonthBtn').onclick = () => { currentCalDate.setMonth(currentCalDate.getMonth() - 1); renderCalendarView(); };
     el('calNextMonthBtn').onclick = () => { currentCalDate.setMonth(currentCalDate.getMonth() + 1); renderCalendarView(); };
+    el('cancelCalEditBtn').onclick = resetCalForm;
 
     el('saveCalEventBtn').onclick = async () => {
       const title = el('calEventTitle').value.trim();
       const date = el('calEventDate').value;
-      const color = el('calEventColor').value;
-      const desc = el('calEventDesc').value.trim();
-
       if (!title || !date) return alert('Event title and date required');
 
-      const ev = { id: 'evt_' + Date.now(), title, date, color, desc, timestamp: Date.now() };
+      const ev = {
+        id: editingCalEventId || ('evt_' + Date.now()),
+        title,
+        date,
+        color: el('calEventColor').value,
+        desc: el('calEventDesc').value.trim(),
+        timestamp: Date.now()
+      };
       await dbOps.saveCalEvent(ev);
-
-      el('calEventTitle').value = '';
-      el('calEventDesc').value = '';
+      resetCalForm();
       renderCalendarView();
     };
 
+    el('deleteCalEventBtn').onclick = async () => {
+      if (editingCalEventId && confirm('Delete this calendar event?')) {
+        await dbOps.deleteCalEvent(editingCalEventId);
+        resetCalForm();
+        renderCalendarView();
+      }
+    };
+
     /* ==========================================================================
-       FEATURE: USER TO-DO LISTS
+       FIXED REQUIREMENT 3: CATEGORIZED TO-DO LISTS ENGINE (ADD/EDIT/DELETE LISTS & ITEMS)
        ========================================================================== */
     async function renderTodoView() {
-      const todos = await dbOps.getTodos();
-      const listContainer = el('todoItemsList');
-      listContainer.innerHTML = '';
+      const lists = await dbOps.getTodos();
+      const container = el('todoListsContainer');
+      container.innerHTML = '';
 
-      let completedCount = 0;
-      todos.forEach(t => { if (t.completed) completedCount++; });
-      el('todoStatsBadge').innerText = `${completedCount} / ${todos.length} Completed`;
+      el('todoStatsBadge').innerText = `${lists.length} Lists`;
 
-      if (todos.length === 0) {
-        listContainer.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px;">No to-do items yet. Create one above!</div>`;
+      if (lists.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:30px;" class="card">No to-do lists found. Create your first list above!</div>`;
         return;
       }
 
-      todos.sort((a, b) => b.timestamp - a.timestamp).forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'todo-list-item' + (item.completed ? ' completed' : '');
+      const groupBy = el('todoGroupSelect').value;
+      const groupedMap = new Map();
 
-        let priorityBadge = item.priority === 'High' ? 'badge-overtime' : item.priority === 'Medium' ? 'badge-task' : 'badge-regular';
+      lists.forEach(l => {
+        const key = groupBy === 'subject' ? (l.category || 'General Uncategorized') : (l.dueDate || 'No Target Date');
+        if (!groupedMap.has(key)) groupedMap.set(key, []);
+        groupedMap.get(key).push(l);
+      });
 
-        div.innerHTML = `
-          <div style="display:flex; align-items:center; gap:12px;">
-            <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleTodo('${item.id}')" style="width:18px; height:18px; cursor:pointer;">
-            <div>
-              <span class="todo-text" style="font-weight:700; font-size:0.95rem;">${escapeHTML(item.title)}</span>
-              <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                Due: ${item.dueDate || 'No Date'}
+      groupedMap.forEach((groupLists, groupName) => {
+        const groupHeader = document.createElement('div');
+        groupHeader.style.cssText = "font-weight: 800; font-size: 0.85rem; color: var(--primary); margin: 16px 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px;";
+        groupHeader.innerText = `📂 ${groupName} (${groupLists.length})`;
+        container.appendChild(groupHeader);
+
+        groupLists.forEach(list => {
+          const card = document.createElement('div');
+          card.className = 'todo-list-card';
+
+          const items = list.items || [];
+          const doneCount = items.filter(i => i.completed).length;
+
+          let itemsHtml = '';
+          if (items.length === 0) {
+            itemsHtml = `<div style="font-size:0.82rem; color:var(--text-muted); padding:8px 0;">No items inside list. Add one below!</div>`;
+          } else {
+            items.forEach((item) => {
+              itemsHtml += `
+                <div class="todo-item-row ${item.completed ? 'completed' : ''}">
+                  <div style="display:flex; align-items:center; gap:8px; flex:1;">
+                    <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleTodoListItem('${list.id}', '${item.id}')" style="width:16px; height:16px; cursor:pointer;">
+                    <span style="font-size:0.88rem; font-weight:600;">${escapeHTML(item.text)}</span>
+                  </div>
+                  <div style="display:flex; gap:4px;">
+                    <button onclick="promptEditTodoItem('${list.id}', '${item.id}')" class="action-icon-btn edit" title="Edit Item">✏️</button>
+                    <button onclick="deleteTodoListItem('${list.id}', '${item.id}')" class="action-icon-btn delete" title="Delete Item">🗑️</button>
+                  </div>
+                </div>
+              `;
+            });
+          }
+
+          card.innerHTML = `
+            <div class="todo-list-header">
+              <div>
+                <h4 style="font-size:1.05rem; font-weight:800; color:var(--text);">${escapeHTML(list.title)}</h4>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                  Category: <b>${escapeHTML(list.category || 'General')}</b> | Target: <b>${list.dueDate || 'None'}</b> | Progress: <b>${doneCount}/${items.length} Completed</b>
+                </div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button onclick="editTodoList('${list.id}')" class="btn btn-secondary btn-inline">✏️ Edit List</button>
+                <button onclick="deleteTodoList('${list.id}')" class="btn btn-secondary btn-inline" style="background:var(--danger-soft); color:var(--danger); border-color:transparent;">🗑️ Delete</button>
               </div>
             </div>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span class="badge ${priorityBadge}">${item.priority}</span>
-            <button onclick="deleteTodo('${item.id}')" class="action-icon-btn delete">🗑️</button>
-          </div>
-        `;
-        listContainer.appendChild(div);
+
+            <div style="margin-bottom:12px;">${itemsHtml}</div>
+
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="newItem_${list.id}" placeholder="Add new item to ${escapeHTML(list.title)}..." style="padding:8px 12px; font-size:0.85rem;" onkeydown="if(event.key==='Enter') addListItem('${list.id}')">
+              <button onclick="addListItem('${list.id}')" class="btn btn-inline" style="margin:0;">+ Item</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
       });
     }
 
-    el('addTodoBtn').onclick = async () => {
-      const title = el('todoInput').value.trim();
-      const priority = el('todoPriority').value;
-      const dueDate = el('todoDueDate').value;
+    el('saveTodoListBtn').onclick = async () => {
+      const title = el('todoListTitle').value.trim();
+      if (!title) return alert('List Title required');
 
-      if (!title) return alert('Task title required');
+      const existingLists = await dbOps.getTodos();
+      let targetList = existingLists.find(l => l.id === editingTodoListId);
 
-      const todo = { id: 'todo_' + Date.now(), title, priority, dueDate, completed: false, timestamp: Date.now() };
-      await dbOps.saveTodo(todo);
+      const listObj = {
+        id: editingTodoListId || ('list_' + Date.now()),
+        title,
+        category: el('todoCategory').value.trim() || 'General',
+        dueDate: el('todoDueDate').value,
+        items: targetList ? targetList.items : [],
+        timestamp: targetList ? targetList.timestamp : Date.now()
+      };
 
-      el('todoInput').value = '';
+      await dbOps.saveTodo(listObj);
+      resetTodoForm();
       renderTodoView();
     };
 
-    window.toggleTodo = async (id) => {
-      const todos = await dbOps.getTodos();
-      const target = todos.find(t => t.id === id);
+    function resetTodoForm() {
+      editingTodoListId = null;
+      el('todoListTitle').value = '';
+      el('todoCategory').value = '';
+      el('todoDueDate').value = '';
+      el('todoFormHeader').innerText = 'Create To-Do List';
+      el('saveTodoListBtn').innerText = 'Create List';
+      el('cancelTodoEditBtn').classList.add('hidden');
+    }
+
+    el('cancelTodoEditBtn').onclick = resetTodoForm;
+    el('todoGroupSelect').onchange = renderTodoView;
+
+    window.editTodoList = async (listId) => {
+      const target = (await dbOps.getTodos()).find(l => l.id === listId);
+      if (!target) return;
+      editingTodoListId = target.id;
+      el('todoListTitle').value = target.title;
+      el('todoCategory').value = target.category || '';
+      el('todoDueDate').value = target.dueDate || '';
+      el('todoFormHeader').innerText = 'Edit To-Do List Header';
+      el('saveTodoListBtn').innerText = 'Update List Header';
+      el('cancelTodoEditBtn').classList.remove('hidden');
+    };
+
+    window.deleteTodoList = async (listId) => {
+      if (confirm('Delete this entire to-do list and all its items?')) {
+        await dbOps.deleteTodo(listId);
+        renderTodoView();
+      }
+    };
+
+    window.addListItem = async (listId) => {
+      const input = el(`newItem_${listId}`);
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+
+      const lists = await dbOps.getTodos();
+      const target = lists.find(l => l.id === listId);
       if (target) {
-        target.completed = !target.completed;
+        if (!target.items) target.items = [];
+        target.items.push({ id: 'item_' + Date.now(), text, completed: false });
         await dbOps.saveTodo(target);
         renderTodoView();
       }
     };
 
-    window.deleteTodo = async (id) => {
-      await dbOps.deleteTodo(id);
-      renderTodoView();
+    window.toggleTodoListItem = async (listId, itemId) => {
+      const lists = await dbOps.getTodos();
+      const target = lists.find(l => l.id === listId);
+      if (target && target.items) {
+        const item = target.items.find(i => i.id === itemId);
+        if (item) {
+          item.completed = !item.completed;
+          await dbOps.saveTodo(target);
+          renderTodoView();
+        }
+      }
+    };
+
+    window.promptEditTodoItem = async (listId, itemId) => {
+      const lists = await dbOps.getTodos();
+      const target = lists.find(l => l.id === listId);
+      if (target && target.items) {
+        const item = target.items.find(i => i.id === itemId);
+        if (item) {
+          const newText = prompt('Edit list item:', item.text);
+          if (newText !== null && newText.trim() !== '') {
+            item.text = newText.trim();
+            await dbOps.saveTodo(target);
+            renderTodoView();
+          }
+        }
+      }
+    };
+
+    window.deleteTodoListItem = async (listId, itemId) => {
+      const lists = await dbOps.getTodos();
+      const target = lists.find(l => l.id === listId);
+      if (target && target.items) {
+        target.items = target.items.filter(i => i.id !== itemId);
+        await dbOps.saveTodo(target);
+        renderTodoView();
+      }
     };
 
     /* ==========================================================================
-       FEATURE: USER NOTES
+       FIXED REQUIREMENT 2: USER NOTES ENGINE WITH EDIT FUNCTIONALITY
        ========================================================================== */
     async function renderNotesView() {
       const notes = await dbOps.getNotes();
@@ -1510,9 +1577,12 @@
             </div>
             <p style="font-size:0.88rem; color:var(--text-muted); white-space:pre-wrap; line-height:1.4;">${escapeHTML(note.content)}</p>
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; pt-8; border-top:1px solid var(--card-border); font-size:0.75rem; color:var(--text-muted);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:8px; border-top:1px solid var(--card-border); font-size:0.75rem; color:var(--text-muted);">
             <span>${new Date(note.timestamp).toLocaleDateString()}</span>
-            <button onclick="deleteNote('${note.id}')" class="action-icon-btn delete">🗑️</button>
+            <div class="record-actions">
+              <button onclick="editNote('${note.id}')" class="action-icon-btn edit" title="Edit Note">✏️</button>
+              <button onclick="deleteNote('${note.id}')" class="action-icon-btn delete" title="Delete Note">🗑️</button>
+            </div>
           </div>
         `;
         grid.appendChild(card);
@@ -1521,81 +1591,92 @@
 
     el('saveNoteBtn').onclick = async () => {
       const title = el('noteTitle').value.trim();
-      const tag = el('noteTag').value.trim();
       const content = el('noteContent').value.trim();
-
       if (!title || !content) return alert('Title and content are required');
 
-      const note = { id: 'note_' + Date.now(), title, tag, content, timestamp: Date.now() };
-      await dbOps.saveNote(note);
+      const note = {
+        id: editingNoteId || ('note_' + Date.now()),
+        title,
+        tag: el('noteTag').value.trim(),
+        content,
+        timestamp: Date.now()
+      };
 
-      el('noteTitle').value = '';
-      el('noteTag').value = '';
-      el('noteContent').value = '';
+      await dbOps.saveNote(note);
+      resetNoteForm();
       renderNotesView();
     };
 
-    window.deleteNote = async (id) => {
-      if (confirm('Delete this note?')) {
-        await dbOps.deleteNote(id);
-        renderNotesView();
-      }
+    function resetNoteForm() {
+      editingNoteId = null;
+      el('noteTitle').value = '';
+      el('noteTag').value = '';
+      el('noteContent').value = '';
+      el('noteFormHeader').innerText = 'Notebook & Quick Notes';
+      el('saveNoteBtn').innerText = 'Save Note';
+      el('cancelNoteEditBtn').classList.add('hidden');
+    }
+
+    el('cancelNoteEditBtn').onclick = resetNoteForm;
+
+    window.editNote = async (id) => {
+      const target = (await dbOps.getNotes()).find(n => n.id === id);
+      if (!target) return;
+      editingNoteId = target.id;
+      el('noteTitle').value = target.title;
+      el('noteTag').value = target.tag || '';
+      el('noteContent').value = target.content;
+      el('noteFormHeader').innerText = 'Edit Note';
+      el('saveNoteBtn').innerText = 'Update Note';
+      el('cancelNoteEditBtn').classList.remove('hidden');
+      el('noteFormCard').scrollIntoView({ behavior: 'smooth' });
     };
 
-    /* ==========================================================================
-       EXCEL IMPORT & EXPORT ENGINE
-       ========================================================================== */
-    async function exportToExcel() {
-      const entries = await dbOps.getAll();
-      const calEvents = await dbOps.getCalEvents();
-      const todos = await dbOps.getTodos();
-      const notes = await dbOps.getNotes();
+    window.deleteNote = async (id) => {
+      if (confirm('Delete this note?')) { await dbOps.deleteNote(id); renderNotesView(); }
+    };
 
+    /* EXCEL EXPORT & IMPORT ENGINE */
+    async function exportToExcel() {
       const workbook = XLSX.utils.book_new();
 
-      // Tasks Sheet
-      const taskRows = entries.map(e => ({
+      const taskRows = (await dbOps.getAll()).map(e => ({
         "ID": e.id, "Type": e.type || 'Task', "Title": e.title || '',
         "Date Time": e.datetime || '', "Month": e.month || '',
         "Work Type": e.workType || 'Regular', "Details": e.desc || ''
       }));
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(taskRows), "Tasks");
 
-      // Calendar Sheet
-      const calRows = calEvents.map(c => ({ "ID": c.id, "Title": c.title, "Date": c.date, "Notes": c.desc }));
+      const calRows = (await dbOps.getCalEvents()).map(c => ({ "ID": c.id, "Title": c.title, "Date": c.date, "Notes": c.desc }));
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(calRows), "Calendar");
 
-      // To-Dos Sheet
-      const todoRows = todos.map(t => ({ "ID": t.id, "Title": t.title, "Priority": t.priority, "Due Date": t.dueDate, "Completed": t.completed }));
+      const todoRows = [];
+      (await dbOps.getTodos()).forEach(l => {
+        (l.items || []).forEach(i => {
+          todoRows.push({ "List Title": l.title, "Category": l.category, "Target Date": l.dueDate, "Item": i.text, "Completed": i.completed });
+        });
+      });
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(todoRows), "To-Dos");
 
-      // Notes Sheet
-      const noteRows = notes.map(n => ({ "ID": n.id, "Title": n.title, "Tag": n.tag, "Content": n.content }));
+      const noteRows = (await dbOps.getNotes()).map(n => ({ "ID": n.id, "Title": n.title, "Tag": n.tag, "Content": n.content }));
       XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(noteRows), "Notes");
 
-      const dateTag = new Date().toISOString().slice(0, 10);
-      XLSX.writeFile(workbook, `TaskTracker_Complete_Backup_${dateTag}.xlsx`);
+      XLSX.writeFile(workbook, `TaskTracker_Complete_Backup_${new Date().toISOString().slice(0, 10)}.xlsx`);
     }
 
     async function importFromExcel(evt) {
       const file = evt.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
+          const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+          const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
           if (!Array.isArray(jsonData) || jsonData.length === 0) return alert('No data rows found.');
 
           const importedEntries = jsonData.map((row, idx) => {
             const rawDt = row['Date Time'] || row.DateTime || getNowDatetimeLocal();
             const formattedDt = typeof rawDt === 'string' && rawDt.length >= 16 ? rawDt.slice(0, 16) : getNowDatetimeLocal();
-            
             return {
               id: String(row.ID || ('imported_' + Date.now() + '_' + idx)),
               userId: currentUser.id || 'usr_default',
@@ -1617,22 +1698,18 @@
             const existingMap = new Map(existing.map(item => [item.id, item]));
             importedEntries.forEach(item => existingMap.set(item.id, item));
             await dbOps.bulkReplace(Array.from(existingMap.values()));
-
             await renderTasksGrid();
             await syncToDrive();
-            alert(`Database import successful! Synchronized ${importedEntries.length} records.`);
+            alert(`Import successful! Synchronized ${importedEntries.length} records.`);
           }
-        } catch (err) {
-          alert('Failed to parse Excel file: ' + err.message);
-        } finally {
-          evt.target.value = '';
-        }
+        } catch (err) { alert('Excel Import Error: ' + err.message); }
+        finally { evt.target.value = ''; }
       };
       reader.readAsArrayBuffer(file);
     }
 
     /* ==========================================================================
-       UNIFIED MULTI-MODULE REPORTING SYSTEM
+       FIXED EMAIL REPORTING SYSTEM FOR USER SPECIFIED TIME PERIOD
        ========================================================================== */
     async function getFilteredReportData() {
       const timeframeMode = el('reportTimeframeSelect').value;
@@ -1647,30 +1724,23 @@
 
       const results = { tasks: [], calendar: [], todos: [], notes: [] };
 
+      const now = new Date();
+      const threeMonthsAgoStr = new Date(now.getFullYear(), now.getMonth() - 2, 1).toISOString().slice(0, 10);
+
       const filterByDate = (dateString) => {
-        if (!dateString) return true;
+        if (!dateString || timeframeMode === 'all') return true;
         if (timeframeMode === 'month') return dateString.slice(0, 7) === selectedMonth;
+        if (timeframeMode === 'last3') return dateString.slice(0, 10) >= threeMonthsAgoStr;
         if (timeframeMode === 'custom' && startDateVal && endDateVal) {
-          return dateString >= startDateVal && dateString <= endDateVal;
+          return dateString.slice(0, 10) >= startDateVal && dateString.slice(0, 10) <= endDateVal;
         }
         return true;
       };
 
-      if (incTasks) {
-        const allTasks = await dbOps.getAll();
-        results.tasks = allTasks.filter(t => filterByDate(t.datetime || t.month));
-      }
-      if (incCal) {
-        const allCal = await dbOps.getCalEvents();
-        results.calendar = allCal.filter(c => filterByDate(c.date));
-      }
-      if (incTodos) {
-        const allTodos = await dbOps.getTodos();
-        results.todos = allTodos.filter(t => filterByDate(t.dueDate));
-      }
-      if (incNotes) {
-        results.notes = await dbOps.getNotes();
-      }
+      if (incTasks) results.tasks = (await dbOps.getAll()).filter(t => filterByDate(t.datetime || t.month));
+      if (incCal) results.calendar = (await dbOps.getCalEvents()).filter(c => filterByDate(c.date));
+      if (incTodos) results.todos = (await dbOps.getTodos()).filter(t => filterByDate(t.dueDate));
+      if (incNotes) results.notes = await dbOps.getNotes();
 
       return results;
     }
@@ -1756,40 +1826,65 @@
 
     async function openMailAppWithCopy() {
       const data = await getFilteredReportData();
-      let formattedText = `PERFORMANCE & USER ACTIVITY REPORT\n===========================================\n\n`;
+      let bodyText = `TASKTRACKER PERFORMANCE REPORT\n`;
+      bodyText += `Generated: ${new Date().toLocaleString()}\n`;
+      bodyText += `===========================================\n\n`;
 
       if (data.tasks.length > 0) {
-        formattedText += `TASKS & ACHIEVEMENTS (${data.tasks.length}):\n-------------------------------------------\n`;
-        data.tasks.forEach((a, i) => { formattedText += `[${i+1}] ${a.title} (${a.type}) - ${a.datetime}\n`; });
-        formattedText += `\n`;
+        bodyText += `TASKS & ACHIEVEMENTS (${data.tasks.length}):\n`;
+        bodyText += `-------------------------------------------\n`;
+        data.tasks.forEach((a, i) => { bodyText += `[${i+1}] ${a.title} (${a.type}) - ${a.datetime}\n    ${a.desc || 'No details'}\n`; });
+        bodyText += `\n`;
       }
 
       if (data.calendar.length > 0) {
-        formattedText += `CALENDAR EVENTS (${data.calendar.length}):\n-------------------------------------------\n`;
-        data.calendar.forEach((c, i) => { formattedText += `[${i+1}] ${c.title} - Date: ${c.date}\n`; });
-        formattedText += `\n`;
+        bodyText += `CALENDAR EVENTS (${data.calendar.length}):\n`;
+        bodyText += `-------------------------------------------\n`;
+        data.calendar.forEach((c, i) => { bodyText += `[${i+1}] ${c.title} - Date: ${c.date}\n    ${c.desc || 'No notes'}\n`; });
+        bodyText += `\n`;
       }
 
       if (data.todos.length > 0) {
-        formattedText += `TO-DO LIST (${data.todos.length}):\n-------------------------------------------\n`;
-        data.todos.forEach((t, i) => { formattedText += `[${i+1}] ${t.title} [${t.completed ? 'DONE' : 'PENDING'}] - Priority: ${t.priority}\n`; });
-        formattedText += `\n`;
+        bodyText += `TO-DO LISTS (${data.todos.length}):\n`;
+        bodyText += `-------------------------------------------\n`;
+        data.todos.forEach((list, i) => {
+          bodyText += `[${i+1}] List: ${list.title} (${list.category || 'General'}) - Target: ${list.dueDate || 'None'}\n`;
+          (list.items || []).forEach((item, j) => {
+            bodyText += `     ${j+1}. [${item.completed ? 'X' : ' '}] ${item.text}\n`;
+          });
+        });
+        bodyText += `\n`;
       }
 
-      try { await navigator.clipboard.writeText(formattedText); } catch (err) {}
+      if (data.notes.length > 0) {
+        bodyText += `NOTES (${data.notes.length}):\n`;
+        bodyText += `-------------------------------------------\n`;
+        data.notes.forEach((n, i) => { bodyText += `[${i+1}] ${n.title} (${n.tag || 'General'})\n    ${n.content}\n`; });
+        bodyText += `\n`;
+      }
 
-      const defaultTo = activeSettings.recipients ? encodeURIComponent(activeSettings.recipients) : '';
-      const subject = encodeURIComponent(`TaskTracker Performance Report`);
-      window.location.href = `mailto:${defaultTo}?subject=${subject}`;
+      try { await navigator.clipboard.writeText(bodyText); } catch (err) {}
+
+      const recipient = activeSettings.recipients ? encodeURIComponent(activeSettings.recipients) : '';
+      const subject = encodeURIComponent(`TaskTracker Performance & Activity Report`);
+      
+      let safeMailtoBody = bodyText;
+      if (safeMailtoBody.length > 1500) safeMailtoBody = safeMailtoBody.slice(0, 1500) + "\n\n...[Full detailed report copied to Clipboard! Press Ctrl+V to paste]";
+
+      window.location.href = `mailto:${recipient}?subject=${subject}&body=${encodeURIComponent(safeMailtoBody)}`;
+      alert("Report body generated and opened in email client!\n(Full detailed report also copied to clipboard)");
     }
 
     async function downloadReportCSV() {
       const data = await getFilteredReportData();
-      let csv = 'Module,Title,Status/Type,Date/Time,Details\n';
+      let csv = 'Module,Title,Category/Type,Date/Time,Details/Items\n';
 
       data.tasks.forEach(t => { csv += `"Task","${t.title}","${t.type}","${t.datetime}","${(t.desc||'').replace(/"/g, '""')}"\n`; });
       data.calendar.forEach(c => { csv += `"Calendar","${c.title}","Event","${c.date}","${(c.desc||'').replace(/"/g, '""')}"\n`; });
-      data.todos.forEach(td => { csv += `"ToDo","${td.title}","${td.completed?'Completed':'Pending'}","${td.dueDate||''}","Priority: ${td.priority}"\n`; });
+      data.todos.forEach(l => {
+        const itemSummary = (l.items || []).map(i => `${i.completed?'[X]':'[ ]'} ${i.text}`).join('; ');
+        csv += `"ToDo List","${l.title}","${l.category||'General'}","${l.dueDate||''}","${itemSummary.replace(/"/g, '""')}"\n`;
+      });
       data.notes.forEach(n => { csv += `"Note","${n.title}","${n.tag||''}","","${(n.content||'').replace(/"/g, '""')}"\n`; });
 
       const blob = new Blob([csv], { type: 'text/csv' });
@@ -1799,7 +1894,6 @@
       a.click();
     }
 
-    /* History Clone Logic */
     let historyDebounceTimer;
     el('historySearchInput').addEventListener('input', (e) => {
       clearTimeout(historyDebounceTimer);
@@ -1812,33 +1906,28 @@
       const resultsContainer = el('historyResults');
       if (!query) { resultsContainer.style.display = 'none'; resultsContainer.innerHTML = ''; return; }
 
-      const all = await dbOps.getAll();
-      const matches = all.filter(item => item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query)).slice(0, 10);
-
+      const matches = (await dbOps.getAll()).filter(item => item.title.toLowerCase().includes(query) || (item.desc || '').toLowerCase().includes(query)).slice(0, 10);
       resultsContainer.innerHTML = '';
       if (matches.length === 0) {
         resultsContainer.innerHTML = `<div class="history-item" style="color:var(--text-muted); cursor:default;">No matches</div>`;
-        resultsContainer.style.display = 'block';
-        return;
+      } else {
+        matches.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'history-item';
+          div.innerHTML = `<span style="color:var(--text-muted); font-size:0.75rem; margin-right:6px;">${item.month}</span>${escapeHTML(item.title)}`;
+          div.onclick = () => {
+            el('taskTitle').value = item.title;
+            el('taskType').value = item.type;
+            el('taskDesc').value = item.desc || '';
+            el('historySearchInput').value = item.title;
+            resultsContainer.style.display = 'none';
+          };
+          resultsContainer.appendChild(div);
+        });
       }
-
-      matches.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'history-item';
-        div.innerHTML = `<span style="color:var(--text-muted); font-size:0.75rem; margin-right:6px;">${item.month}</span>${escapeHTML(item.title)}`;
-        div.onclick = () => {
-          el('taskTitle').value = item.title;
-          el('taskType').value = item.type;
-          el('taskDesc').value = item.desc || '';
-          el('historySearchInput').value = item.title;
-          resultsContainer.style.display = 'none';
-        };
-        resultsContainer.appendChild(div);
-      });
       resultsContainer.style.display = 'block';
     }
 
-    /* Settings & Bookmark Colors Management */
     function loadSettings() {
       const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
       if (raw) { try { savedSettings = { ...savedSettings, ...JSON.parse(raw) }; } catch(e){} }
@@ -1881,9 +1970,7 @@
       if (colors.settings) document.documentElement.style.setProperty('--bm-settings', colors.settings);
     }
 
-    function checkSettingsDirty() {
-      el('saveSettingsBtn').disabled = false;
-    }
+    function checkSettingsDirty() { el('saveSettingsBtn').disabled = false; }
 
     async function saveSettings() {
       activeSettings.bookmarkColors = {
@@ -1899,7 +1986,7 @@
       localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(savedSettings));
       applyLiveUI(savedSettings);
       await syncToDrive();
-      alert('Preferences & Bookmark Colors Saved!');
+      alert('Preferences Saved!');
     }
 
     function updateAppCredentialsSettings() {
@@ -1909,7 +1996,6 @@
       const confirmPass = el('settingConfirmPass').value;
 
       if (!newUsername) return alert('Username cannot be empty.');
-
       if (newPass || currentPass) {
         if (currentPass !== savedSettings.appPassword) return alert('Current Application Password incorrect.');
         if (newPass !== confirmPass) return alert('New passwords do not match.');
@@ -1925,10 +2011,9 @@
       el('settingConfirmPass').value = '';
 
       syncToDrive();
-      alert('Application credentials updated successfully!');
+      alert('Application credentials updated!');
     }
 
-    /* Event Listeners */
     document.querySelectorAll('.top-nav-btn, .bookmark-tab').forEach(btn => {
       btn.addEventListener('click', (e) => switchView(e.currentTarget.getAttribute('data-target')));
     });
@@ -1955,7 +2040,7 @@
 
     el('reportTimeframeSelect').onchange = (e) => {
       const val = e.target.value;
-      el('monthPickerWrap').classList.toggle('hidden', val !== 'month' && val !== 'last3');
+      el('monthPickerWrap').classList.toggle('hidden', val !== 'month');
       el('customDateStartWrap').classList.toggle('hidden', val !== 'custom');
       el('customDateEndWrap').classList.toggle('hidden', val !== 'custom');
       renderReportsView();
