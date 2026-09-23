@@ -1,323 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TaskTracker PRO - Executive Dashboard & Report Generator</title>
-  <style>
-    :root {
-      --bg-primary: #0f172a;
-      --bg-surface: #1e293b;
-      --bg-card: #334155;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-blue: #2563eb;
-      --accent-blue-hover: #1d4ed8;
-      --accent-green: #059669;
-      --accent-amber: #d97706;
-      --accent-purple: #7c3aed;
-      --border-color: #475569;
-      --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    }
+/**
+ * Utility function to sanitize strings for HTML insertion to mitigate XSS risks.
+ */
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background-color: var(--bg-primary); color: var(--text-main); font-family: var(--font-family); line-height: 1.5; padding: 24px; min-height: 100vh; }
+/**
+ * Extracts and filters multi-module database entries based on UI reporting controls.
+ */
+async function getFilteredReportData() {
+  const timeframeMode = el('reportTimeframeSelect')?.value || 'month';
+  const incTasks = el('repIncTasks')?.checked ?? true;
+  const incCalendar = el('repIncCalendar')?.checked ?? true;
+  const incTodos = el('repIncTodos')?.checked ?? true;
+  const incNotes = el('repIncNotes')?.checked ?? true;
+
+  let startDate = null;
+  let endDate = null;
+
+  const now = new Date();
+  if (timeframeMode === 'month') {
+    const monthVal = el('reportMonthPicker')?.value || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const [year, month] = monthVal.split('-').map(Number);
+    startDate = new Date(year, month - 1, 1);
+    endDate = new Date(year, month, 0, 23, 59, 59, 999);
+  } else if (timeframeMode === 'custom') {
+    const startStr = el('reportStartDate')?.value;
+    const endStr = el('reportEndDate')?.value;
+    if (startStr) startDate = new Date(startStr + 'T00:00:00');
+    if (endStr) endDate = new Date(endStr + 'T23:59:59');
+  } else if (timeframeMode === 'last3') {
+    endDate = new Date();
+    startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 3);
+  }
+
+  const isWithinRange = (dateInput) => {
+    if (!startDate && !endDate) return true;
+    if (!dateInput) return false;
+    const target = new Date(dateInput);
+    if (isNaN(target.getTime())) return false;
+    if (startDate && target < startDate) return false;
+    if (endDate && target > endDate) return false;
+    return true;
+  };
+
+  const rawTasks = incTasks ? await dbOps.getAll() : [];
+  const rawCalendar = incCalendar ? await dbOps.getCalEvents() : [];
+  const rawTodos = incTodos ? await dbOps.getTodos() : [];
+  const rawNotes = incNotes ? await dbOps.getNotes() : [];
+
+  return {
+    tasks: rawTasks.filter(t => isWithinRange(t.datetime || t.timestamp)),
+    calendar: rawCalendar.filter(c => isWithinRange(c.date)),
+    todos: rawTodos.filter(l => isWithinRange(l.dueDate || l.timestamp)),
+    notes: rawNotes.filter(n => isWithinRange(n.timestamp))
+  };
+}
+
+/**
+ * Generates an executive Word document (.doc) from filtered active data,
+ * triggers an automatic file download, copies an email summary to the clipboard,
+ * and launches the OS default email client via mailto.
+ */
+async function exportReportToWordAndEmail() {
+  try {
+    const data = await getFilteredReportData();
     
-    .container { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+    // 1. Build and download the styled Word document Blob
+    const wordHtml = buildWordDocumentHTML(data);
+    const blob = new Blob(['\ufeff' + wordHtml], { type: 'application/msword;charset=utf-8' });
+    const filename = `TaskTracker_Report_${new Date().toISOString().slice(0, 10)}.doc`;
     
-    header { display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface); padding: 20px 24px; border-radius: 12px; border: 1px solid var(--border-color); }
-    header h1 { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -0.025em; }
-    header p { font-size: 0.875rem; color: var(--text-muted); }
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    
+    setTimeout(() => URL.revokeObjectURL(downloadLink.href), 1000);
 
-    .control-panel { background: var(--bg-surface); padding: 20px 24px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
-    .filter-group { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
-    .input-field { display: flex; flex-direction: column; gap: 6px; }
-    .input-field label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
-    .input-field input, .input-field select { background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 12px; border-radius: 6px; font-size: 0.875rem; outline: none; }
-    .input-field input:focus, .input-field select:focus { border-color: var(--accent-blue); }
-
-    .btn { background: var(--accent-blue); color: #fff; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: background 0.2s ease; display: inline-flex; align-items: center; gap: 8px; }
-    .btn:hover { background: var(--accent-blue-hover); }
-    .btn-secondary { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
-    .btn-secondary:hover { background: #475569; }
-
-    .grid-dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(580px, 1fr)); gap: 24px; }
-    @media (max-width: 640px) { .grid-dashboard { grid-template-columns: 1fr; } }
-
-    .card { background: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border-color); padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
-    .card-title { font-size: 1.125rem; font-weight: 600; }
-
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
-    th { background: var(--bg-primary); color: var(--text-muted); padding: 10px 12px; font-weight: 600; text-transform: uppercase; font-size: 0.75rem; border-bottom: 1px solid var(--border-color); }
-    td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
-    tr:last-child td { border-bottom: none; }
-
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
-    .badge-task { background: rgba(37, 99, 235, 0.2); color: #93c5fd; border: 1px solid rgba(37, 99, 235, 0.4); }
-    .badge-achievement { background: rgba(5, 150, 105, 0.2); color: #6ee7b7; border: 1px solid rgba(5, 150, 105, 0.4); }
-    .badge-regular { background: rgba(5, 150, 105, 0.2); color: #6ee7b7; }
-    .badge-overtime { background: rgba(217, 119, 6, 0.2); color: #fcd34d; }
-    .badge-holiday { background: rgba(124, 58, 237, 0.2); color: #c084fc; }
-
-    .todo-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-    .todo-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg-primary); border-radius: 6px; border: 1px solid var(--border-color); }
-    .todo-item.completed span { text-decoration: line-through; color: var(--text-muted); }
-
-    .modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 100; }
-    .modal { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 500px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px; }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <header>
-      <div>
-        <h1>TaskTracker PRO</h1>
-        <p>Lead Architecture Executive Operational Dashboard</p>
-      </div>
-      <div>
-        <button class="btn btn-secondary" id="settingsBtn">⚙️ Settings</button>
-      </div>
-    </header>
-
-    <section class="control-panel">
-      <div class="filter-group">
-        <div class="input-field">
-          <label for="filterStartDate">Start Date</label>
-          <input type="date" id="filterStartDate">
-        </div>
-        <div class="input-field">
-          <label for="filterEndDate">End Date</label>
-          <input type="date" id="filterEndDate">
-        </div>
-        <div class="input-field">
-          <label for="filterKeyword">Search</label>
-          <input type="text" id="filterKeyword" placeholder="Filter by keyword...">
-        </div>
-        <button class="btn btn-secondary" id="resetFiltersBtn">Reset</button>
-      </div>
-      <div>
-        <button class="btn" id="exportReportBtn">📄 Export Word & Compose Email</button>
-      </div>
-    </section>
-
-    <main class="grid-dashboard">
-      <!-- Tasks & Achievements Module -->
-      <section class="card">
-        <div class="card-header">
-          <h2 class="card-title">Tasks & Achievements</h2>
-          <button class="btn btn-secondary" id="addTaskBtn">+ Add Entry</button>
-        </div>
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Type / Shift</th>
-                <th>Timestamp</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody id="tasksTableBody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Calendar Events Module -->
-      <section class="card">
-        <div class="card-header">
-          <h2 class="card-title">Calendar Events</h2>
-          <button class="btn btn-secondary" id="addCalendarBtn">+ Add Event</button>
-        </div>
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>Event Title</th>
-                <th>Date</th>
-                <th>Context</th>
-              </tr>
-            </thead>
-            <tbody id="calendarTableBody"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- To-Do Lists Module -->
-      <section class="card">
-        <div class="card-header">
-          <h2 class="card-title">To-Do Lists</h2>
-          <button class="btn btn-secondary" id="addTodoBtn">+ Add List</button>
-        </div>
-        <div id="todosContainer" style="display: flex; flex-direction: column; gap: 16px;"></div>
-      </section>
-
-      <!-- Knowledge & Notes Module -->
-      <section class="card">
-        <div class="card-header">
-          <h2 class="card-title">Knowledge & Notes Log</h2>
-          <button class="btn btn-secondary" id="addNoteBtn">+ Add Note</button>
-        </div>
-        <div style="overflow-x: auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>Title / Tag</th>
-                <th>Date</th>
-                <th>Content</th>
-              </tr>
-            </thead>
-            <tbody id="notesTableBody"></tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- Settings Modal -->
-  <div class="modal-backdrop" id="settingsModal">
-    <div class="modal">
-      <h3>System & User Settings</h3>
-      <div class="input-field">
-        <label for="settingUsername">User Name / Identifier</label>
-        <input type="text" id="settingUsername" placeholder="e.g. Lead Systems Architect">
-      </div>
-      <div class="input-field">
-        <label for="settingRecipients">Default Email Recipients</label>
-        <input type="text" id="settingRecipients" placeholder="exec-team@company.com, leads@company.com">
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" id="closeSettingsBtn">Cancel</button>
-        <button class="btn" id="saveSettingsBtn">Save Settings</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Script Implementation -->
-  <script>
-    // System State & Initial Fallback Data Structure
-    const defaultData = {
-      currentUser: { email: 'architect@enterprise.internal' },
-      savedSettings: {
-        appUsername: 'Lead Systems Architect',
-        recipients: 'executive-board@enterprise.internal'
-      },
-      tasks: [
-        { id: 1, title: 'Microservice Migration Phase 1', type: 'Task', workType: 'Regular', datetime: '2026-09-20T09:00', desc: 'Successfully decoupled authorization engine into zero-trust IAM worker.' },
-        { id: 2, title: 'Zero-Downtime Deployment Achieved', type: 'Achievement', workType: 'Overtime', datetime: '2026-09-22T21:30', desc: 'Deployed database schema migration v4.2 under peak traffic without query drops.' }
-      ],
-      calendar: [
-        { id: 1, title: 'Q4 Architecture Steering Committee', date: '2026-09-25', desc: 'Presenting hybrid client-side document generator strategy.' }
-      ],
-      todos: [
-        {
-          id: 1,
-          title: 'Infrastructure Audit',
-          category: 'DevOps',
-          dueDate: '2026-09-30',
-          items: [
-            { text: 'Verify TLS 1.3 enforcement on API Gateway', completed: true },
-            { text: 'Audit edge memory footprint on worker nodes', completed: false }
-          ]
-        }
-      ],
-      notes: [
-        { id: 1, title: 'MSO-HTML Styling Guidelines', tag: 'Architecture', timestamp: '2026-09-21T14:15', content: 'Office HTML schema supports mso-data-placement and embedded Word XML namespaces cleanly.' }
-      ]
-    };
-
-    // Global In-Memory State
-    let appState = JSON.parse(localStorage.getItem('TASKTRACKER_PRO_STATE')) || defaultData;
-    let savedSettings = appState.savedSettings || defaultData.savedSettings;
-    let currentUser = appState.currentUser || defaultData.currentUser;
-
-    // Helper Selectors & Utility Functions
-    const el = (id) => document.getElementById(id);
-
-    function escapeHTML(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    function calculateWorkType(datetimeStr) {
-      if (!datetimeStr) return 'Regular';
-      const dt = new Date(datetimeStr);
-      const day = dt.getDay();
-      const hours = dt.getHours();
-      
-      if (day === 0 || day === 6) return 'Holiday';
-      if (hours < 8 || hours >= 18) return 'Overtime';
-      return 'Regular';
-    }
-
-    function saveState() {
-      localStorage.setItem('TASKTRACKER_PRO_STATE', JSON.stringify(appState));
-      renderDashboard();
-    }
-
-    // Dynamic Filter Core Engine
-    async function getFilteredReportData() {
-      const startDateVal = el('filterStartDate').value;
-      const endDateVal = el('filterEndDate').value;
-      const keywordVal = el('filterKeyword').value.toLowerCase().trim();
-
-      const start = startDateVal ? new Date(startDateVal) : null;
-      const end = endDateVal ? new Date(endDateVal + 'T23:59:59') : null;
-
-      const filterByKeywordAndDate = (item, dateProp, textProps) => {
-        // Date Check
-        if (dateProp && item[dateProp]) {
-          const itemDate = new Date(item[dateProp]);
-          if (start && itemDate < start) return false;
-          if (end && itemDate > end) return false;
-        }
-        // Keyword Check
-        if (keywordVal) {
-          const combinedText = textProps.map(p => item[p] || '').join(' ').toLowerCase();
-          if (!combinedText.includes(keywordVal)) return false;
-        }
-        return true;
-      };
-
-      return {
-        tasks: appState.tasks.filter(t => filterByKeywordAndDate(t, 'datetime', ['title', 'desc', 'type', 'workType'])),
-        calendar: appState.calendar.filter(c => filterByKeywordAndDate(c, 'date', ['title', 'desc'])),
-        todos: appState.todos.filter(td => {
-          const matchesMeta = filterByKeywordAndDate(td, 'dueDate', ['title', 'category']);
-          if (matchesMeta) return true;
-          return td.items.some(i => i.text.toLowerCase().includes(keywordVal));
-        }),
-        notes: appState.notes.filter(n => filterByKeywordAndDate(n, 'timestamp', ['title', 'tag', 'content']))
-      };
-    }
-
-    // Hybrid Word Generator and Email Integration
-    async function exportReportToWordAndEmail() {
-      const data = await getFilteredReportData();
-      
-      // 1. Build and download the styled Word document Blob
-      const wordHtml = buildWordDocumentHTML(data);
-      const blob = new Blob(['\ufeff' + wordHtml], { type: 'application/msword' });
-      const filename = `TaskTracker_Report_${new Date().toISOString().slice(0, 10)}.doc`;
-      
-      const downloadLink = document.createElement('a');
-      downloadLink.href = URL.createObjectURL(blob);
-      downloadLink.download = filename;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-      URL.revokeObjectURL(downloadLink.href);
-
-      // 2. Compose executive cover email text
-      const author = savedSettings.appUsername || savedSettings.username || currentUser.email || 'TaskTracker User';
-      const coverText = 
+    // 2. Compose executive cover email text
+    const author = savedSettings.appUsername || savedSettings.username || currentUser.email || 'TaskTracker User';
+    const coverText = 
 `Hi Team,
 
 Please find attached the TaskTracker Executive Performance & Activity Report.
@@ -333,28 +105,43 @@ The fully formatted Word report ("${filename}") has been saved to your Downloads
 Best regards,
 ${author}`;
 
-      // 3. Copy cover text to clipboard
-      try {
-        await navigator.clipboard.writeText(coverText);
-      } catch (err) {
-        console.warn('Clipboard copy failed:', err);
-      }
-
-      // 4. Launch mailto client
-      const recipient = savedSettings.recipients ? encodeURIComponent(savedSettings.recipients) : '';
-      const subject = encodeURIComponent(`TaskTracker Executive Report - ${new Date().toLocaleDateString()}`);
-      const body = encodeURIComponent(coverText);
-
-      window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
-
-      alert(`✅ Formatted Word document generated and downloaded ("${filename}").\n\n✉️ Email client opened! The cover note has been copied to your clipboard. Simply attach the downloaded file to your email.`);
+    // 3. Copy cover text to clipboard with fallback
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(coverText);
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = coverText;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
     }
 
-    function buildWordDocumentHTML(data) {
-      const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-      const authorStr = escapeHTML(savedSettings.appUsername || savedSettings.username || currentUser.email || 'TaskTracker User');
+    // 4. Launch mailto client
+    const recipient = activeSettings.recipients ? encodeURIComponent(activeSettings.recipients) : '';
+    const subject = encodeURIComponent(`TaskTracker Executive Report - ${new Date().toLocaleDateString()}`);
+    const body = encodeURIComponent(coverText);
 
-      let html = `<!DOCTYPE html>
+    window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+
+    alert(`✅ Formatted Word document generated and downloaded ("${filename}").\n\n✉️ Email client opened! The cover note has been copied to your clipboard. Simply attach the downloaded file to your email.`);
+  } catch (error) {
+    console.error('Report Generation Error:', error);
+    alert('An error occurred while generating the report. Check console for details.');
+  }
+}
+
+/**
+ * Builds standard MSO-HTML markup with embedded Office XML styling rules.
+ * Generates exact visual parity with native Word document elements.
+ */
+function buildWordDocumentHTML(data) {
+  const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const authorStr = escapeHTML(savedSettings.appUsername || savedSettings.username || currentUser.email || 'TaskTracker User');
+
+  let html = `<!DOCTYPE html>
 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
 <head>
   <meta charset='utf-8'>
@@ -370,20 +157,25 @@ ${author}`;
   <![endif]-->
   <style>
     body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; color: #0f172a; line-height: 1.5; font-size: 11pt; margin: 24pt; }
+    
     .header-card { background-color: #1e40af; color: #ffffff; padding: 20pt 24pt; border-radius: 8pt; margin-bottom: 24pt; }
     .header-title { font-size: 22pt; font-weight: 800; color: #ffffff; margin: 0; }
     .header-subtitle { font-size: 11pt; color: #93c5fd; margin-top: 4pt; margin-bottom: 0; }
+    
     .section-header { font-size: 13pt; font-weight: 700; color: #1e293b; border-bottom: 2pt solid #2563eb; padding-bottom: 4pt; margin-top: 22pt; margin-bottom: 12pt; text-transform: uppercase; letter-spacing: 0.5pt; }
+    
     table { width: 100%; border-collapse: collapse; margin-bottom: 16pt; font-size: 10pt; }
     th { background-color: #f1f5f9; color: #334155; font-weight: 700; text-transform: uppercase; font-size: 8.5pt; border: 1pt solid #cbd5e1; padding: 8pt 10pt; text-align: left; }
     td { border: 1pt solid #e2e8f0; padding: 8pt 10pt; vertical-align: top; color: #1e293b; }
     tr:nth-child(even) td { background-color: #f8fafc; }
+    
     .badge { display: inline-block; padding: 3pt 8pt; font-size: 8pt; font-weight: 700; border-radius: 4pt; text-transform: uppercase; }
     .badge-task { background-color: #dbeafe; color: #1e40af; }
     .badge-achievement { background-color: #d1fae5; color: #065f46; }
     .badge-regular { background-color: #d1fae5; color: #065f46; }
     .badge-overtime { background-color: #fef3c7; color: #92400e; }
     .badge-holiday { background-color: #f3e8ff; color: #6b21a8; }
+    
     .meta-text { font-size: 9pt; color: #64748b; font-style: italic; }
     .footer { margin-top: 36pt; padding-top: 12pt; border-top: 1pt solid #e2e8f0; font-size: 8.5pt; color: #94a3b8; text-align: center; }
   </style>
@@ -394,272 +186,107 @@ ${author}`;
     <div class="header-subtitle">Generated on ${dateStr} | Prepared by ${authorStr}</div>
   </div>`;
 
-      // 1. TASKS & ACHIEVEMENTS MODULE
-      if (data.tasks.length > 0) {
-        html += `<div class="section-header">Tasks & Achievements (${data.tasks.length})</div>
-        <table>
+  // 1. TASKS & ACHIEVEMENTS MODULE
+  if (data.tasks.length > 0) {
+    html += `<div class="section-header">Tasks & Achievements (${data.tasks.length})</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 25%;">Title</th>
+          <th style="width: 20%;">Type & Classification</th>
+          <th style="width: 20%;">Date & Time</th>
+          <th style="width: 35%;">Details & Outcomes</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    data.tasks.forEach(t => {
+      const workType = t.workType || calculateWorkType(t.datetime);
+      const typeClass = t.type === 'Achievement' ? 'badge-achievement' : 'badge-task';
+      const workClass = workType === 'Overtime' ? 'badge-overtime' : workType === 'Holiday' ? 'badge-holiday' : 'badge-regular';
+      html += `<tr>
+        <td><b>${escapeHTML(t.title)}</b></td>
+        <td>
+          <span class="badge ${typeClass}">${escapeHTML(t.type || 'Task')}</span><br style="mso-data-placement:same-cell;"/>
+          <span class="badge ${workClass}" style="margin-top:4pt;">${escapeHTML(workType)}</span>
+        </td>
+        <td>${t.datetime ? new Date(t.datetime).toLocaleString() : 'N/A'}</td>
+        <td>${escapeHTML(t.desc || 'No details provided.').replace(/\n/g, '<br/>')}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  // 2. CALENDAR EVENTS MODULE
+  if (data.calendar.length > 0) {
+    html += `<div class="section-header">Calendar Events (${data.calendar.length})</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 30%;">Event Title</th>
+          <th style="width: 25%;">Scheduled Date</th>
+          <th style="width: 45%;">Notes & Context</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    data.calendar.forEach(c => {
+      html += `<tr>
+        <td><b>${escapeHTML(c.title)}</b></td>
+        <td>${escapeHTML(c.date)}</td>
+        <td>${escapeHTML(c.desc || 'N/A').replace(/\n/g, '<br/>')}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+
+  // 3. TO-DO LISTS MODULE
+  if (data.todos.length > 0) {
+    html += `<div class="section-header">To-Do Lists (${data.todos.length})</div>`;
+    data.todos.forEach(list => {
+      html += `<div style="margin-bottom: 12pt;">
+        <div style="font-size: 10.5pt; font-weight: bold; color: #1e40af;">📋 ${escapeHTML(list.title)} <span class="meta-text">(Category: ${escapeHTML(list.category || 'General')} | Target: ${list.dueDate || 'None'})</span></div>
+        <table style="margin-top: 6pt;">
           <thead>
             <tr>
-              <th style="width: 25%;">Title</th>
-              <th style="width: 20%;">Type & Classification</th>
-              <th style="width: 20%;">Date & Time</th>
-              <th style="width: 35%;">Details & Outcomes</th>
+              <th style="width: 20%;">Status</th>
+              <th>Task Item</th>
             </tr>
           </thead>
           <tbody>`;
-        data.tasks.forEach(t => {
-          const workType = t.workType || calculateWorkType(t.datetime);
-          const typeClass = t.type === 'Achievement' ? 'badge-achievement' : 'badge-task';
-          const workClass = workType === 'Overtime' ? 'badge-overtime' : workType === 'Holiday' ? 'badge-holiday' : 'badge-regular';
-          html += `<tr>
-            <td><b>${escapeHTML(t.title)}</b></td>
-            <td>
-              <span class="badge ${typeClass}">${escapeHTML(t.type || 'Task')}</span><br style="mso-data-placement:same-cell;"/>
-              <span class="badge ${workClass}" style="margin-top:4pt;">${escapeHTML(workType)}</span>
-            </td>
-            <td>${t.datetime ? new Date(t.datetime).toLocaleString() : 'N/A'}</td>
-            <td>${escapeHTML(t.desc || 'No details provided.').replace(/\n/g, '<br/>')}</td>
-          </tr>`;
-        });
-        html += `</tbody></table>`;
-      }
+      (list.items || []).forEach(item => {
+        html += `<tr>
+          <td style="text-align: center;">${item.completed ? '<b>[ X ] Completed</b>' : '<span style="color:#64748b;">[ &nbsp; ] Pending</span>'}</td>
+          <td>${escapeHTML(item.text)}</td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    });
+  }
 
-      // 2. CALENDAR EVENTS MODULE
-      if (data.calendar.length > 0) {
-        html += `<div class="section-header">Calendar Events (${data.calendar.length})</div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 30%;">Event Title</th>
-              <th style="width: 25%;">Scheduled Date</th>
-              <th style="width: 45%;">Notes & Context</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        data.calendar.forEach(c => {
-          html += `<tr>
-            <td><b>${escapeHTML(c.title)}</b></td>
-            <td>${escapeHTML(c.date)}</td>
-            <td>${escapeHTML(c.desc || 'N/A').replace(/\n/g, '<br/>')}</td>
-          </tr>`;
-        });
-        html += `</tbody></table>`;
-      }
+  // 4. NOTES & KNOWLEDGE LOG MODULE
+  if (data.notes.length > 0) {
+    html += `<div class="section-header">Notes & Knowledge Log (${data.notes.length})</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 25%;">Title & Tag</th>
+          <th style="width: 20%;">Recorded Date</th>
+          <th style="width: 55%;">Content</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    data.notes.forEach(n => {
+      html += `<tr>
+        <td><b>${escapeHTML(n.title)}</b><br/><span class="badge badge-task" style="margin-top:4pt;">${escapeHTML(n.tag || 'General')}</span></td>
+        <td>${new Date(n.timestamp).toLocaleDateString()}</td>
+        <td>${escapeHTML(n.content).replace(/\n/g, '<br/>')}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
 
-      // 3. TO-DO LISTS MODULE
-      if (data.todos.length > 0) {
-        html += `<div class="section-header">To-Do Lists (${data.todos.length})</div>`;
-        data.todos.forEach(list => {
-          html += `<div style="margin-bottom: 12pt;">
-            <div style="font-size: 10.5pt; font-weight: bold; color: #1e40af;">📋 ${escapeHTML(list.title)} <span class="meta-text">(Category: ${escapeHTML(list.category || 'General')} | Target: ${list.dueDate || 'None'})</span></div>
-            <table style="margin-top: 6pt;">
-              <thead>
-                <tr>
-                  <th style="width: 20%;">Status</th>
-                  <th>Task Item</th>
-                </tr>
-              </thead>
-              <tbody>`;
-          (list.items || []).forEach(item => {
-            html += `<tr>
-              <td style="text-align: center;">${item.completed ? '<b>[ X ] Completed</b>' : '<span style="color:#64748b;">[ &nbsp; ] Pending</span>'}</td>
-              <td>${escapeHTML(item.text)}</td>
-            </tr>`;
-          });
-          html += `</tbody></table></div>`;
-        });
-      }
-
-      // 4. NOTES & KNOWLEDGE LOG MODULE
-      if (data.notes.length > 0) {
-        html += `<div class="section-header">Notes & Knowledge Log (${data.notes.length})</div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 25%;">Title & Tag</th>
-              <th style="width: 20%;">Recorded Date</th>
-              <th style="width: 55%;">Content</th>
-            </tr>
-          </thead>
-          <tbody>`;
-        data.notes.forEach(n => {
-          html += `<tr>
-            <td><b>${escapeHTML(n.title)}</b><br/><span class="badge badge-task" style="margin-top:4pt;">${escapeHTML(n.tag || 'General')}</span></td>
-            <td>${new Date(n.timestamp).toLocaleDateString()}</td>
-            <td>${escapeHTML(n.content).replace(/\n/g, '<br/>')}</td>
-          </tr>`;
-        });
-        html += `</tbody></table>`;
-      }
-
-      html += `<div class="footer">TaskTracker PRO Automated Reporting System &bull; Confidential</div>
+  html += `<div class="footer">TaskTracker PRO Automated Reporting System &bull; Confidential</div>
 </body>
 </html>`;
 
-      return html;
-    }
-
-    // Dashboard Rendering Controller
-    async function renderDashboard() {
-      const filtered = await getFilteredReportData();
-
-      // Render Tasks
-      const tasksTbody = el('tasksTableBody');
-      tasksTbody.innerHTML = filtered.tasks.map(t => {
-        const wClass = t.workType === 'Overtime' ? 'badge-overtime' : t.workType === 'Holiday' ? 'badge-holiday' : 'badge-regular';
-        const tClass = t.type === 'Achievement' ? 'badge-achievement' : 'badge-task';
-        return `<tr>
-          <td><strong>${escapeHTML(t.title)}</strong></td>
-          <td>
-            <span class="badge ${tClass}">${escapeHTML(t.type)}</span>
-            <span class="badge ${wClass}">${escapeHTML(t.workType || 'Regular')}</span>
-          </td>
-          <td>${t.datetime ? new Date(t.datetime).toLocaleString() : 'N/A'}</td>
-          <td>${escapeHTML(t.desc)}</td>
-        </tr>`;
-      }).join('') || '<tr><td colspan="4" style="text-align:center; color: var(--text-muted);">No tasks found matching filter.</td></tr>';
-
-      // Render Calendar
-      const calendarTbody = el('calendarTableBody');
-      calendarTbody.innerHTML = filtered.calendar.map(c => `
-        <tr>
-          <td><strong>${escapeHTML(c.title)}</strong></td>
-          <td>${escapeHTML(c.date)}</td>
-          <td>${escapeHTML(c.desc)}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="3" style="text-align:center; color: var(--text-muted);">No calendar events.</td></tr>';
-
-      // Render To-Dos
-      const todosContainer = el('todosContainer');
-      todosContainer.innerHTML = filtered.todos.map(list => `
-        <div style="background: var(--bg-primary); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-          <div style="font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between;">
-            <span>📋 ${escapeHTML(list.title)}</span>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">${escapeHTML(list.category)} | Due: ${list.dueDate || 'N/A'}</span>
-          </div>
-          <ul class="todo-list">
-            ${list.items.map(item => `
-              <li class="todo-item ${item.completed ? 'completed' : ''}">
-                <input type="checkbox" ${item.completed ? 'checked' : ''} disabled>
-                <span>${escapeHTML(item.text)}</span>
-              </li>
-            `).join('')}
-          </ul>
-        </div>
-      `).join('') || '<div style="text-align:center; color: var(--text-muted); padding: 12px;">No to-do lists matching filter.</div>';
-
-      // Render Notes
-      const notesTbody = el('notesTableBody');
-      notesTbody.innerHTML = filtered.notes.map(n => `
-        <tr>
-          <td>
-            <strong>${escapeHTML(n.title)}</strong><br>
-            <span class="badge badge-task" style="margin-top: 4px;">${escapeHTML(n.tag)}</span>
-          </td>
-          <td>${new Date(n.timestamp).toLocaleDateString()}</td>
-          <td>${escapeHTML(n.content)}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="3" style="text-align:center; color: var(--text-muted);">No notes recorded.</td></tr>';
-    }
-
-    // Modal & Interactive Controls Setup
-    function setupEventListeners() {
-      // Export & Filter Actions
-      el('exportReportBtn').onclick = exportReportToWordAndEmail;
-      
-      const filterInputs = ['filterStartDate', 'filterEndDate', 'filterKeyword'];
-      filterInputs.forEach(id => el(id).addEventListener('input', renderDashboard));
-
-      el('resetFiltersBtn').onclick = () => {
-        filterInputs.forEach(id => el(id).value = '');
-        renderDashboard();
-      };
-
-      // Settings Modal
-      el('settingsBtn').onclick = () => {
-        el('settingUsername').value = savedSettings.appUsername || '';
-        el('settingRecipients').value = savedSettings.recipients || '';
-        el('settingsModal').style.display = 'flex';
-      };
-
-      el('closeSettingsBtn').onclick = () => {
-        el('settingsModal').style.display = 'none';
-      };
-
-      el('saveSettingsBtn').onclick = () => {
-        appState.savedSettings.appUsername = el('settingUsername').value.trim();
-        appState.savedSettings.recipients = el('settingRecipients').value.trim();
-        savedSettings = appState.savedSettings;
-        saveState();
-        el('settingsModal').style.display = 'none';
-      };
-
-      // Dynamic Item Creation Triggers
-      el('addTaskBtn').onclick = () => {
-        const title = prompt('Enter Task/Achievement Title:');
-        if (!title) return;
-        const type = confirm('Click OK for "Achievement", Cancel for "Task"') ? 'Achievement' : 'Task';
-        const desc = prompt('Enter description/outcomes:');
-        
-        appState.tasks.push({
-          id: Date.now(),
-          title,
-          type,
-          workType: calculateWorkType(new Date().toISOString()),
-          datetime: new Date().toISOString().slice(0, 16),
-          desc: desc || ''
-        });
-        saveState();
-      };
-
-      el('addCalendarBtn').onclick = () => {
-        const title = prompt('Enter Event Title:');
-        if (!title) return;
-        const date = prompt('Enter Date (YYYY-MM-DD):', new Date().toISOString().slice(0,10));
-        const desc = prompt('Enter notes/context:');
-
-        appState.calendar.push({ id: Date.now(), title, date, desc: desc || '' });
-        saveState();
-      };
-
-      el('addTodoBtn').onclick = () => {
-        const title = prompt('Enter List Title:');
-        if (!title) return;
-        const category = prompt('Enter Category:', 'General');
-        const item1 = prompt('Enter first checklist item:');
-        
-        appState.todos.push({
-          id: Date.now(),
-          title,
-          category: category || 'General',
-          dueDate: new Date().toISOString().slice(0,10),
-          items: item1 ? [{ text: item1, completed: false }] : []
-        });
-        saveState();
-      };
-
-      el('addNoteBtn').onclick = () => {
-        const title = prompt('Enter Note Title:');
-        if (!title) return;
-        const tag = prompt('Enter Tag:', 'General');
-        const content = prompt('Enter Note Content:');
-
-        appState.notes.push({
-          id: Date.now(),
-          title,
-          tag: tag || 'General',
-          timestamp: new Date().toISOString(),
-          content: content || ''
-        });
-        saveState();
-      };
-    }
-
-    // Initialization
-    document.addEventListener('DOMContentLoaded', () => {
-      setupEventListeners();
-      renderDashboard();
-    });
-  </script>
-</body>
-</html>
+  return html;
+}
