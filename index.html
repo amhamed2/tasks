@@ -1980,9 +1980,33 @@ ${body}
       };
       const meta = { periodLabel: periodLabelMap[timeframeMode] || 'All Time' };
       const fileName = `TaskTracker_Report_${new Date().toISOString().slice(0, 10)}.docx`;
+      const summaryLine = `Summary: ${data.tasks.length} tasks/achievements, ${data.calendar.length} calendar events, ${data.todos.length} to-do lists, ${data.notes.length} notes.`;
 
       try {
         const blob = await buildReportDocxBlob(data, meta);
+        const docxType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        const file = new File([blob], fileName, { type: docxType });
+
+        // Phones (iOS Safari especially) don't reliably save a downloaded blob to a
+        // findable location — the download attribute often just previews the file
+        // instead. The native Share Sheet is the OS-supported way to hand a generated
+        // file to another app on mobile, and it can attach straight into Mail/Gmail.
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'TaskTracker Performance & Activity Report',
+              text: summaryLine
+            });
+            return; // shared (or attached) successfully — nothing else to do
+          } catch (shareErr) {
+            if (shareErr && shareErr.name === 'AbortError') return; // user cancelled the sheet
+            // otherwise fall through to the download+mailto fallback below
+          }
+        }
+
+        // Desktop / browsers without file sharing: download the file, then open the
+        // mail app with a short body asking the user to attach what was just downloaded.
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = fileName;
@@ -1997,7 +2021,7 @@ ${body}
 
 Please find this period's TaskTracker report attached as a Word document (${fileName}), just downloaded to this device.
 
-Summary: ${data.tasks.length} tasks/achievements, ${data.calendar.length} calendar events, ${data.todos.length} to-do lists, ${data.notes.length} notes.
+${summaryLine}
 
 Thanks!`;
 
